@@ -58,6 +58,9 @@ dependencies {
 
     // Compose
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.compose)
+
 
     implementation(project(":common"))
     implementation(project(":core"))
