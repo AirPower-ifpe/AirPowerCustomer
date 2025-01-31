@@ -6,7 +6,6 @@ package com.ifpe.edu.br.common.ui.theme
 * Project: AirPower Costumer
 */
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
