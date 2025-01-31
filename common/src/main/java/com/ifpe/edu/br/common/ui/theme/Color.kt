@@ -1,4 +1,10 @@
-package com.ifpe.edu.br.ui.theme
+package com.ifpe.edu.br.common.ui.theme
+
+/*
+* Trabalho de conclusão de curso - IFPE 2025
+* Author: Willian Santos
+* Project: AirPower Costumer
+*/
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,6 +1,11 @@
-package com.ifpe.edu.br.ui.theme
+package com.ifpe.edu.br.common.ui.theme
 
-import android.app.Activity
+/*
+* Trabalho de conclusão de curso - IFPE 2025
+* Author: Willian Santos
+* Project: AirPower Costumer
+*/
+
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +46,7 @@ fun AirPowerCostumerTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        dynamicColor -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
