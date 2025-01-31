@@ -7,10 +7,6 @@ package com.ifpe.edu.br.common
 */
 
 object CommonConstants {
-    const val NAVIGATION_INITIAL = "START"
-    const val NAVIGATION_MAIN = "MAIN"
-    const val NAVIGATION_AUTH = "AUTH"
-
     const val ALIGNMENT_TOP = 1
     const val ALIGNMENT_CENTER = 2
 }

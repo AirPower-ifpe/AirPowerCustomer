@@ -1,4 +1,4 @@
-package com.ifpe.edu.br.view
+package com.ifpe.edu.br.view.screens
 
 /*
 * Trabalho de conclusão de curso - IFPE 2025
@@ -29,6 +29,7 @@ import com.ifpe.edu.br.common.components.GradientBackground
 import com.ifpe.edu.br.common.components.RoundedImageIcon
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientDark
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
+import com.ifpe.edu.br.model.Constants
 
 @Composable
 fun SplashScreen(
@@ -59,8 +60,8 @@ private fun AuthScreenPostDelayed(navController: NavController) {
         hasNavigated = true
         val handler = Handler(Looper.getMainLooper())
         handler.postDelayed({
-            navController.navigate(CommonConstants.NAVIGATION_AUTH) {
-                popUpTo(CommonConstants.NAVIGATION_INITIAL) { inclusive = true }
+            navController.navigate(Constants.NAVIGATION_AUTH) {
+                popUpTo(Constants.NAVIGATION_INITIAL) { inclusive = true }
             }
         }, 1500)
     }
