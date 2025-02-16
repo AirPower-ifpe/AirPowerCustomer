@@ -63,6 +63,6 @@ private fun AuthScreenPostDelayed(navController: NavController) {
             navController.navigate(Constants.NAVIGATION_AUTH) {
                 popUpTo(Constants.NAVIGATION_INITIAL) { inclusive = true }
             }
-        }, 1500)
+        }, 100)
     }
 }
