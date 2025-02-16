@@ -8,7 +8,6 @@ package com.ifpe.edu.br.common.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -18,6 +17,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +25,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -61,7 +64,17 @@ fun CustomInputText(
     placeholder: String = "",
     leadingIcon: @Composable (() -> Unit)? = null,
     isPassword: Boolean = false,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    shape: Shape = RectangleShape,
+    inputFieldColors: TextFieldColors = TextFieldDefaults.colors(
+        focusedTextColor = MaterialTheme.colorScheme.onPrimary,
+        unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
+        focusedLabelColor = MaterialTheme.colorScheme.onPrimary,
+        unfocusedLabelColor = MaterialTheme.colorScheme.onPrimary,
+        focusedContainerColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer
+    ),
+    iconColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     OutlinedTextField(
@@ -76,7 +89,7 @@ fun CustomInputText(
         placeholder = {
             Text(
                 placeholder,
-                color = MaterialTheme.colorScheme.secondary
+                color = iconColor
             )
         },
         singleLine = singleLine,
@@ -91,19 +104,12 @@ fun CustomInputText(
                     Icon(
                         imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                         contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                        tint = MaterialTheme.colorScheme.onPrimary
+                        tint = iconColor
                     )
                 }
             }
         } else null,
-        shape = RoundedCornerShape(16.dp),
-        colors = TextFieldDefaults.colors(
-            focusedTextColor = MaterialTheme.colorScheme.onPrimary,
-            unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
-            focusedLabelColor = MaterialTheme.colorScheme.onPrimary,
-            unfocusedLabelColor = MaterialTheme.colorScheme.onPrimary,
-            focusedContainerColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
+        shape = shape,
+        colors = inputFieldColors
     )
 }

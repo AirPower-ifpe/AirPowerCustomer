@@ -8,4 +8,4 @@ import androidx.compose.ui.unit.dp
 * Project: AirPower Costumer
 */
 
-val cardCornerRadius = 18.dp
+val cardCornerRadius = 15.dp
