@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="network_failure">Erro de conexão</string>
+    <string name="connection_failure_retry">Toque para tentar novamente</string>
+</resources>

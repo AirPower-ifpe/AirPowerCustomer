@@ -8,6 +8,7 @@ package com.ifpe.edu.br.common.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -111,5 +112,26 @@ fun CustomInputText(
         } else null,
         shape = shape,
         colors = inputFieldColors
+    )
+}
+
+@Composable
+fun CustomText(
+    text: String,
+    alignment: TextAlign = TextAlign.Left,
+    color: Color = MaterialTheme.colorScheme.onPrimary,
+    fontSize: TextUnit = 16.sp,
+    fontWeight: FontWeight = FontWeight.Bold,
+    modifier: Modifier = Modifier
+        .wrapContentWidth()
+        .padding(start = 4.dp, end = 4.dp)
+) {
+    Text(
+        textAlign = alignment,
+        text = text,
+        color = color,
+        fontSize = fontSize,
+        fontWeight = fontWeight,
+        modifier = modifier
     )
 }
