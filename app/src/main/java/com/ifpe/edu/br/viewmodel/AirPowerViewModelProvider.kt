@@ -1,0 +1,39 @@
+package com.ifpe.edu.br.viewmodel
+
+// Trabalho de conclusão de curso - IFPE 2025
+// Author: Willian Santos
+// Project: AirPower Costumer
+
+// Copyright (c) 2025 IFPE. All rights reserved.
+
+import android.app.Application
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import com.ifpe.edu.br.core.api.ConnectionManager
+import com.ifpe.edu.br.viewmodel.manager.ThingsBoardContractImpl
+
+object AirPowerViewModelProvider {
+    private var singletonViewModel: AirPowerViewModel? = null
+    private val thingsBoardConnectionMrg = ConnectionManager.getInstance(ThingsBoardContractImpl)
+    fun getInstance(
+        application: Application,
+    ): AirPowerViewModel {
+        if (singletonViewModel == null) {
+            val factory = AirPowerViewModelFactory(application, thingsBoardConnectionMrg.connection)
+            singletonViewModel = ViewModelProvider(
+                ViewModelStore(),
+                factory
+            )[AirPowerViewModel::class.java]
+        }
+        return singletonViewModel!!
+    }
+
+    fun getInstance(): AirPowerViewModel {
+        if (singletonViewModel == null) {
+            val errorMessage =
+                "Erro! ${AirPowerViewModel::class.simpleName} chamado antes da construção."
+            throw IllegalStateException(errorMessage)
+        }
+        return singletonViewModel!!
+    }
+}

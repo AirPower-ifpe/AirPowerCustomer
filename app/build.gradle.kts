@@ -61,6 +61,17 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
 
+    implementation (libs.androidx.room.runtime)
+    implementation(libs.androidx.runtime.livedata)
+    annotationProcessor (libs.androidx.room.compiler)
+
+    // Retrofit
+    implementation (libs.converter.scalars)
+    implementation (libs.retrofit)
+    implementation (libs.converter.gson)
+    implementation (libs.okhttp)
+    implementation (libs.logging.interceptor)
+    implementation (libs.gson)
 
     implementation(project(":common"))
     implementation(project(":core"))

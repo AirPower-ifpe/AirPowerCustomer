@@ -4,6 +4,7 @@ package com.ifpe.edu.br.view
 * Author: Willian Santos
 * Project: AirPower Costumer
 */
+
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
@@ -11,7 +12,6 @@ import android.util.DisplayMetrics
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -20,18 +20,18 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-
 import com.ifpe.edu.br.common.ui.theme.AirPowerCostumerTheme
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.view.screens.AuthScreen
 import com.ifpe.edu.br.view.screens.MainScreen
 import com.ifpe.edu.br.view.screens.SplashScreen
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
+import com.ifpe.edu.br.viewmodel.AirPowerViewModelProvider
 
 class MainActivity : ComponentActivity() {
-    private val viewModel by viewModels<AirPowerViewModel>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val viewModel = AirPowerViewModelProvider.getInstance(application)
         enableEdgeToEdge()
         setContent {
             val adjustedContext = LocalContext.current.adjustedFontScale()
@@ -59,7 +59,10 @@ private fun InitializeNavigation(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
-    NavHost(navController = navController, startDestination = Constants.NAVIGATION_INITIAL) {
+    NavHost(
+        navController = navController,
+        startDestination = Constants.NAVIGATION_INITIAL
+    ) {
         composable(Constants.NAVIGATION_INITIAL) {
             SplashScreen(navController = navController)
         }
@@ -69,7 +72,10 @@ private fun InitializeNavigation(
         }
 
         composable(Constants.NAVIGATION_AUTH) {
-            AuthScreen(navController = navController, mainViewModel = mainViewModel)
+            AuthScreen(
+                navController = navController,
+                viewModel = mainViewModel
+            )
         }
     }
 }
