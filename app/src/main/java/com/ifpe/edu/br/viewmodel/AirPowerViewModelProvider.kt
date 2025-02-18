@@ -14,12 +14,12 @@ import com.ifpe.edu.br.viewmodel.manager.ThingsBoardContractImpl
 
 object AirPowerViewModelProvider {
     private var singletonViewModel: AirPowerViewModel? = null
-    private val thingsBoardConnectionMrg = ConnectionManager.getInstance(ThingsBoardContractImpl)
+    private val thingsBoardConnection = ConnectionManager.getInstance().getConnection(ThingsBoardContractImpl)
     fun getInstance(
         application: Application,
     ): AirPowerViewModel {
         if (singletonViewModel == null) {
-            val factory = AirPowerViewModelFactory(application, thingsBoardConnectionMrg.connection)
+            val factory = AirPowerViewModelFactory(application, thingsBoardConnection)
             singletonViewModel = ViewModelProvider(
                 ViewModelStore(),
                 factory

@@ -100,4 +100,8 @@ object ThingsBoardContractImpl : IConnectionManager {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getBaseURL")
         return Constants.URL_API
     }
+
+    override fun getConnectionTimeout(): Long {
+        return 1
+    }
 }
