@@ -5,13 +5,10 @@ import okhttp3.OkHttpClient
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
-
 // Trabalho de conclusão de curso - IFPE 2025
 // Author: Willian Santos
 // Project: AirPower Costumer
-
 // Copyright (c) 2025 IFPE. All rights reserved.
-
 
 interface IConnectionManager {
     fun getJwtInterceptor(): Interceptor
@@ -20,4 +17,5 @@ interface IConnectionManager {
     fun getLoggerClient(): OkHttpClient.Builder
     fun getConnectionId(): Int
     fun getBaseURL(): String
+    fun getConnectionTimeout(): Long
 }

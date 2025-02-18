@@ -14,46 +14,43 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.util.concurrent.TimeUnit
 
-class ConnectionManager private constructor(
-    private val connectionManager: IConnectionManager
-) {
+class ConnectionManager {
+    private val connections = mutableMapOf<Int, Retrofit>()
 
     companion object {
         @Volatile
         private var instance: ConnectionManager? = null
-
-        fun getInstance(connectionManager: IConnectionManager): ConnectionManager {
-            return instance ?: synchronized(this) {
-                instance ?: ConnectionManager(connectionManager).also { instance = it }
-            }
-        }
-
         fun getInstance(): ConnectionManager {
-            return instance ?: throw IllegalStateException("ConnectionManager not initialized")
+            return instance ?: synchronized(this) {
+                instance ?: ConnectionManager().also { instance = it }
+            }
         }
     }
 
-    private val httpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder().apply {
+    private fun createRetrofitInstance(connectionManager: IConnectionManager): Retrofit {
+        val httpClient = OkHttpClient.Builder().apply {
             addInterceptor(connectionManager.getJwtInterceptor())
-            connectTimeout(30, TimeUnit.SECONDS)
-            readTimeout(30, TimeUnit.SECONDS)
-            writeTimeout(30, TimeUnit.SECONDS)
+            connectTimeout(connectionManager.getConnectionTimeout(), TimeUnit.SECONDS)
+            readTimeout(connectionManager.getConnectionTimeout(), TimeUnit.SECONDS)
+            writeTimeout(connectionManager.getConnectionTimeout(), TimeUnit.SECONDS)
             sslSocketFactory(
                 connectionManager.getSSLSocketFactory(),
                 connectionManager.getX509TrustManager()
             )
-            hostnameVerifier { hostname, session -> true }
+            hostnameVerifier { _, _ -> true }
         }.build()
+        return Retrofit.Builder()
+            .baseUrl(connectionManager.getBaseURL())
+            .addConverterFactory(ScalarsConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .client(httpClient)
+            .build()
     }
 
-    val connection: Retrofit by lazy {
-        Retrofit.Builder().apply {
-            baseUrl(connectionManager.getBaseURL())
-            addConverterFactory(ScalarsConverterFactory.create())
-            addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
-            client(connectionManager.getLoggerClient().build())
-            client(httpClient)
-        }.build()
+    fun getConnection(connectionManager: IConnectionManager): Retrofit {
+        val connectionId = connectionManager.getConnectionId()
+        return connections.getOrPut(connectionId) {
+            createRetrofitInstance(connectionManager)
+        }
     }
 }
