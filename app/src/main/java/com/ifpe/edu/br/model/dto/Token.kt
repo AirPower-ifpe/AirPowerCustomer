@@ -11,7 +11,7 @@ package com.ifpe.edu.br.model.dto
 data class Token(
     val token: String,
     val refreshToken: String,
-    val scope: Any
+    val scope: String
 ) {
     override fun toString(): String {
         return "Token(token='$token', " +

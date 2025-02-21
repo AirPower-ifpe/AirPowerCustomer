@@ -63,6 +63,11 @@ dependencies {
 
     implementation (libs.androidx.room.runtime)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
     annotationProcessor (libs.androidx.room.compiler)
 
     // Retrofit

@@ -15,18 +15,18 @@ import com.ifpe.edu.br.viewmodel.util.AirPowerUtil;
 
 import java.util.Base64;
 
-public class JWTMgr {
-    private static final String TAG = JWTMgr.class.getSimpleName();
-    private static JWTMgr instance;
+public class JWTManager {
+    private static final String TAG = JWTManager.class.getSimpleName();
+    private static JWTManager instance;
     private final AirPowerRepository mRepo;
 
-    private JWTMgr() {
+    private JWTManager() {
         mRepo = AirPowerRepository.getInstance();
     }
 
-    public static JWTMgr getInstance() {
+    public static JWTManager getInstance() {
         if (instance == null) {
-            instance = new JWTMgr();
+            instance = new JWTManager();
         }
         return instance;
     }
@@ -41,7 +41,7 @@ public class JWTMgr {
         }
         String jwt = token.getToken();
         String refreshToken = token.getRefreshToken();
-        String scope = token.getScope() != null ? token.getScope().toString() : "";
+        String scope = token.getScope();
         if (AirPowerUtil.Text.isNullOrEmpty(jwt) || AirPowerUtil.Text.isNullOrEmpty(refreshToken)) {
             AirPowerLog.e(TAG, "handleAuthentication() ERROR: jwt or token is/are null");
             authCallback.onFailure(-2); // todo add error code here
@@ -80,7 +80,8 @@ public class JWTMgr {
         }
         String incomingJwt = incomingToken.getToken();
         String incomingRefreshToken = incomingToken.getRefreshToken();
-        String incomingScope = incomingToken.getScope() == null ? "" : incomingToken.getScope().toString();
+        incomingToken.getScope();
+        String incomingScope = incomingToken.getScope();
         if (AirPowerUtil.Text.isNullOrEmpty(incomingJwt) ||
                 AirPowerUtil.Text.isNullOrEmpty(incomingRefreshToken)) {
             authCallback.onFailure(-15);// todo add error code here
@@ -148,7 +149,6 @@ public class JWTMgr {
     }
 
     public void resetTokenForConnection(Integer connectionId) {
-
         AirPowerToken tokenByClient = mRepo.getTokenByConnectionId(connectionId);
         if (tokenByClient == null) {
             AirPowerLog.w(TAG, "getTokenByConnectionId(): " +
@@ -165,7 +165,6 @@ public class JWTMgr {
 
     public interface IHandleAuthCallback {
         void onSuccess(AirPowerToken airPowerToken);
-
         void onFailure(int failure);
     }
 }

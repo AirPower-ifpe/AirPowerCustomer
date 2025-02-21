@@ -28,8 +28,11 @@ import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 */
 
 @Composable
-fun MainScreen(mainViewModel: AirPowerViewModel) {
-    val navController = rememberNavController()
+fun MainScreen(
+    navController: NavHostController,
+    mainViewModel: AirPowerViewModel
+) {
+    //val navController = rememberNavController()
     CustomColumn(
         alignmentStrategy = CommonConstants.ALIGNMENT_TOP,
         layouts = listOf {

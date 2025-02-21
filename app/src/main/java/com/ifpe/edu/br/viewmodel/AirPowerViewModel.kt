@@ -6,8 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.dto.AuthUser
 import com.ifpe.edu.br.model.dto.Token
-import com.ifpe.edu.br.model.repo.AirPowerRepository
+import com.ifpe.edu.br.model.model.auth.AirPowerToken
 import com.ifpe.edu.br.model.repo.ThingsBoardManager
+import com.ifpe.edu.br.viewmodel.manager.JWTManager
+import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
 import com.ifpe.edu.br.viewmodel.manager.UIStateManager
 import com.ifpe.edu.br.viewmodel.util.AirPowerLog
 import kotlinx.coroutines.delay
@@ -28,7 +30,6 @@ class AirPowerViewModel(
     private val TAG: String = AirPowerViewModel::class.java.simpleName
     val uiStateManager = UIStateManager.getInstance()
     private val thingsBoardMgr = ThingsBoardManager(connection)
-    private val thingsBoardRepository = AirPowerRepository.build(application.applicationContext)
 
     fun authenticate(
         user: AuthUser,
@@ -38,20 +39,32 @@ class AirPowerViewModel(
             val startTime = System.currentTimeMillis()
             val minDelay = 1000L
             try {
-
                 uiStateManager.setBooleanState(
                     Constants.STATE_AUTH_LOADING,
                     true
                 )
-
                 thingsBoardMgr.auth(
                     user = user,
                     onFailure = { errorCode ->
+                        errorCode.message
                         AirPowerLog.d(TAG, "DEU MERDA")
                     },
                     onSuccess = { token: Token ->
                         AirPowerLog.d(TAG, "SUCESSO")
-                        onSuccessCallback.invoke()
+                        JWTManager.getInstance().handleAuthentication(
+                            ThingsBoardConnectionContractImpl.getConnectionId(), token,
+                            object : JWTManager.IHandleAuthCallback {
+                                override fun onSuccess(airPowerToken: AirPowerToken?) {
+                                    onSuccessCallback.invoke()
+                                }
+
+                                override fun onFailure(failure: Int) {
+
+                                }
+
+                            }
+                        )
+
                     }
                 )
 

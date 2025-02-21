@@ -7,9 +7,11 @@ package com.ifpe.edu.br.viewmodel.util;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -109,5 +111,14 @@ public class AirPowerUtil {
     public static boolean isDebugVersion() {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.w(TAG, "isDebugVersion: FORCE");
         return true;//BuildConfig.DEBUG;
+    }
+
+
+    public static void launchActivity(Context context,
+                                      Class<? extends Activity> activity,
+                                      Bundle options) {
+        Intent intent = new Intent(context, activity);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        context.startActivity(intent, options);
     }
 }

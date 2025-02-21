@@ -20,23 +20,22 @@ import javax.net.ssl.X509TrustManager
 // Copyright (c) 2025 IFPE. All rights reserved.
 
 
-object ThingsBoardContractImpl : IConnectionManager {
+object ThingsBoardConnectionContractImpl : IConnectionManager {
 
-    private val TAG: String = ThingsBoardContractImpl.javaClass.simpleName
-    val THINGSBOARD_CONNECTION_ID = 1
+    private val TAG: String = ThingsBoardConnectionContractImpl.javaClass.simpleName
 
     override fun getConnectionId(): Int {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getConnectionId")
-        return THINGSBOARD_CONNECTION_ID
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "build: ConnectionId")
+        return Constants.CONNECTION_ID_THINGSBOARD
     }
 
     override fun getJwtInterceptor(): Interceptor {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getJwtInterceptor")
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "build: JwtInterceptor")
         return Interceptor { chain ->
             val request = chain.request().newBuilder()
                 .addHeader(
                     "Authorization", "Bearer ${
-                        JWTMgr.getInstance().getJwtForConnectionId(getConnectionId())
+                        JWTManager.getInstance().getJwtForConnectionId(getConnectionId())
                     }}"
                 )
                 .build()
@@ -45,7 +44,7 @@ object ThingsBoardContractImpl : IConnectionManager {
     }
 
     override fun getSSLSocketFactory(): SSLSocketFactory {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getSSLSocketFactory")
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "build: SSLSocketFactory")
         return try {
             val sslContext = SSLContext.getInstance("TLS")
             sslContext.init(null, arrayOf(getX509TrustManager()), SecureRandom())
@@ -56,13 +55,13 @@ object ThingsBoardContractImpl : IConnectionManager {
     }
 
     override fun getX509TrustManager(): X509TrustManager {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getX509TrustManager")
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "build: X509TrustManager")
         return object : X509TrustManager {
             override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
                 if (AirPowerLog.ISLOGABLE) {
                     AirPowerLog.w(
                         TAG, "checkClientTrusted: \n" +
-                                "CERTIFICATE VERIFICATION DISABLED DUE SELF SIGNED T.B. CERTIFICATE"
+                                "CERTIFICATE VERIFICATION DISABLED DUE SELF SIGNED THINGS BOARD CERTIFICATE"
                     )
                 }
             }
@@ -71,7 +70,7 @@ object ThingsBoardContractImpl : IConnectionManager {
                 if (AirPowerLog.ISLOGABLE) {
                     AirPowerLog.w(
                         TAG, "checkServerTrusted: \n" +
-                                "CERTIFICATE VERIFICATION DISABLED DUE SELF SIGNED T.B. CERTIFICATE"
+                                "CERTIFICATE VERIFICATION DISABLED DUE SELF SIGNED THINGS BOARD CERTIFICATE"
                     )
                 }
             }
@@ -80,7 +79,7 @@ object ThingsBoardContractImpl : IConnectionManager {
                 if (AirPowerLog.ISLOGABLE) {
                     AirPowerLog.w(
                         TAG, "getAcceptedIssuers: \n" +
-                                "CERTIFICATE VERIFICATION DISABLED DUE SELF SIGNED T.B. CERTIFICATE"
+                                "CERTIFICATE VERIFICATION DISABLED DUE SELF SIGNED THINGS BOARD CERTIFICATE"
                     )
                 }
                 return arrayOf()
@@ -89,7 +88,7 @@ object ThingsBoardContractImpl : IConnectionManager {
     }
 
     override fun getLoggerClient(): OkHttpClient.Builder {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getLoggerClient")
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "build: LoggerClient")
         return OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
@@ -97,11 +96,12 @@ object ThingsBoardContractImpl : IConnectionManager {
     }
 
     override fun getBaseURL(): String {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getBaseURL")
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "build: BaseURL")
         return Constants.URL_API
     }
 
     override fun getConnectionTimeout(): Long {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "build: ConnectionTimeout")
         return 1
     }
 }

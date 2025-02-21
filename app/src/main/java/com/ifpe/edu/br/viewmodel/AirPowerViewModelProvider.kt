@@ -10,15 +10,19 @@ import android.app.Application
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import com.ifpe.edu.br.core.api.ConnectionManager
-import com.ifpe.edu.br.viewmodel.manager.ThingsBoardContractImpl
+import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
+import com.ifpe.edu.br.viewmodel.util.AirPowerLog
 
 object AirPowerViewModelProvider {
+    private val tag = AirPowerViewModelProvider::class.simpleName
     private var singletonViewModel: AirPowerViewModel? = null
-    private val thingsBoardConnection = ConnectionManager.getInstance().getConnection(ThingsBoardContractImpl)
+    private val thingsBoardConnection =
+        ConnectionManager.getInstance().getConnection(ThingsBoardConnectionContractImpl)
     fun getInstance(
         application: Application,
     ): AirPowerViewModel {
         if (singletonViewModel == null) {
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(tag, "AirPowerViewModel creation")
             val factory = AirPowerViewModelFactory(application, thingsBoardConnection)
             singletonViewModel = ViewModelProvider(
                 ViewModelStore(),
@@ -31,7 +35,7 @@ object AirPowerViewModelProvider {
     fun getInstance(): AirPowerViewModel {
         if (singletonViewModel == null) {
             val errorMessage =
-                "Erro! ${AirPowerViewModel::class.simpleName} chamado antes da construção."
+                "${AirPowerViewModel::class.simpleName} build error: getInstance called before construction"
             throw IllegalStateException(errorMessage)
         }
         return singletonViewModel!!

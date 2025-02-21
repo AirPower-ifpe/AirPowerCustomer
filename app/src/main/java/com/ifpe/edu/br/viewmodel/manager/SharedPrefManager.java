@@ -18,7 +18,6 @@ public class SharedPrefManager {
     private final SharedPreferences.Editor mEditor;
     private static SharedPrefManager instance;
 
-
     public static SharedPrefManager getInstance(Context context) {
         if (instance == null) {
             instance = new SharedPrefManager(context);
@@ -26,14 +25,12 @@ public class SharedPrefManager {
         return instance;
     }
 
-    public static SharedPrefManager getInstance()
-            throws Exception {
+    public static SharedPrefManager getInstance() throws Exception {
         if (instance == null) {
-            throw new Exception("get instance being called before construction");
+            throw new IllegalStateException("SharedPrefManager error: getInstance called before construction");
         }
         return instance;
     }
-
 
     private SharedPrefManager(Context context) {
         mSP = context.getSharedPreferences(PREF_FILE_NAME, Context.MODE_PRIVATE);

@@ -6,6 +6,7 @@ package com.ifpe.edu.br.view.screens
 * Project: AirPower Costumer
 */
 
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -29,8 +30,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityOptionsCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.navigation.NavHostController
 import com.ifpe.edu.br.R
@@ -46,11 +49,13 @@ import com.ifpe.edu.br.common.ui.theme.White
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.dto.AuthUser
+import com.ifpe.edu.br.view.MainActivity
 import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
 import com.ifpe.edu.br.view.ui.theme.tb_tertiary_light
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
+import com.ifpe.edu.br.viewmodel.util.AirPowerUtil
 
 @Composable
 fun AuthScreen(
@@ -66,6 +71,7 @@ fun AuthScreen(
     val hasError by airPowerViewModel.uiStateManager.observeBoolean(
         id = Constants.STATE_AUTH_FAILURE
     ).observeAsState(initial = false)
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -151,7 +157,18 @@ fun AuthScreen(
                                         password = password
                                     )
                                 ) {
-                                    navController.navigate(Constants.NAVIGATION_MAIN)
+                                    val options = ActivityOptionsCompat.makeCustomAnimation(
+                                        context,
+                                        R.anim.enter_from_right,
+                                        R.anim.exit_to_left
+                                    )
+                                    navController.popBackStack()
+                                    AirPowerUtil.launchActivity(
+                                        context,
+                                        MainActivity::class.java,
+                                        options.toBundle()
+                                    )
+                                    (context as? ComponentActivity)?.finish()
                                 }
                             },
                             modifier = Modifier

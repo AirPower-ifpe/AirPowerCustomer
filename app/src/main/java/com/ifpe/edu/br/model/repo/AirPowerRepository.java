@@ -1,4 +1,5 @@
 package com.ifpe.edu.br.model.repo;
+
 // Trabalho de conclusão de curso - IFPE 2025
 // Author: Willian Santos
 // Project: AirPower Costumer
@@ -24,13 +25,13 @@ public class AirPowerRepository {
     private final TokenDao mTokenDao;
     private final SharedPrefManager mSPManager;
 
-    private AirPowerRepository(Context context) {
+    private AirPowerRepository(Context context) throws Exception {
         AirPowerDatabase db = AirPowerDatabase.getDataBaseInstance(context);
         mTokenDao = db.getTokenDaoInstance();
-        mSPManager = SharedPrefManager.getInstance(context);
+        mSPManager = SharedPrefManager.getInstance();
     }
 
-    public static void build(Context context) {
+    public static void build(Context context) throws Exception {
         if (instance == null) {
             instance = new AirPowerRepository(context);
             if (AirPowerLog.ISLOGABLE)
@@ -39,8 +40,9 @@ public class AirPowerRepository {
     }
 
     public static AirPowerRepository getInstance() {
-        if (instance == null)
-            AirPowerLog.e(TAG, "ERROR: getInstance() called before build() method");
+        if (instance == null) {
+            throw new IllegalStateException("AirPowerRepository error: getInstance() called before build() method");
+        }
         return instance;
     }
 
