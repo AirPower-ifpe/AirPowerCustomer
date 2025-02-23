@@ -44,6 +44,7 @@ class ConnectionManager {
             .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
             .client(httpClient)
+            .client(connectionManager.getLoggerClient().build())
             .build()
     }
 
