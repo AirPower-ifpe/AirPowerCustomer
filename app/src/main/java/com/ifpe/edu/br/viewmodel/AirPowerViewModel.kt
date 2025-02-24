@@ -7,6 +7,8 @@ import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.dto.AuthUser
 import com.ifpe.edu.br.model.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.repo.ThingsBoardManager
+import com.ifpe.edu.br.viewmodel.manager.JWTManager
+import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
 import com.ifpe.edu.br.viewmodel.manager.UIStateManager
 import com.ifpe.edu.br.viewmodel.util.AirPowerLog
 import kotlinx.coroutines.delay
@@ -66,9 +68,28 @@ class AirPowerViewModel(
         viewModelScope.launch {
             try {
                 currentUser = thingsBoardMgr.getCurrentUser()
-            } catch (_: Exception) {
-                AirPowerLog.e(TAG, "Error getting current user")
+            } catch (e: Exception) {
+                AirPowerLog.e(TAG, "getCurrentUser error ${e.message}")
             }
         }
+    }
+
+    fun updateSession(
+        onSuccessCallback: () -> Unit,
+        onFailureCallback: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                thingsBoardMgr.refreshToken { onSuccessCallback.invoke() }
+            } catch (e: Exception) {
+                AirPowerLog.e(TAG, "updateSession error ${e.message}")
+                onFailureCallback.invoke()
+            }
+        }
+    }
+
+    fun isSessionExpired(): Boolean {
+        val connectionId = ThingsBoardConnectionContractImpl.getConnectionId()
+        return JWTManager.getInstance().isTokenExpiredForConnection(connectionId)
     }
 }

@@ -6,7 +6,7 @@ import com.ifpe.edu.br.model.api.ThingsBoardAPIService
 import com.ifpe.edu.br.model.dto.AuthUser
 import com.ifpe.edu.br.model.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.dto.ThingsBordErrorResponse
-import com.ifpe.edu.br.model.dto.Token
+import com.ifpe.edu.br.model.query.RefreshTokenQuery
 import com.ifpe.edu.br.viewmodel.manager.JWTManager
 import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
 import com.ifpe.edu.br.viewmodel.util.AirPowerLog
@@ -41,15 +41,10 @@ class ThingsBoardManager(connection: Retrofit) {
         val responseCode = serverResponse.code()
         if (responseCode == HttpsURLConnection.HTTP_OK) {
             if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Authorized")
-            val token = serverResponse.body()
-            if (token != null) {
-                JWTManager.getInstance().handleAuthentication(
-                    ThingsBoardConnectionContractImpl.getConnectionId(),
-                    token
-                ) { onSuccess.invoke() }
-            } else {
-                throw IllegalStateException("Token is null")
-            }
+            JWTManager.getInstance().handleAuthentication(
+                ThingsBoardConnectionContractImpl.getConnectionId(),
+                serverResponse.body()
+            ) { onSuccess.invoke() }
         } else {
             throw IllegalStateException("auth() Error! ${getServerErrorMessage(serverResponse)}")
         }
@@ -69,6 +64,37 @@ class ThingsBoardManager(connection: Retrofit) {
         } else {
             throw IllegalStateException(
                 "getCurrentUser() Error! ${
+                    getServerErrorMessage(
+                        serverResponse
+                    )
+                }"
+            )
+        }
+    }
+
+    suspend fun refreshToken(
+        onSuccess: () -> Unit
+    ) {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "refreshToken()")
+        val jwtManager = JWTManager.getInstance()
+        val token = jwtManager
+            .getTokenForConnectionId(ThingsBoardConnectionContractImpl.getConnectionId())
+        if (!jwtManager.isTokenValid(token)) throw IllegalStateException("Token is not valid")
+        val refreshTokenQuery = Gson().toJson(RefreshTokenQuery(token.refreshToken))
+        val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+        val requestBody = RequestBody.create(mediaType, refreshTokenQuery)
+        val serverResponse = apiService.refreshToken(requestBody)
+        if (serverResponse.code() == HttpsURLConnection.HTTP_OK) {
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Server Response: HTTP_OK")
+            jwtManager.handleRefreshToken(
+                ThingsBoardConnectionContractImpl.getConnectionId(),
+                serverResponse.body()
+            ) {
+                onSuccess.invoke()
+            }
+        } else {
+            throw IllegalStateException(
+                "refreshToken() Error! ${
                     getServerErrorMessage(
                         serverResponse
                     )

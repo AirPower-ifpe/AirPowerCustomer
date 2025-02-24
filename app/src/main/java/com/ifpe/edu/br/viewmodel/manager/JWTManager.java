@@ -34,7 +34,7 @@ public class JWTManager {
     public void handleAuthentication(Integer connectionId,
                                      Token token,
                                      IHandleAuthCallback authCallback) {
-        if (!isTokenValid(token)){
+        if (!isTokenValid(token)) {
             throw new IllegalStateException("Token is not valid");
         }
         String jwt = token.getToken();
@@ -61,27 +61,21 @@ public class JWTManager {
     public void handleRefreshToken(Integer connectionId,
                                    Token incomingToken,
                                    IHandleAuthCallback authCallback) {
-        AirPowerToken tokenByClient = mRepo.getTokenByConnectionId(connectionId);
-        if (tokenByClient == null) {
-            AirPowerLog.w(TAG, "handleRefreshToken() token not found for connectionId:" + connectionId);
-            return;
+        AirPowerToken storedToken = mRepo.getTokenByConnectionId(connectionId);
+        if (!isTokenValid(getTokenFromAirPowerToken(storedToken))) {
+            throw new IllegalStateException("Stored Token is not valid");
         }
-        if (incomingToken == null) {
-            return;
+        if (!isTokenValid(incomingToken)) {
+            throw new IllegalStateException("Incoming Token is not valid");
         }
         String incomingJwt = incomingToken.getToken();
         String incomingRefreshToken = incomingToken.getRefreshToken();
-        incomingToken.getScope();
-        String incomingScope = incomingToken.getScope();
-        if (AirPowerUtil.Text.isNullOrEmpty(incomingJwt) ||
-                AirPowerUtil.Text.isNullOrEmpty(incomingRefreshToken)) {
-            return;
-        }
-        tokenByClient.setJwt(incomingJwt);
-        tokenByClient.setRefreshToken(incomingRefreshToken);
-        tokenByClient.setScope(incomingScope);
-        mRepo.update(tokenByClient);
-        authCallback.onSuccess(tokenByClient);
+        String incomingScope = incomingToken.getScope() == null ? "" : incomingToken.getScope();
+        storedToken.setJwt(incomingJwt);
+        storedToken.setRefreshToken(incomingRefreshToken);
+        storedToken.setScope(incomingScope);
+        mRepo.update(storedToken);
+        authCallback.onSuccess(storedToken);
     }
 
     public boolean isTokenExpiredForConnection(Integer connectionId) {
@@ -135,7 +129,7 @@ public class JWTManager {
             AirPowerLog.w(TAG, "JWT is null");
             return "";
         }
-        return token.getToken() == null? "" : token.getToken();
+        return token.getToken() == null ? "" : token.getToken();
     }
 
     public Token getTokenForConnectionId(Integer connectionId) {
@@ -184,17 +178,19 @@ public class JWTManager {
         }
     }
 
-    private boolean isTokenValid(Token token) {
+    public boolean isTokenValid(Token token) {
         String reason = "check success";
         boolean isValid = true;
         if (token == null) {
             reason = "token is null";
             isValid = false;
-        } else if (AirPowerUtil.Text.isNullOrEmpty(token.getToken())) {
-            reason = "JWT is null or empty";
+        } else if (AirPowerUtil.Text.isNullOrEmpty(token.getToken())
+                || token.getToken().length() < 50) {
+            reason = "JWT is NOT valid";
             isValid = false;
-        } else if (AirPowerUtil.Text.isNullOrEmpty(token.getRefreshToken())) {
-            reason = "Refresh token is null or empty";
+        } else if (AirPowerUtil.Text.isNullOrEmpty(token.getRefreshToken())
+                || token.getRefreshToken().length() < 50) {
+            reason = "Refresh token is NOT valid";
             isValid = false;
         }
         if (AirPowerLog.ISLOGABLE)

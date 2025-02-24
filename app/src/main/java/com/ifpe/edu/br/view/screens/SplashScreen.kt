@@ -32,13 +32,13 @@ import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientDark
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.view.MainActivity
-import com.ifpe.edu.br.viewmodel.manager.JWTManager
-import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
+import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 import com.ifpe.edu.br.viewmodel.util.AirPowerUtil
 
 @Composable
 fun SplashScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    viewModel: AirPowerViewModel
 ) {
     GradientBackground(if (isSystemInDarkTheme()) defaultBackgroundGradientDark else defaultBackgroundGradientLight)
     CustomColumn(
@@ -53,36 +53,59 @@ fun SplashScreen(
                 modifier = Modifier.size(250.dp)
             )
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
-            AuthScreenPostDelayed(navController)
+            AuthScreenPostDelayed(
+                navController = navController,
+                viewModel = viewModel
+            )
         }
     )
 }
 
 @Composable
-private fun AuthScreenPostDelayed(navController: NavController) {
+private fun AuthScreenPostDelayed(
+    navController: NavController,
+    viewModel: AirPowerViewModel
+) {
     var hasNavigated by remember { mutableStateOf(false) }
     if (!hasNavigated) {
         hasNavigated = true
         val handler = Handler(Looper.getMainLooper())
         handler.postDelayed({
-            val connectionId = ThingsBoardConnectionContractImpl.getConnectionId()
-            val isTokenExpired = JWTManager.getInstance().isTokenExpiredForConnection(connectionId)
             val options = ActivityOptionsCompat.makeCustomAnimation(
                 navController.context,
                 R.anim.enter_from_right,
                 R.anim.exit_to_left
             )
-            if (!isTokenExpired) {
-                AirPowerUtil.launchActivity(
-                    navController.context,
-                    MainActivity::class.java,
-                    options.toBundle()
+            if (viewModel.isSessionExpired()) {
+                viewModel.updateSession(
+                    onSuccessCallback = {
+                        navigateMainActivity(navController, options)
+                    },
+                    onFailureCallback = {
+                        navigateAuthScreen(navController)
+                    }
                 )
             } else {
-                navController.navigate(Constants.NAVIGATION_AUTH) {
-                    popUpTo(Constants.NAVIGATION_INITIAL) { inclusive = true }
-                }
+                navigateMainActivity(navController, options)
             }
         }, 1500)
+    }
+}
+
+
+private fun navigateMainActivity(
+    navController: NavController,
+    options: ActivityOptionsCompat
+) {
+    AirPowerUtil.launchActivity(
+        navController.context,
+        MainActivity::class.java,
+        options.toBundle()
+    )
+}
+
+private fun navigateAuthScreen(navController: NavController) {
+    navController.navigate(Constants.NAVIGATION_AUTH) {
+        popUpTo(Constants.NAVIGATION_INITIAL) { inclusive = true }
     }
 }

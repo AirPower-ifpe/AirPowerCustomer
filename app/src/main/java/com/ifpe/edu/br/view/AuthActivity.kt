@@ -62,7 +62,10 @@ private fun InitializeNavigation(
         startDestination = Constants.NAVIGATION_INITIAL
     ) {
         composable(Constants.NAVIGATION_INITIAL) {
-            SplashScreen(navController = navController)
+            SplashScreen(
+                navController = navController,
+                viewModel = mainViewModel
+            )
         }
 
         composable(Constants.NAVIGATION_AUTH) {

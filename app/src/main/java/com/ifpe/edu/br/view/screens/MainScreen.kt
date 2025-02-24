@@ -32,7 +32,6 @@ fun MainScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
-    //val navController = rememberNavController()
     CustomColumn(
         alignmentStrategy = CommonConstants.ALIGNMENT_TOP,
         layouts = listOf {
