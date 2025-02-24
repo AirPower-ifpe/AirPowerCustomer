@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.dto.AuthUser
+import com.ifpe.edu.br.model.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.dto.Token
 import com.ifpe.edu.br.model.model.auth.AirPowerToken
 import com.ifpe.edu.br.model.repo.ThingsBoardManager
@@ -30,6 +31,7 @@ class AirPowerViewModel(
     private val TAG: String = AirPowerViewModel::class.java.simpleName
     val uiStateManager = UIStateManager.getInstance()
     private val thingsBoardMgr = ThingsBoardManager(connection)
+    private var currentUser: ThingsBoardUser? = null;
 
     fun authenticate(
         user: AuthUser,
@@ -86,10 +88,13 @@ class AirPowerViewModel(
         }
     }
 
-    fun test() {
-        uiStateManager.setBooleanState(
-            Constants.STATE_AUTH_LOADING,
-            true
-        )
+    fun getCurrentUser() {
+        viewModelScope.launch {
+            try {
+                currentUser = thingsBoardMgr.getCurrentUser()
+            } catch (_: Exception) {
+                AirPowerLog.e(TAG, "Error getting current user")
+            }
+        }
     }
 }

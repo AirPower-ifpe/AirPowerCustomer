@@ -34,19 +34,10 @@ public class JWTManager {
     public void handleAuthentication(Integer connectionId,
                                      Token token,
                                      IHandleAuthCallback authCallback) {
-        if (token == null) {
-            AirPowerLog.e(TAG, "handleAuthentication() ERROR: auth token is null");
-            authCallback.onFailure(-1); // todo add error code here
-            return;
-        }
+        if (!isTokenValid(token)) return;
         String jwt = token.getToken();
         String refreshToken = token.getRefreshToken();
-        String scope = token.getScope();
-        if (AirPowerUtil.Text.isNullOrEmpty(jwt) || AirPowerUtil.Text.isNullOrEmpty(refreshToken)) {
-            AirPowerLog.e(TAG, "handleAuthentication() ERROR: jwt or token is/are null");
-            authCallback.onFailure(-2); // todo add error code here
-            return;
-        }
+        String scope = token.getScope() == null ? "" : token.getScope();
         AirPowerToken persistToken = new AirPowerToken(
                 connectionId,
                 jwt,
@@ -138,14 +129,25 @@ public class JWTManager {
 
     public String getJwtForConnectionId(Integer connectionId) {
         if (AirPowerLog.ISLOGABLE)
-            AirPowerLog.d(TAG, "getJwtForConnectionId(): " + connectionId);
-        AirPowerToken token = mRepo.getTokenByConnectionId(connectionId);
+            AirPowerLog.d(TAG, "getJWTForConnectionId(): " + connectionId);
+        Token token = getTokenForConnectionId(connectionId);
+
         if (token == null) {
-            if (AirPowerLog.ISLOGABLE)
-                AirPowerLog.w(TAG, "Token is null for connection:" + connectionId);
+            AirPowerLog.w(TAG, "JWT is null");
             return "";
         }
-        return token.getJwt();
+        return token.getToken() == null? "" : token.getToken();
+    }
+
+    public Token getTokenForConnectionId(Integer connectionId) {
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.d(TAG, "getTokenForConnectionId(): " + connectionId);
+        AirPowerToken token = mRepo.getTokenByConnectionId(connectionId);
+        if (token == null) {
+            AirPowerLog.w(TAG, "Token is null for connection:" + connectionId);
+            return null;
+        }
+        return getTokenFromAirPowerToken(token);
     }
 
     public void resetTokenForConnection(Integer connectionId) {
@@ -165,6 +167,41 @@ public class JWTManager {
 
     public interface IHandleAuthCallback {
         void onSuccess(AirPowerToken airPowerToken);
+
         void onFailure(int failure);
+    }
+
+    private Token getTokenFromAirPowerToken(AirPowerToken airPowerToken) {
+        try {
+            if (AirPowerLog.ISLOGABLE) {
+                AirPowerLog.d(TAG, "getTokenFromAirPowerToken():" + airPowerToken.toString());
+            }
+            return new Token(
+                    airPowerToken.getJwt(),
+                    airPowerToken.getRefreshToken(),
+                    airPowerToken.getScope()
+            );
+        } catch (Exception e) {
+            AirPowerLog.e(TAG, "Error while building Token object: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private boolean isTokenValid(Token token) {
+        String reason = "check success";
+        boolean isValid = true;
+        if (token == null) {
+            reason = "token is null";
+            isValid = false;
+        } else if (AirPowerUtil.Text.isNullOrEmpty(token.getToken())) {
+            reason = "JWT is null or empty";
+            isValid = false;
+        } else if (AirPowerUtil.Text.isNullOrEmpty(token.getRefreshToken())) {
+            reason = "Refresh token is null or empty";
+            isValid = false;
+        }
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.d(TAG, "isTokenValid(): " + isValid + " reason: " + reason);
+        return isValid;
     }
 }

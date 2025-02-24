@@ -4,6 +4,7 @@ package com.ifpe.edu.br.model.repo
 import com.google.gson.Gson
 import com.ifpe.edu.br.model.api.ThingsBoardAPIService
 import com.ifpe.edu.br.model.dto.AuthUser
+import com.ifpe.edu.br.model.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.dto.ThingsBordErrorResponse
 import com.ifpe.edu.br.model.dto.Token
 import com.ifpe.edu.br.viewmodel.util.AirPowerLog
@@ -56,6 +57,29 @@ class ThingsBoardManager(connection: Retrofit) {
 
         } else {
             AirPowerLog.e(TAG, "Error: $responseCode")
+        }
+    }
+
+    suspend fun getCurrentUser(): ThingsBoardUser {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getCurrentUser()")
+        val serverResponse = apiService.getCurrentUser()
+        if (serverResponse.code() == HttpsURLConnection.HTTP_OK) {
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Server Response: HTTP_OK")
+            val thingsBoardUser = serverResponse.body()
+            if (thingsBoardUser != null) {
+                return thingsBoardUser
+            } else {
+                throw IllegalStateException("ThingsBoardUser is null")
+            }
+        } else {
+            val responseCode = serverResponse.code().toString()
+            var errorMessage = "unknown error"
+            val errorBody = serverResponse.errorBody()?.string()
+            if (errorBody != null) {
+                errorMessage =
+                    Gson().fromJson(errorBody, ThingsBordErrorResponse::class.java).message
+            }
+            throw IllegalStateException("Error! code: $responseCode message: $errorMessage")
         }
     }
 }

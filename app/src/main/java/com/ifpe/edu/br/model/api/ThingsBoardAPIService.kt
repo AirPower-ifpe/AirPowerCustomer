@@ -1,9 +1,12 @@
 package com.ifpe.edu.br.model.api
 
+import com.ifpe.edu.br.model.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.dto.Token
 import okhttp3.RequestBody
+import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 
@@ -18,4 +21,7 @@ interface ThingsBoardAPIService {
 
     @POST("/api/auth/login")
     suspend fun auth(@Body requestBody: RequestBody): Response<Token>
+
+    @GET("/api/auth/user")
+    suspend fun getCurrentUser(): Response<ThingsBoardUser?>
 }
