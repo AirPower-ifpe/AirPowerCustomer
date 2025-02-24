@@ -6,7 +6,6 @@ package com.ifpe.edu.br.core.api
 * Project: AirPower Costumer
 */
 
-import com.google.gson.GsonBuilder
 import com.ifpe.edu.br.core.contracts.IConnectionManager
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -39,10 +38,11 @@ class ConnectionManager {
             )
             hostnameVerifier { _, _ -> true }
         }.build()
+
         return Retrofit.Builder()
             .baseUrl(connectionManager.getBaseURL())
             .addConverterFactory(ScalarsConverterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().create()))
+            .addConverterFactory(GsonConverterFactory.create())
             .client(httpClient)
             .client(connectionManager.getLoggerClient().build())
             .build()
