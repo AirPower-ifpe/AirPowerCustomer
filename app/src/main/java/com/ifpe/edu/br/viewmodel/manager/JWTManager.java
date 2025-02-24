@@ -34,7 +34,9 @@ public class JWTManager {
     public void handleAuthentication(Integer connectionId,
                                      Token token,
                                      IHandleAuthCallback authCallback) {
-        if (!isTokenValid(token)) return;
+        if (!isTokenValid(token)){
+            throw new IllegalStateException("Token is not valid");
+        }
         String jwt = token.getToken();
         String refreshToken = token.getRefreshToken();
         String scope = token.getScope() == null ? "" : token.getScope();
@@ -62,11 +64,9 @@ public class JWTManager {
         AirPowerToken tokenByClient = mRepo.getTokenByConnectionId(connectionId);
         if (tokenByClient == null) {
             AirPowerLog.w(TAG, "handleRefreshToken() token not found for connectionId:" + connectionId);
-            authCallback.onFailure(-6); // todo add error code here
             return;
         }
         if (incomingToken == null) {
-            authCallback.onFailure(-16); // todo add error code here
             return;
         }
         String incomingJwt = incomingToken.getToken();
@@ -75,7 +75,6 @@ public class JWTManager {
         String incomingScope = incomingToken.getScope();
         if (AirPowerUtil.Text.isNullOrEmpty(incomingJwt) ||
                 AirPowerUtil.Text.isNullOrEmpty(incomingRefreshToken)) {
-            authCallback.onFailure(-15);// todo add error code here
             return;
         }
         tokenByClient.setJwt(incomingJwt);
@@ -167,8 +166,6 @@ public class JWTManager {
 
     public interface IHandleAuthCallback {
         void onSuccess(AirPowerToken airPowerToken);
-
-        void onFailure(int failure);
     }
 
     private Token getTokenFromAirPowerToken(AirPowerToken airPowerToken) {

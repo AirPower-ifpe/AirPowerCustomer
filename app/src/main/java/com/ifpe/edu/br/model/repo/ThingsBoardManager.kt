@@ -7,9 +7,12 @@ import com.ifpe.edu.br.model.dto.AuthUser
 import com.ifpe.edu.br.model.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.dto.ThingsBordErrorResponse
 import com.ifpe.edu.br.model.dto.Token
+import com.ifpe.edu.br.viewmodel.manager.JWTManager
+import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
 import com.ifpe.edu.br.viewmodel.util.AirPowerLog
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
+import retrofit2.Response
 import retrofit2.Retrofit
 import javax.net.ssl.HttpsURLConnection
 
@@ -24,39 +27,31 @@ import javax.net.ssl.HttpsURLConnection
 private const val TAG = "ThingsBoardManager"
 
 class ThingsBoardManager(connection: Retrofit) {
-    val apiService = connection.create(ThingsBoardAPIService::class.java)
+    private val apiService = connection.create(ThingsBoardAPIService::class.java)
 
     suspend fun auth(
         user: AuthUser,
-        onSuccess: (token: Token) -> Unit,
-        onFailure: (errorCode: ThingsBordErrorResponse) -> Unit
+        onSuccess: () -> Unit
     ) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "auth()")
         val userJson = Gson().toJson(user)
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val requestBody = RequestBody.create(mediaType, userJson)
-        val auth = apiService.auth(requestBody)
-
-        val responseCode = auth.code()
+        val serverResponse = apiService.auth(requestBody)
+        val responseCode = serverResponse.code()
         if (responseCode == HttpsURLConnection.HTTP_OK) {
             if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Authorized")
-            val token = auth.body()
+            val token = serverResponse.body()
             if (token != null) {
-                onSuccess.invoke(token)
+                JWTManager.getInstance().handleAuthentication(
+                    ThingsBoardConnectionContractImpl.getConnectionId(),
+                    token
+                ) { onSuccess.invoke() }
             } else {
-                AirPowerLog.e(TAG, "Token is null")
+                throw IllegalStateException("Token is null")
             }
-        } else if (responseCode == HttpsURLConnection.HTTP_UNAUTHORIZED) {
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.w(TAG, "Unauthorized")
-            val errorBody = auth.errorBody()?.string()
-            if (errorBody != null) {
-                val errorResponse =
-                    Gson().fromJson(errorBody, ThingsBordErrorResponse::class.java)
-                onFailure.invoke(errorResponse)
-            }
-
         } else {
-            AirPowerLog.e(TAG, "Error: $responseCode")
+            throw IllegalStateException("auth() Error! ${getServerErrorMessage(serverResponse)}")
         }
     }
 
@@ -72,14 +67,26 @@ class ThingsBoardManager(connection: Retrofit) {
                 throw IllegalStateException("ThingsBoardUser is null")
             }
         } else {
-            val responseCode = serverResponse.code().toString()
-            var errorMessage = "unknown error"
-            val errorBody = serverResponse.errorBody()?.string()
-            if (errorBody != null) {
-                errorMessage =
-                    Gson().fromJson(errorBody, ThingsBordErrorResponse::class.java).message
-            }
-            throw IllegalStateException("Error! code: $responseCode message: $errorMessage")
+            throw IllegalStateException(
+                "getCurrentUser() Error! ${
+                    getServerErrorMessage(
+                        serverResponse
+                    )
+                }"
+            )
         }
+    }
+
+    private fun getServerErrorMessage(
+        serverResponse: Response<out Any>
+    ): String {
+        val responseCode = serverResponse.code().toString()
+        var errorMessage = "unknown error"
+        val errorBody = serverResponse.errorBody()?.string()
+        if (errorBody != null) {
+            errorMessage =
+                Gson().fromJson(errorBody, ThingsBordErrorResponse::class.java).message
+        }
+        return "code: $responseCode message: $errorMessage"
     }
 }

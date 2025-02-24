@@ -6,11 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.dto.AuthUser
 import com.ifpe.edu.br.model.dto.ThingsBoardUser
-import com.ifpe.edu.br.model.dto.Token
-import com.ifpe.edu.br.model.model.auth.AirPowerToken
 import com.ifpe.edu.br.model.repo.ThingsBoardManager
-import com.ifpe.edu.br.viewmodel.manager.JWTManager
-import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
 import com.ifpe.edu.br.viewmodel.manager.UIStateManager
 import com.ifpe.edu.br.viewmodel.util.AirPowerLog
 import kotlinx.coroutines.delay
@@ -47,35 +43,13 @@ class AirPowerViewModel(
                 )
                 thingsBoardMgr.auth(
                     user = user,
-                    onFailure = { errorCode ->
-                        errorCode.message
-                        AirPowerLog.d(TAG, "DEU MERDA")
-                    },
-                    onSuccess = { token: Token ->
-                        AirPowerLog.d(TAG, "SUCESSO")
-                        JWTManager.getInstance().handleAuthentication(
-                            ThingsBoardConnectionContractImpl.getConnectionId(), token,
-                            object : JWTManager.IHandleAuthCallback {
-                                override fun onSuccess(airPowerToken: AirPowerToken?) {
-                                    onSuccessCallback.invoke()
-                                }
-
-                                override fun onFailure(failure: Int) {
-
-                                }
-
-                            }
-                        )
-
-                    }
+                    onSuccess = onSuccessCallback
                 )
-
                 val timeDelayed = System.currentTimeMillis() - startTime
                 val timeLeft = (minDelay - timeDelayed).coerceAtLeast(0L)
                 delay(timeLeft)
                 uiStateManager.setBooleanState(Constants.STATE_CONNECTION_FAILURE, false)
                 uiStateManager.setBooleanState(Constants.STATE_AUTH_FAILURE, false)
-
             } catch (e: Exception) {
                 AirPowerLog.e(TAG, "Authentication error: ${e.message}")
                 uiStateManager.setBooleanState(Constants.STATE_AUTH_FAILURE, true)

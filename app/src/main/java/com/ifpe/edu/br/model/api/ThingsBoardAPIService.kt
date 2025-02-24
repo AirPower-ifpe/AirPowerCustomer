@@ -23,5 +23,5 @@ interface ThingsBoardAPIService {
     suspend fun auth(@Body requestBody: RequestBody): Response<Token>
 
     @GET("/api/auth/user")
-    suspend fun getCurrentUser(): Response<ThingsBoardUser?>
+    suspend fun getCurrentUser(): Response<ThingsBoardUser>
 }
