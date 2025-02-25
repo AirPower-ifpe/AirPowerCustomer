@@ -102,11 +102,13 @@ object ThingsBoardConnectionContractImpl : IConnectionManager {
         }
     }
 
-    override fun getLoggerClient(): OkHttpClient.Builder {
-        return OkHttpClient.Builder()
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            })
+    override fun getLoggerClient():  HttpLoggingInterceptor {
+        val loggingInterceptor = HttpLoggingInterceptor { message ->
+            AirPowerLog.d("OkHttp", message)
+        }.apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+        return loggingInterceptor
     }
 
     override fun getBaseURL(): String {
