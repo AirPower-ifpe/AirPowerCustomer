@@ -13,10 +13,11 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 import com.ifpe.edu.br.model.model.auth.AirPowerToken;
+import com.ifpe.edu.br.model.model.auth.AirPowerUser;
 import com.ifpe.edu.br.viewmodel.util.AirPowerLog;
 
 @Database(entities = {
-        AirPowerToken.class}, version = 10, exportSchema = false)
+        AirPowerToken.class, AirPowerUser.class}, version = 1, exportSchema = false)
 public abstract class AirPowerDatabase extends RoomDatabase {
 
     public static final String TAG = AirPowerDatabase.class.getSimpleName();
@@ -35,4 +36,6 @@ public abstract class AirPowerDatabase extends RoomDatabase {
     }
 
     public abstract TokenDao getTokenDaoInstance();
+
+    public abstract UserDao getUserDaoInstance();
 }

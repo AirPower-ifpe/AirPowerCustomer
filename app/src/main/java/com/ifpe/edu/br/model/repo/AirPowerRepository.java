@@ -11,9 +11,12 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import com.ifpe.edu.br.model.dto.ThingsBoardUser;
 import com.ifpe.edu.br.model.model.auth.AirPowerToken;
+import com.ifpe.edu.br.model.model.auth.AirPowerUser;
 import com.ifpe.edu.br.model.repo.persistence.AirPowerDatabase;
 import com.ifpe.edu.br.model.repo.persistence.TokenDao;
+import com.ifpe.edu.br.model.repo.persistence.UserDao;
 import com.ifpe.edu.br.viewmodel.manager.SharedPrefManager;
 import com.ifpe.edu.br.viewmodel.util.AirPowerLog;
 import com.ifpe.edu.br.viewmodel.util.AirPowerUtil;
@@ -23,11 +26,13 @@ public class AirPowerRepository {
 
     private static AirPowerRepository instance;
     private final TokenDao mTokenDao;
+    private final UserDao mUserDao;
     private final SharedPrefManager mSPManager;
 
     private AirPowerRepository(Context context) throws Exception {
         AirPowerDatabase db = AirPowerDatabase.getDataBaseInstance(context);
         mTokenDao = db.getTokenDaoInstance();
+        mUserDao = db.getUserDaoInstance();
         mSPManager = SharedPrefManager.getInstance();
     }
 
@@ -50,6 +55,36 @@ public class AirPowerRepository {
         if (AirPowerLog.ISLOGABLE)
             AirPowerLog.d(TAG, "get token for connection: " + connection);
         return mTokenDao.getTokenByClient(connection);
+    }
+
+    public void save(ThingsBoardUser user) {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "save: " + user);
+        if (isUserValid(user)) throw new IllegalStateException("ThingsBoardUser is null");
+        try {
+            AirPowerUser airPowerUser = getAirPowerUserFromThingsBoardUser(user);
+            mUserDao.insert(airPowerUser);
+        } catch (Exception e) {
+            throw new IllegalStateException("Error while persisting user on DB:" + e.getMessage());
+        }
+    }
+
+    public void delete(AirPowerUser user) {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "delete: " + user);
+        try {
+            AirPowerUser persistUser = mUserDao.getUserById(user.getId());
+            mUserDao.delete(persistUser);
+        }catch (Exception e) {
+            throw new IllegalStateException("Error while deleting user on DB:" + e.getMessage());
+        }
+    }
+
+    public AirPowerUser getCurrentAirPowerUser() {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getCurrentAirPowerUser");
+        try {
+            return mUserDao.findAll().get(0);
+        }catch (Exception e) {
+            throw new IllegalStateException("Error while getting current user on DB:" + e.getMessage());
+        }
     }
 
     public void save(AirPowerToken token) {
@@ -123,4 +158,34 @@ public class AirPowerRepository {
         return mSPManager.readString(key);
     }
 
+    private boolean isUserValid(ThingsBoardUser user) {
+        boolean isValid = true;
+        String reason = "check success";
+        if (user == null) {
+            isValid = false;
+            reason = "user is null";
+        } else if (AirPowerUtil.Text.isNullOrEmpty(user.getAuthority())) {
+            isValid = false;
+            reason = "authority is null or empty";
+        } else if (AirPowerUtil.Text.isNullOrEmpty(user.getCustomerId().getId())) {
+            isValid = false;
+            reason = "costumer id is null or empty";
+        }
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.d(TAG, "isUserValid:" + isValid + " reason:" + reason);
+        return !isValid;
+    }
+
+    private  AirPowerUser getAirPowerUserFromThingsBoardUser(ThingsBoardUser user) {
+        AirPowerUser airPowerUser = new AirPowerUser();
+        airPowerUser.setId(user.getId().getId());
+        airPowerUser.setAuthority(user.getAuthority());
+        airPowerUser.setEmail(user.getEmail());
+        airPowerUser.setCustomerId(user.getCustomerId().getId());
+        airPowerUser.setFirstName(user.getFirstName());
+        airPowerUser.setLastName(user.getLastName());
+        airPowerUser.setName(user.getName());
+        airPowerUser.setPhone(user.getPhone());
+        return airPowerUser;
+    }
 }
