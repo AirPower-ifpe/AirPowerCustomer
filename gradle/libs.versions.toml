@@ -1,5 +1,6 @@
 [versions]
 agp = "8.5.2"
+composeCharts = "0.1.2"
 converterGson = "2.9.0"
 converterScalars = "2.1.0"
 gson = "2.10.1"
@@ -26,6 +27,7 @@ androidx-material-icons-extended = { module = "androidx.compose.material:materia
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+compose-charts = { module = "io.github.ehsannarmani:compose-charts", version.ref = "composeCharts" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "converterScalars" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }

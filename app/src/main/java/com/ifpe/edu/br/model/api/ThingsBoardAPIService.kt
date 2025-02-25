@@ -1,13 +1,16 @@
 package com.ifpe.edu.br.model.api
 
+import com.ifpe.edu.br.model.dto.Device
+import com.ifpe.edu.br.model.dto.PageData
 import com.ifpe.edu.br.model.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.dto.Token
 import okhttp3.RequestBody
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 
 // Trabalho de conclusão de curso - IFPE 2025
@@ -27,4 +30,13 @@ interface ThingsBoardAPIService {
 
     @POST("/api/auth/token")
     suspend fun refreshToken(@Body requestBody: RequestBody): Response<Token>
+
+    @GET("api/customer/{customerId}/devices")
+    suspend fun getCustomerDevices(
+        @Path("customerId") customerId: String,
+        @Query("pageSize") pageSize: Int,
+        @Query("page") page: Int,
+        @Query("sortProperty") sortProperty: String = "name",
+        @Query("sortOrder") sortOrder: String = "ASC"
+    ): Response<PageData<Device>>
 }

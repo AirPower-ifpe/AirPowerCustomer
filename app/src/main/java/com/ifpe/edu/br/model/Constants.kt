@@ -17,7 +17,7 @@ object Constants {
     const val NAVIGATION_MAIN = "MAIN"
     const val NAVIGATION_AUTH = "AUTH"
 
-    const val URL_API = "https://192.168.119.54:8080"
+    const val URL_API = "https://192.168.204.54:8080"
 
     const val CONNECTION_ID_THINGSBOARD = 1
 }

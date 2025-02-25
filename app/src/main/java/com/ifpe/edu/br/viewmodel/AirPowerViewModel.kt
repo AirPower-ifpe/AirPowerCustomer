@@ -5,7 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.dto.AuthUser
-import com.ifpe.edu.br.model.dto.ThingsBoardUser
+import com.ifpe.edu.br.model.repo.AirPowerRepository
 import com.ifpe.edu.br.model.repo.ThingsBoardManager
 import com.ifpe.edu.br.viewmodel.manager.JWTManager
 import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
@@ -29,12 +29,13 @@ class AirPowerViewModel(
     private val TAG: String = AirPowerViewModel::class.java.simpleName
     val uiStateManager = UIStateManager.getInstance()
     private val thingsBoardMgr = ThingsBoardManager(connection)
-    private var currentUser: ThingsBoardUser? = null;
+    private var repository = AirPowerRepository.getInstance()
 
     fun authenticate(
         user: AuthUser,
         onSuccessCallback: () -> Unit
     ) {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "authenticate")
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()
             val minDelay = 1000L
@@ -47,6 +48,7 @@ class AirPowerViewModel(
                     user = user,
                     onSuccess = onSuccessCallback
                 )
+                retrieveCurrentUser()
                 val timeDelayed = System.currentTimeMillis() - startTime
                 val timeLeft = (minDelay - timeDelayed).coerceAtLeast(0L)
                 delay(timeLeft)
@@ -64,12 +66,26 @@ class AirPowerViewModel(
         }
     }
 
-    fun getCurrentUser() {
+    private fun retrieveCurrentUser() {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveCurrentUser")
         viewModelScope.launch {
             try {
-                currentUser = thingsBoardMgr.getCurrentUser()
+                repository.save(thingsBoardMgr.getCurrentUser())
             } catch (e: Exception) {
                 AirPowerLog.e(TAG, "getCurrentUser error ${e.message}")
+            }
+        }
+    }
+
+    fun getDevicesForCurrentUser() {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getDevicesForCurrentUser")
+        viewModelScope.launch {
+            try {
+                thingsBoardMgr.getAllDevicesForCustomer(repository.currentAirPowerUser)
+            } catch (c: IllegalStateException) {
+                AirPowerLog.e(TAG, "getDevicesForCurrentUser error ${c.message}")
+            } catch (e: Exception) {
+                AirPowerLog.e(TAG, "something very bad happened ${e.message}")
             }
         }
     }
@@ -78,6 +94,7 @@ class AirPowerViewModel(
         onSuccessCallback: () -> Unit,
         onFailureCallback: () -> Unit
     ) {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "updateSession")
         viewModelScope.launch {
             try {
                 thingsBoardMgr.refreshToken { onSuccessCallback.invoke() }
@@ -89,7 +106,15 @@ class AirPowerViewModel(
     }
 
     fun isSessionExpired(): Boolean {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "isSessionExpired")
         val connectionId = ThingsBoardConnectionContractImpl.getConnectionId()
         return JWTManager.getInstance().isTokenExpiredForConnection(connectionId)
+    }
+
+    fun logout() {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "logout")
+        val connectionId = ThingsBoardConnectionContractImpl.getConnectionId()
+        JWTManager.getInstance().resetTokenForConnection(connectionId)
+        repository.delete(repository.currentAirPowerUser)
     }
 }

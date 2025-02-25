@@ -4,8 +4,10 @@ package com.ifpe.edu.br.model.repo
 import com.google.gson.Gson
 import com.ifpe.edu.br.model.api.ThingsBoardAPIService
 import com.ifpe.edu.br.model.dto.AuthUser
+import com.ifpe.edu.br.model.dto.Device
 import com.ifpe.edu.br.model.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.dto.ThingsBordErrorResponse
+import com.ifpe.edu.br.model.model.auth.AirPowerUser
 import com.ifpe.edu.br.model.query.RefreshTokenQuery
 import com.ifpe.edu.br.viewmodel.manager.JWTManager
 import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
@@ -24,10 +26,9 @@ import javax.net.ssl.HttpsURLConnection
 // Copyright (c) 2025 IFPE. All rights reserved.
 
 
-private const val TAG = "ThingsBoardManager"
-
 class ThingsBoardManager(connection: Retrofit) {
     private val apiService = connection.create(ThingsBoardAPIService::class.java)
+    private val TAG = ThingsBoardManager::class.simpleName
 
     suspend fun auth(
         user: AuthUser,
@@ -40,7 +41,7 @@ class ThingsBoardManager(connection: Retrofit) {
         val serverResponse = apiService.auth(requestBody)
         val responseCode = serverResponse.code()
         if (responseCode == HttpsURLConnection.HTTP_OK) {
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Authorized")
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "auth(): HTTP_OK")
             JWTManager.getInstance().handleAuthentication(
                 ThingsBoardConnectionContractImpl.getConnectionId(),
                 serverResponse.body()
@@ -54,7 +55,7 @@ class ThingsBoardManager(connection: Retrofit) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getCurrentUser()")
         val serverResponse = apiService.getCurrentUser()
         if (serverResponse.code() == HttpsURLConnection.HTTP_OK) {
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Server Response: HTTP_OK")
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getCurrentUser(): HTTP_OK")
             val thingsBoardUser = serverResponse.body()
             if (thingsBoardUser != null) {
                 return thingsBoardUser
@@ -72,6 +73,35 @@ class ThingsBoardManager(connection: Retrofit) {
         }
     }
 
+    suspend fun getAllDevicesForCustomer(
+        customerUser: AirPowerUser
+    ): List<Device> {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getAllDevicesForCustomer()")
+        val serverResponse = apiService.getCustomerDevices(
+            customerId = customerUser.customerId,
+            pageSize = 100, // TODO fixed page size, maybe in the future must use pagination
+            page = 0
+        )
+        if (serverResponse.code() == HttpsURLConnection.HTTP_OK) {
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getAllDevicesForCustomer(): HTTP_OK")
+            val devices = serverResponse.body()
+            if (devices != null) {
+                return devices.data
+            } else {
+                throw IllegalStateException("Devices list is null")
+            }
+        } else {
+            throw IllegalStateException(
+                "getDevices() Error! ${
+                    getServerErrorMessage(
+                        serverResponse
+                    )
+                }"
+            )
+        }
+
+    }
+
     suspend fun refreshToken(
         onSuccess: () -> Unit
     ) {
@@ -85,7 +115,7 @@ class ThingsBoardManager(connection: Retrofit) {
         val requestBody = RequestBody.create(mediaType, refreshTokenQuery)
         val serverResponse = apiService.refreshToken(requestBody)
         if (serverResponse.code() == HttpsURLConnection.HTTP_OK) {
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Server Response: HTTP_OK")
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "refreshToken(): HTTP_OK")
             jwtManager.handleRefreshToken(
                 ThingsBoardConnectionContractImpl.getConnectionId(),
                 serverResponse.body()

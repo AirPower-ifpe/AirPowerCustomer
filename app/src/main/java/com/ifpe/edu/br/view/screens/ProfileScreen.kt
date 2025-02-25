@@ -58,8 +58,7 @@ fun ProfileScreen(
             RectButton(
                 text = "Logout",
                 onClick = {
-                    val connectionId = ThingsBoardConnectionContractImpl.getConnectionId()
-                    JWTManager.getInstance().resetTokenForConnection(connectionId)
+                    mainViewModel.logout()
                     val options = ActivityOptionsCompat.makeCustomAnimation(
                         context,
                         R.anim.enter_from_right,
