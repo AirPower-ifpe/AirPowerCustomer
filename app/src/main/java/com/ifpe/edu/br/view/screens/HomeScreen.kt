@@ -35,9 +35,6 @@ fun HomeScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
-    LaunchedEffect(Unit) {
-        mainViewModel.getDevicesForCurrentUser()
-    }
     val scrollState = rememberScrollState()
     CustomColumn(
         modifier = Modifier

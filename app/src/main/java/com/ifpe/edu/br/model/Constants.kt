@@ -20,4 +20,5 @@ object Constants {
     const val URL_API = "https://192.168.204.54:8080"
 
     const val CONNECTION_ID_THINGSBOARD = 1
+    const val KEY_COD_DRAWABLE: String = "drawable"
 }

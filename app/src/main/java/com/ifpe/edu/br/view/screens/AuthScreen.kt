@@ -48,14 +48,14 @@ import com.ifpe.edu.br.common.components.RoundedImageIcon
 import com.ifpe.edu.br.common.ui.theme.White
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.model.Constants
-import com.ifpe.edu.br.model.dto.AuthUser
+import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
 import com.ifpe.edu.br.view.MainActivity
 import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
 import com.ifpe.edu.br.view.ui.theme.tb_tertiary_light
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
-import com.ifpe.edu.br.viewmodel.util.AirPowerUtil
+import com.ifpe.edu.br.model.util.AirPowerUtil
 
 @Composable
 fun AuthScreen(

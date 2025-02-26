@@ -2,17 +2,18 @@ package com.ifpe.edu.br.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.model.Constants
-import com.ifpe.edu.br.model.dto.AuthUser
-import com.ifpe.edu.br.model.repo.AirPowerRepository
-import com.ifpe.edu.br.model.repo.ThingsBoardManager
-import com.ifpe.edu.br.viewmodel.manager.JWTManager
-import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
-import com.ifpe.edu.br.viewmodel.manager.UIStateManager
-import com.ifpe.edu.br.viewmodel.util.AirPowerLog
+import com.ifpe.edu.br.model.repository.Repository
+import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
+import com.ifpe.edu.br.model.repository.remote.dto.Device
+import com.ifpe.edu.br.model.util.AirPowerLog
+import com.ifpe.edu.br.view.manager.UIStateManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 
 /*
@@ -28,14 +29,29 @@ class AirPowerViewModel(
 
     private val TAG: String = AirPowerViewModel::class.java.simpleName
     val uiStateManager = UIStateManager.getInstance()
-    private val thingsBoardMgr = ThingsBoardManager(connection)
-    private var repository = AirPowerRepository.getInstance()
+    private var repository = Repository.getInstance()
+    private val fetchInterval = 10_000L
+    val devices: MutableLiveData<List<Device>> get() = repository.devices
+    val currentUser = repository.currentUser
+
+    fun startFetchingDevices() {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "startFetchingDevices")
+        viewModelScope.launch {
+            while (true) {
+                try {
+                    repository.getDevicesForCurrentUser()
+                } catch (e: Exception) {
+                    AirPowerLog.e(TAG, "Error fetching devices periodically: ${e.message}")
+                }
+                delay(fetchInterval)
+            }
+        }
+    }
 
     fun authenticate(
         user: AuthUser,
         onSuccessCallback: () -> Unit
     ) {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "authenticate")
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()
             val minDelay = 1000L
@@ -44,11 +60,10 @@ class AirPowerViewModel(
                     Constants.STATE_AUTH_LOADING,
                     true
                 )
-                thingsBoardMgr.auth(
+                repository.authenticate(
                     user = user,
-                    onSuccess = onSuccessCallback
+                    onSuccessCallback = onSuccessCallback
                 )
-                retrieveCurrentUser()
                 val timeDelayed = System.currentTimeMillis() - startTime
                 val timeLeft = (minDelay - timeDelayed).coerceAtLeast(0L)
                 delay(timeLeft)
@@ -66,38 +81,13 @@ class AirPowerViewModel(
         }
     }
 
-    private fun retrieveCurrentUser() {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveCurrentUser")
-        viewModelScope.launch {
-            try {
-                repository.save(thingsBoardMgr.getCurrentUser())
-            } catch (e: Exception) {
-                AirPowerLog.e(TAG, "getCurrentUser error ${e.message}")
-            }
-        }
-    }
-
-    fun getDevicesForCurrentUser() {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getDevicesForCurrentUser")
-        viewModelScope.launch {
-            try {
-                thingsBoardMgr.getAllDevicesForCustomer(repository.currentAirPowerUser)
-            } catch (c: IllegalStateException) {
-                AirPowerLog.e(TAG, "getDevicesForCurrentUser error ${c.message}")
-            } catch (e: Exception) {
-                AirPowerLog.e(TAG, "something very bad happened ${e.message}")
-            }
-        }
-    }
-
     fun updateSession(
         onSuccessCallback: () -> Unit,
         onFailureCallback: () -> Unit
     ) {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "updateSession")
         viewModelScope.launch {
             try {
-                thingsBoardMgr.refreshToken { onSuccessCallback.invoke() }
+                repository.updateSession { onSuccessCallback.invoke() }
             } catch (e: Exception) {
                 AirPowerLog.e(TAG, "updateSession error ${e.message}")
                 onFailureCallback.invoke()
@@ -105,16 +95,17 @@ class AirPowerViewModel(
         }
     }
 
-    fun isSessionExpired(): Boolean {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "isSessionExpired")
-        val connectionId = ThingsBoardConnectionContractImpl.getConnectionId()
-        return JWTManager.getInstance().isTokenExpiredForConnection(connectionId)
+    fun isSessionExpired(callback: (Boolean) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.Main) {
+                callback(repository.isSessionExpired())
+            }
+        }
     }
 
     fun logout() {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "logout")
-        val connectionId = ThingsBoardConnectionContractImpl.getConnectionId()
-        JWTManager.getInstance().resetTokenForConnection(connectionId)
-        repository.delete(repository.currentAirPowerUser)
+        viewModelScope.launch {
+            repository.logout()
+        }
     }
 }

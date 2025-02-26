@@ -26,12 +26,9 @@ import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.RectButton
 import com.ifpe.edu.br.common.components.RoundedImageIcon
 import com.ifpe.edu.br.common.components.TextTitle
-import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.view.AuthActivity
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
-import com.ifpe.edu.br.viewmodel.manager.JWTManager
-import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
-import com.ifpe.edu.br.viewmodel.util.AirPowerUtil
+import com.ifpe.edu.br.model.util.AirPowerUtil
 
 @Composable
 fun ProfileScreen(

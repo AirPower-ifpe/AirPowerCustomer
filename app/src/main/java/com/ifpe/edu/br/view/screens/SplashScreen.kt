@@ -33,7 +33,7 @@ import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.view.MainActivity
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
-import com.ifpe.edu.br.viewmodel.util.AirPowerUtil
+import com.ifpe.edu.br.model.util.AirPowerUtil
 
 @Composable
 fun SplashScreen(
@@ -76,17 +76,19 @@ private fun AuthScreenPostDelayed(
                 R.anim.enter_from_right,
                 R.anim.exit_to_left
             )
-            if (viewModel.isSessionExpired()) {
-                viewModel.updateSession(
-                    onSuccessCallback = {
-                        navigateMainActivity(navController, options)
-                    },
-                    onFailureCallback = {
-                        navigateAuthScreen(navController)
-                    }
-                )
-            } else {
-                navigateMainActivity(navController, options)
+            viewModel.isSessionExpired { expired ->
+                if (expired) {
+                    viewModel.updateSession(
+                        onSuccessCallback = {
+                            navigateMainActivity(navController, options)
+                        },
+                        onFailureCallback = {
+                            navigateAuthScreen(navController)
+                        }
+                    )
+                } else {
+                    navigateMainActivity(navController, options)
+                }
             }
         }, 1500)
     }

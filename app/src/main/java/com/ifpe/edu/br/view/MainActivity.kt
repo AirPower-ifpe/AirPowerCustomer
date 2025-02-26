@@ -9,10 +9,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.Observer
 import androidx.navigation.compose.rememberNavController
 import com.ifpe.edu.br.R
+import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.view.screens.MainScreen
 import com.ifpe.edu.br.view.ui.theme.AirPowerCostumerTheme
 import com.ifpe.edu.br.viewmodel.AirPowerViewModelProvider
@@ -23,11 +27,19 @@ class MainActivity : ComponentActivity() {
         overridePendingTransition(R.anim.enter_from_right, R.anim.exit_to_left)
         enableEdgeToEdge()
         setContent {
+            val viewmodel = AirPowerViewModelProvider.getInstance()
+            val user by viewmodel.currentUser.observeAsState()
+            if (user != null) {
+                viewmodel.startFetchingDevices()
+            } else {
+                AirPowerLog.e("MainActivity", "current user is null")
+            }
+
             val navController = rememberNavController()
             AirPowerCostumerTheme {
                 MainScreen(
                     navController = navController,
-                    mainViewModel = AirPowerViewModelProvider.getInstance()
+                    mainViewModel = viewmodel
                 )
             }
         }

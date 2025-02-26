@@ -10,8 +10,8 @@ import android.app.Application
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import com.ifpe.edu.br.core.api.ConnectionManager
-import com.ifpe.edu.br.viewmodel.manager.ThingsBoardConnectionContractImpl
-import com.ifpe.edu.br.viewmodel.util.AirPowerLog
+import com.ifpe.edu.br.model.repository.remote.api.ThingsBoardConnectionContractImpl
+import com.ifpe.edu.br.model.util.AirPowerLog
 
 object AirPowerViewModelProvider {
     private val tag = AirPowerViewModelProvider::class.simpleName
