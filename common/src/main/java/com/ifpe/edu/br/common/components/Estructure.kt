@@ -36,11 +36,11 @@ import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 
 @Composable
 fun CustomColumn(
-    alignmentStrategy: Int = CommonConstants.ALIGNMENT_TOP,
+    alignmentStrategy: Int = CommonConstants.Ui.ALIGNMENT_TOP,
     layouts: List<@Composable () -> Unit>,
     modifier: Modifier = Modifier
 ) {
-    if (alignmentStrategy == CommonConstants.ALIGNMENT_TOP) {
+    if (alignmentStrategy == CommonConstants.Ui.ALIGNMENT_TOP) {
         Column(
             modifier = modifier,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -49,7 +49,7 @@ fun CustomColumn(
                 layout()
             }
         }
-    } else if (alignmentStrategy == CommonConstants.ALIGNMENT_CENTER) {
+    } else if (alignmentStrategy == CommonConstants.Ui.ALIGNMENT_CENTER) {
         Column(
             modifier = modifier,
             horizontalAlignment = Alignment.CenterHorizontally,
