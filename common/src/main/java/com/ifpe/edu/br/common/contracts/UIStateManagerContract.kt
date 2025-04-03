@@ -17,4 +17,6 @@ interface UIStateManagerContract {
     fun observeString(id: String): LiveData<String>
     fun setIntState(id: String, value: Int)
     fun observeInt(id: String): LiveData<Int>
+    fun setErrorState(id: String, value: ErrorState)
+    fun observeError(id: String): LiveData<ErrorState>
 }
