@@ -48,10 +48,15 @@ class ConnectionManager {
             .build()
     }
 
-    fun getConnection(connectionManager: IConnectionManager): Retrofit {
+    fun getConnectionById(connectionManager: IConnectionManager): Retrofit {
         val connectionId = connectionManager.getConnectionId()
         return connections.getOrPut(connectionId) {
             createRetrofitInstance(connectionManager)
         }
+    }
+
+    fun getConnectionById(connectionId: Int): Retrofit {
+        if (connections[connectionId] == null) throw IllegalStateException("Connection not found")
+        return connections[connectionId]!!
     }
 }
