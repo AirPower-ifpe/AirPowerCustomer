@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
@@ -40,7 +39,7 @@ fun HomeScreen(
         modifier = Modifier
             .verticalScroll(scrollState)
             .fillMaxSize(),
-        alignmentStrategy = CommonConstants.ALIGNMENT_CENTER,
+        alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
         layouts = listOf {
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
             TextTitle(textAlign = TextAlign.Center, message = "HomeScreen")

@@ -1,5 +1,6 @@
 package com.ifpe.edu.br.model.repository.remote.api
 
+import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.remote.dto.Device
 import com.ifpe.edu.br.model.repository.remote.dto.PageData
 import com.ifpe.edu.br.model.repository.remote.dto.ThingsBoardUser

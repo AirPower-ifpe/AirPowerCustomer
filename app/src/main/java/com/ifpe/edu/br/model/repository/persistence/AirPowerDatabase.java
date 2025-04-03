@@ -32,7 +32,7 @@ public abstract class AirPowerDatabase extends RoomDatabase {
                     .allowMainThreadQueries()
                     .fallbackToDestructiveMigration() // TODO remove before release
                     .build();
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Database instantiation");
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "create instance");
         }
         return dbInstance;
     }

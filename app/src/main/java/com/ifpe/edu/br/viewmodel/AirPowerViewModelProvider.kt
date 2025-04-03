@@ -17,12 +17,13 @@ object AirPowerViewModelProvider {
     private val tag = AirPowerViewModelProvider::class.simpleName
     private var singletonViewModel: AirPowerViewModel? = null
     private val thingsBoardConnection =
-        ConnectionManager.getInstance().getConnection(ThingsBoardConnectionContractImpl)
+        ConnectionManager.getInstance().getConnectionById(ThingsBoardConnectionContractImpl)
     fun getInstance(
         application: Application,
     ): AirPowerViewModel {
         if (singletonViewModel == null) {
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(tag, "AirPowerViewModel creation")
+            if (AirPowerLog.ISLOGABLE)
+                AirPowerLog.d(tag, "AirPowerViewModel -> create instance")
             val factory = AirPowerViewModelFactory(application, thingsBoardConnection)
             singletonViewModel = ViewModelProvider(
                 ViewModelStore(),

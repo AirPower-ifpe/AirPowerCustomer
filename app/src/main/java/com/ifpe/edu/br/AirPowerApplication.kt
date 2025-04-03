@@ -16,7 +16,6 @@ class AirPowerApplication : Application() {
     private val tag = AirPowerApplication::class.simpleName
     override fun onCreate() {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(tag, "onCreate()")
-        SharedPrefManager.getInstance(applicationContext)
         Repository.build(applicationContext)
         AirPowerViewModelProvider.getInstance(this)
         super.onCreate()

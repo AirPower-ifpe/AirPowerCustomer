@@ -12,7 +12,7 @@ import android.content.SharedPreferences;
 import com.ifpe.edu.br.model.util.AirPowerLog;
 
 public class SharedPrefManager {
-    private final String TAG = SharedPrefManager.class.getSimpleName();
+    private static final String TAG = SharedPrefManager.class.getSimpleName();
     private static final String PREF_FILE_NAME = "AirPowerApp-Preference";
     private final SharedPreferences mSP;
     private final SharedPreferences.Editor mEditor;
@@ -20,6 +20,8 @@ public class SharedPrefManager {
 
     public static SharedPrefManager getInstance(Context context) {
         if (instance == null) {
+            if (AirPowerLog.ISLOGABLE)
+                AirPowerLog.d(TAG, "create instance");
             instance = new SharedPrefManager(context);
         }
         return instance;

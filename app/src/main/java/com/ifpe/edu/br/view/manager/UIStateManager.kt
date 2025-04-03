@@ -8,12 +8,14 @@ package com.ifpe.edu.br.view.manager
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.ifpe.edu.br.common.contracts.ErrorState
 import com.ifpe.edu.br.common.contracts.UIStateManagerContract
 
 class UIStateManager : UIStateManagerContract {
     private val booleanStates = mutableMapOf<String, MutableLiveData<Boolean>>()
     private val stringStates = mutableMapOf<String, MutableLiveData<String>>()
     private val intStates = mutableMapOf<String, MutableLiveData<Int>>()
+    private val errorStates = mutableMapOf<String, MutableLiveData<ErrorState>>()
 
     override fun setBooleanState(id: String, value: Boolean) {
         booleanStates.getOrPut(id) { MutableLiveData() }.postValue(value)
@@ -38,6 +40,15 @@ class UIStateManager : UIStateManagerContract {
     override fun observeInt(id: String): LiveData<Int> {
         return intStates.getOrPut(id) { MutableLiveData() }
     }
+
+    override fun setErrorState(id: String, value: ErrorState) {
+        errorStates.getOrPut(id) { MutableLiveData() }.postValue(value)
+    }
+
+    override fun observeError(id: String): LiveData<ErrorState> {
+        return errorStates.getOrPut(id) { MutableLiveData() }
+    }
+
 
     companion object {
         @Volatile

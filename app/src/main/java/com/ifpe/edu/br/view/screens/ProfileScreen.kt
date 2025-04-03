@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityOptionsCompat
 import androidx.navigation.NavHostController
 import com.ifpe.edu.br.R
 import com.ifpe.edu.br.common.CommonConstants
@@ -41,7 +40,7 @@ fun ProfileScreen(
         modifier = Modifier
             .verticalScroll(scrollState)
             .fillMaxSize(),
-        alignmentStrategy = CommonConstants.ALIGNMENT_CENTER,
+        alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
         layouts = listOf {
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
             TextTitle(textAlign = TextAlign.Center, message = "ProfileScreen")
@@ -56,18 +55,20 @@ fun ProfileScreen(
                 text = "Logout",
                 onClick = {
                     mainViewModel.logout()
-                    val options = ActivityOptionsCompat.makeCustomAnimation(
-                        context,
-                        R.anim.enter_from_right,
-                        R.anim.exit_to_left
-                    )
                     AirPowerUtil.launchActivity(
                         navController.context,
                         AuthActivity::class.java,
-                        options.toBundle()
                     )
                     navController.popBackStack()
                     (context as? ComponentActivity)?.finish()
+                },
+                fontSize = 20.sp
+            )
+
+            RectButton(
+                text = "Verbose logs: ${AirPowerUtil.isVerbose()}",
+                onClick = {
+                    AirPowerUtil.setVerbose(!AirPowerUtil.isVerbose())
                 },
                 fontSize = 20.sp
             )

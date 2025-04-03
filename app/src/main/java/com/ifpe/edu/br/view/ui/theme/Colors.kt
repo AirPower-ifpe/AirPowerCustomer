@@ -27,9 +27,11 @@ private val transparentGradient = listOf(
 )
 
 @Composable
-fun DefaultTransparentGradient() {
+fun DefaultTransparentGradient(
+    modifier: Modifier = Modifier.fillMaxSize()
+) {
     Canvas(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier
     ) {
         scale(scaleX = 1f, scaleY = 1f) {
             drawRect(

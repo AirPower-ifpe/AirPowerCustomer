@@ -19,6 +19,8 @@ import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.Device
 import com.ifpe.edu.br.model.repository.remote.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.util.AirPowerLog
+import com.ifpe.edu.br.model.util.AuthenticateFailureException
+import com.ifpe.edu.br.model.util.InvalidStateException
 import com.ifpe.edu.br.model.util.TokenExpiredException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,9 +29,9 @@ class Repository private constructor(context: Context) {
     private val db = AirPowerDatabase.getDataBaseInstance(context)
     private val tokenDao = db.getTokenDaoInstance()
     private val userDao = db.getUserDaoInstance()
-    private val spManager = SharedPrefManager.getInstance()
+    private val spManager = SharedPrefManager.getInstance(context)
     private val thingsBoardConnection =
-        ConnectionManager.getInstance().getConnection(ThingsBoardConnectionContractImpl)
+        ConnectionManager.getInstance().getConnectionById(ThingsBoardConnectionContractImpl)
     private val thingsBoardMgr = ThingsBoardManager(thingsBoardConnection)
 
     private val _currentUser = MutableLiveData<AirPowerUser?>()
@@ -46,9 +48,9 @@ class Repository private constructor(context: Context) {
             if (instance == null) {
                 synchronized(this) {
                     if (instance == null) {
-                        instance = Repository(context)
                         if (AirPowerLog.ISLOGABLE)
-                            AirPowerLog.d(TAG, "AirPowerRepository built")
+                            AirPowerLog.d(TAG, "build()")
+                        instance = Repository(context)
                     }
                 }
             }
@@ -59,25 +61,38 @@ class Repository private constructor(context: Context) {
                 ?: throw IllegalStateException("AirPowerRepository not initialized. Call build() first.")
         }
 
-        private const val TAG = "AirPowerRepository"
+        private val TAG = Repository::class.simpleName
     }
 
     suspend fun authenticate(
         user: AuthUser,
-        onSuccessCallback: () -> Unit
+        onSuccessCallback: () -> Unit,
+        onFailureCallback: (e: Exception) -> Unit
     ) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "authenticate()")
-        thingsBoardMgr.auth(user) { onSuccessCallback.invoke() }
-        val tbUser = thingsBoardMgr.getCurrentUser()
-        save(tbUser)
-        _currentUser.value = tbUser.toAirPowerUser()
+        try {
+            thingsBoardMgr.auth(user) { onSuccessCallback.invoke() }
+        } catch (e: Exception) {
+            onFailureCallback.invoke(e)
+            throw e
+        }
+//
+//        val tbUser = thingsBoardMgr.getCurrentUser()
+//        save(tbUser)
+//        _currentUser.value = tbUser.toAirPowerUser()
     }
 
     suspend fun updateSession(
         onSuccessCallback: () -> Unit,
     ) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "updateSession()")
-        thingsBoardMgr.refreshToken { onSuccessCallback.invoke() }
+        try {
+            thingsBoardMgr.refreshToken { onSuccessCallback.invoke() }
+        } catch (e: Exception) {
+            if (AirPowerLog.ISLOGABLE)
+                AirPowerLog.w(TAG, "Exception -> updateSession() -> ${e.message}")
+            throw e
+        }
     }
 
     suspend fun isSessionExpired(): Boolean {
@@ -98,22 +113,24 @@ class Repository private constructor(context: Context) {
     suspend fun getDevicesForCurrentUser() {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getDevicesForCurrentUser()")
         val user = currentUser.value
-            ?: throw IllegalStateException("getDevicesForCurrentUser() user is null")
+            ?: throw IllegalStateException("[$TAG]: Exception -> [current user is null]")
         try {
             val devicesList = thingsBoardMgr.getAllDevicesForCustomer(user)
             withContext(Dispatchers.Main) {
                 _devices.value = devicesList
             }
         } catch (e: TokenExpiredException) {
-            updateSession { }
+            AirPowerLog.d(TAG, "[$TAG]: TokenExpiredException -> ${e.message}")
+            throw e
         } catch (e: Exception) {
-            throw Exception(e)
+            AirPowerLog.d(TAG, "[$TAG]: Exception -> ${e.message}")
+            throw e
         }
     }
 
     suspend fun getTokenByConnectionId(connection: Int): AirPowerToken? {
         return withContext(Dispatchers.IO) {
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getToken for connection: $connection")
+            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getTokenByConnectionId: $connection")
             tokenDao.getTokenByClient(connection)
         }
     }
@@ -154,6 +171,7 @@ class Repository private constructor(context: Context) {
     }
 
     suspend fun save(token: AirPowerToken) {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "save() token: $token")
         require(!token.jwt.isNullOrEmpty() && !token.refreshToken.isNullOrEmpty() && token.client != null) {
             "Token info is null or empty!"
         }
@@ -169,6 +187,7 @@ class Repository private constructor(context: Context) {
     }
 
     suspend fun update(token: AirPowerToken) {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "update() token: $token")
         require(!token.jwt.isNullOrEmpty() && !token.refreshToken.isNullOrEmpty() && token.client != null) {
             "Token info is null or empty!"
         }
@@ -221,5 +240,24 @@ class Repository private constructor(context: Context) {
             name = name,
             phone = phone
         )
+    }
+
+    suspend fun retrieveCurrentUser(
+        onSuccessCallback: (user: AirPowerUser?) -> Unit
+    ) {
+        try {
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveCurrentUser()")
+            val user = thingsBoardMgr.getCurrentUser()
+            _currentUser.value = user.toAirPowerUser()
+            onSuccessCallback.invoke(_currentUser.value)
+        } catch (e: Exception) {
+            if (AirPowerLog.ISLOGABLE)
+                AirPowerLog.w(TAG, "[$TAG]: Exception: -> ${e.message}")
+            throw e
+        }
+    }
+
+    fun isCurrentUserValid(): Boolean {
+        return _currentUser.value != null
     }
 }

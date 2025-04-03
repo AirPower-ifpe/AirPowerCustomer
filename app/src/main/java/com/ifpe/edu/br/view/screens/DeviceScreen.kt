@@ -34,7 +34,7 @@ fun DeviceScreen(
         modifier = Modifier
             .verticalScroll(scrollState)
             .fillMaxSize(),
-        alignmentStrategy = CommonConstants.ALIGNMENT_CENTER,
+        alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
         layouts = listOf {
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
             TextTitle(textAlign = TextAlign.Center, message = "DeviceScreen")

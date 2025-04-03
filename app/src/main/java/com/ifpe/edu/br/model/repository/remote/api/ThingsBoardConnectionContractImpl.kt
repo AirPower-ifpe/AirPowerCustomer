@@ -74,7 +74,7 @@ object ThingsBoardConnectionContractImpl : IConnectionManager {
         // IGNORES CERTIFICATE VERIFICATION DUE DEVELOPMENT ENVIRONMENT
         return object : X509TrustManager {
             override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
-                if (AirPowerLog.ISLOGABLE) {
+                if (AirPowerLog.ISVERBOSE) {
                     AirPowerLog.w(
                         TAG, "checkClientTrusted: \n" +
                                 "CERTIFICATE VERIFICATION DISABLED DUE SELF SIGNED THINGS BOARD CERTIFICATE"
@@ -83,7 +83,7 @@ object ThingsBoardConnectionContractImpl : IConnectionManager {
             }
 
             override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
-                if (AirPowerLog.ISLOGABLE) {
+                if (AirPowerLog.ISVERBOSE) {
                     AirPowerLog.w(
                         TAG, "checkServerTrusted: \n" +
                                 "CERTIFICATE VERIFICATION DISABLED DUE SELF SIGNED THINGS BOARD CERTIFICATE"
@@ -92,7 +92,7 @@ object ThingsBoardConnectionContractImpl : IConnectionManager {
             }
 
             override fun getAcceptedIssuers(): Array<X509Certificate> {
-                if (AirPowerLog.ISLOGABLE) {
+                if (AirPowerLog.ISVERBOSE) {
                     AirPowerLog.w(
                         TAG, "getAcceptedIssuers: \n" +
                                 "CERTIFICATE VERIFICATION DISABLED DUE SELF SIGNED THINGS BOARD CERTIFICATE"
@@ -105,9 +105,9 @@ object ThingsBoardConnectionContractImpl : IConnectionManager {
 
     override fun getLoggerClient(): HttpLoggingInterceptor {
         val loggingInterceptor = HttpLoggingInterceptor { message ->
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.d("OkHttp", message)
+            if (AirPowerLog.ISVERBOSE) AirPowerLog.d("OkHttp", message)
         }.apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.HEADERS
         }
         return loggingInterceptor
     }

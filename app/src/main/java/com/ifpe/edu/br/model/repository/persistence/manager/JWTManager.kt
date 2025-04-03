@@ -20,6 +20,7 @@ object JWTManager {
         token: Token,
         authCallback: suspend (AirPowerToken) -> Unit
     ) {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "handleAuthentication()")
         require(isTokenValid(token)) { "Token is not valid" }
 
         val persistToken = AirPowerToken(
@@ -32,10 +33,10 @@ object JWTManager {
         val clientToken = repository.getTokenByConnectionId(connectionId)
 
         if (clientToken == null) {
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "No token found. Creating!")
+            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "Token NOT found. Creating!")
             repository.save(persistToken)
         } else {
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Token found. Updating!")
+            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "Token found. Updating!")
             repository.update(persistToken)
         }
 
@@ -47,6 +48,7 @@ object JWTManager {
         incomingToken: Token,
         authCallback: suspend (AirPowerToken) -> Unit
     ) {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "handleRefreshToken()")
         val storedToken = repository.getTokenByConnectionId(connectionId)
             ?: throw IllegalStateException("Stored Token not found")
 
@@ -70,7 +72,8 @@ object JWTManager {
 
         val jwtParts = tokenByClient.jwt.split(".")
         if (jwtParts.size != 3) return true.also {
-            AirPowerLog.w(TAG, "Invalid JWT format")
+            if (AirPowerLog.ISVERBOSE)
+                AirPowerLog.w(TAG, "Invalid JWT format")
         }
 
         return try {
@@ -85,11 +88,12 @@ object JWTManager {
                     .toLong()
 
                 val now = System.currentTimeMillis() / 1000
-                if (AirPowerLog.ISLOGABLE)
+                if (AirPowerLog.ISVERBOSE)
                     AirPowerLog.d(TAG, "exp: $expValue, system time: $now")
                 expValue < now
             } else {
-                AirPowerLog.e(TAG, "Expiration time not found")
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.e(TAG, "Expiration time not found")
                 true
             }
         } catch (e: Exception) {
@@ -99,19 +103,20 @@ object JWTManager {
     }
 
     suspend fun getJwtForConnectionId(connectionId: Int): String {
-        if (AirPowerLog.ISLOGABLE)
+        if (AirPowerLog.ISVERBOSE)
             AirPowerLog.d(TAG, "getJWTForConnectionId(): $connectionId")
         return getTokenForConnectionId(connectionId)?.token ?: ""
     }
 
     suspend fun getTokenForConnectionId(connectionId: Int): Token? {
-        if (AirPowerLog.ISLOGABLE)
+        if (AirPowerLog.ISVERBOSE)
             AirPowerLog.d(TAG, "getTokenForConnectionId(): $connectionId")
         val token = repository.getTokenByConnectionId(connectionId)
 
         return token?.let { getTokenFromAirPowerToken(it) }
             ?: run {
-                AirPowerLog.w(TAG, "Token is null for connection: $connectionId")
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.w(TAG, "Token is null for connection: $connectionId")
                 null
             }
     }
@@ -129,8 +134,8 @@ object JWTManager {
 
     private fun getTokenFromAirPowerToken(airPowerToken: AirPowerToken): Token {
         return try {
-            if (AirPowerLog.ISLOGABLE)
-                AirPowerLog.d(TAG, "getTokenFromAirPowerToken: $airPowerToken")
+//            if (AirPowerLog.ISLOGABLE)
+//                AirPowerLog.d(TAG, "getTokenFromAirPowerToken: $airPowerToken")
             Token(
                 airPowerToken.jwt,
                 airPowerToken.refreshToken,
@@ -146,24 +151,24 @@ object JWTManager {
         return when {
             token == null -> {
                 if (AirPowerLog.ISLOGABLE)
-                    AirPowerLog.d(TAG, "Token is null")
+                    AirPowerLog.w(TAG, "Token is null")
                 false
             }
 
-            token.token.isNullOrBlank() || token.token.length < 50 -> {
-                if (AirPowerLog.ISLOGABLE)
-                    AirPowerLog.d(TAG, "JWT is NOT valid")
+            token.token.isBlank() || token.token.length < 50 -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.w(TAG, "JWT is NOT valid")
                 false
             }
 
-            token.refreshToken.isNullOrBlank() || token.refreshToken.length < 50 -> {
+            token.refreshToken.isBlank() || token.refreshToken.length < 50 -> {
                 if (AirPowerLog.ISLOGABLE)
-                    AirPowerLog.d(TAG, "Refresh token is NOT valid")
+                    AirPowerLog.w(TAG, "Refresh token is NOT valid")
                 false
             }
 
             else -> {
-                if (AirPowerLog.ISLOGABLE)
+                if (AirPowerLog.ISVERBOSE)
                     AirPowerLog.d(TAG, "Token is valid")
                 true
             }
