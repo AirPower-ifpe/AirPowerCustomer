@@ -1,7 +1,6 @@
 package com.ifpe.edu.br.core.contracts
 
 import okhttp3.Interceptor
-import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
