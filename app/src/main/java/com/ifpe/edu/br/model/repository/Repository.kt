@@ -76,10 +76,6 @@ class Repository private constructor(context: Context) {
             onFailureCallback.invoke(e)
             throw e
         }
-//
-//        val tbUser = thingsBoardMgr.getCurrentUser()
-//        save(tbUser)
-//        _currentUser.value = tbUser.toAirPowerUser()
     }
 
     suspend fun updateSession(

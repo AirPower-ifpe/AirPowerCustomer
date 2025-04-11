@@ -2,7 +2,6 @@ package com.ifpe.edu.br.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.contracts.ErrorState
@@ -10,15 +9,14 @@ import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
 import com.ifpe.edu.br.model.repository.persistence.model.AirPowerUser
 import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
-import com.ifpe.edu.br.model.repository.remote.dto.Device
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AuthenticateFailureException
 import com.ifpe.edu.br.model.util.TokenExpiredException
 import com.ifpe.edu.br.view.manager.UIStateManager
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 
 /*
@@ -35,45 +33,10 @@ class AirPowerViewModel(
     private val TAG: String = AirPowerViewModel::class.java.simpleName
     val uiStateManager = UIStateManager.getInstance()
     private var repository = Repository.getInstance()
-    private val fetchInterval = 10_000L
-    val devices: MutableLiveData<List<Device>> get() = repository.devices
-    val currentUser = repository.currentUser
-
-//    fun startFetchingDevices(
-//        onFailureCallback: () -> Unit
-//    ) {
-//        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "startFetchingDevices()")
-//        viewModelScope.launch {
-//            while (true) {
-//                try {
-//                    repository.getDevicesForCurrentUser()
-//                } catch (e: TokenExpiredException) {
-//                    AirPowerLog.e(TAG, "o erro aconteceu aqui ohhh: ${e.message}")
-//                    updateSession(
-//                        onSuccessCallback = {},
-//                        onFailureCallback = { onFailureCallback.invoke() })
-//                    uiStateManager.setErrorState(
-//                        Constants.STATE_ERROR,
-//                        ErrorState(
-//                            "coisa coisa",
-//                            Constants.THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED
-//                        )
-//                    )
-//                } catch (e: Exception) {
-//                    AirPowerLog.e(TAG, "Error fetching devices: ${e.message}")
-//                    uiStateManager.setErrorState(
-//                        Constants.STATE_ERROR,
-//                        ErrorState(
-//                            "coisa coisa",
-//                            Constants.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
-//                        )
-//                    )
-//                    //onFailureCallback.invoke()
-//                }
-//                delay(fetchInterval)
-//            }
-//        }
-//    }
+    private var currentUserJob: Job? = null
+    private var devicesJob: Job? = null
+    private var telemetryJob: Job? = null
+    private val devicesFetchInterval = 120_000L
 
     fun authenticate(
         user: AuthUser,
@@ -142,22 +105,17 @@ class AirPowerViewModel(
 
 
     fun isTokenExpired(callback: (Boolean) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            withContext(Dispatchers.Main) {
-                val isExpired = repository.isSessionExpired()
-//                if (!isExpired) {
-//                    uiStateManager.setErrorState(
-//                        Constants.STATE_ERROR, getDefaultErrorState()
-//                    )
-//                }
-                callback(isExpired)
-            }
+        viewModelScope.launch {
+            val isExpired = repository.isSessionExpired()
+            callback(isExpired)
         }
     }
 
     fun logout() {
         viewModelScope.launch {
             repository.logout()
+            currentUserJob?.cancel()
+            devicesJob?.cancel()
         }
     }
 
@@ -182,44 +140,12 @@ class AirPowerViewModel(
         uiStateManager.setErrorState(stateId, getDefaultErrorState())
     }
 
-//    fun fetchData() {
-//        viewModelScope.launch {
-//            if (AirPowerLog.ISVERBOSE) {
-//                AirPowerLog.e(TAG, "fetchData()")
-//            }
-//            while (true) {
-//                try {
-//                    if (currentUser.value == null) {
-//                        repository.retrieveCurrentUser { }
-//                    }
-//                    repository.getDevicesForCurrentUser()
-//                    uiStateManager.setErrorState(Constants.STATE_ERROR, getDefaultErrorState())
-//                } catch (e: TokenExpiredException) {
-//                    uiStateManager.setErrorState(
-//                        Constants.STATE_ERROR,
-//                        ErrorState(
-//                            "[$TAG] : -> ${e.message}",
-//                            Constants.THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED
-//                        )
-//                    )
-//                } catch (e: Exception) {
-//                    uiStateManager.setErrorState(
-//                        Constants.STATE_ERROR,
-//                        ErrorState(
-//                            "${e.message}",
-//                            Constants.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
-//                        )
-//                    )
-//                }
-//                delay(fetchInterval)
-//            }
-//        }
-//    }
-
     fun startDataFetchers() {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "startDataFetchers()")
-        fetchCurrentUserIfNeeded()
-        startDevicesFetcher()
+        fetchCurrentUser()
+        if (devicesJob?.isActive != true) {
+            devicesJob = startDevicesFetcher()
+        }
     }
 
     private fun handleException(e: Exception) {
@@ -242,11 +168,24 @@ class AirPowerViewModel(
         )
     }
 
-    private fun fetchCurrentUserIfNeeded() {
+    private fun fetchCurrentUser() {
         viewModelScope.launch {
             try {
-                if (!repository.isCurrentUserValid()) {
+                repository.retrieveCurrentUser { }
+            } catch (e: TokenExpiredException) {
+                handleTokenExpiredException(e)
+            } catch (e: Exception) {
+                handleException(e)
+            }
+        }
+    }
+
+    private fun startCurrentUserFetcher(): Job {
+        return viewModelScope.launch {
+            try {
+                while (isActive) {
                     repository.retrieveCurrentUser { }
+                    delay(1 * 1000L)
                 }
             } catch (e: TokenExpiredException) {
                 handleTokenExpiredException(e)
@@ -256,14 +195,15 @@ class AirPowerViewModel(
         }
     }
 
-    private fun startDevicesFetcher() {
-        viewModelScope.launch {
+    private fun startDevicesFetcher(): Job {
+        return viewModelScope.launch {
             try {
-                while (true) {
-                    if (repository.isCurrentUserValid()) {
-                        repository.getDevicesForCurrentUser()
+                while (isActive) {
+                    while (!repository.isCurrentUserValid()) {
+                        delay(500)
                     }
-                    delay(5 * 1000L)
+                    repository.getDevicesForCurrentUser()
+                    delay(devicesFetchInterval)
                 }
             } catch (e: TokenExpiredException) {
                 handleTokenExpiredException(e)
