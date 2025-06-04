@@ -9,6 +9,7 @@ import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
 import com.ifpe.edu.br.model.repository.persistence.model.AirPowerUser
 import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
+import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AuthenticateFailureException
 import com.ifpe.edu.br.model.util.TokenExpiredException
@@ -74,6 +75,29 @@ class AirPowerViewModel(
                 val timeLeft = (minDelay - timeDelayed).coerceAtLeast(0L)
                 delay(timeLeft)
                 uiStateManager.setErrorState(Constants.STATE_ERROR, errorState)
+            }
+        }
+    }
+
+    fun getAggregatedTelemetry(
+        query: AggregatedTelemetryQuery?,
+        onSuccessCallback: () -> Unit,
+        onFailureCallback: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                repository.getAggregatedTelemetry(
+                    query = AggregatedTelemetryQuery(
+                        deviceIds = listOf("e6dfad10-416b-11f0-918d-8b1a89ef9dab", "655eae80-4148-11f0-918d-8b1a89ef9dab"),
+                        telemetryKeys = listOf("voltage", "current", "power"),
+                        aggregationFunction = "AVG",
+                        timeWindowHours = 12
+                    ),
+                    onSuccess = {},
+                    onFailureCallback = {}
+                )
+            } catch (e: Exception) {
+                AirPowerLog.e(TAG, "DEU MERDA AQUI HEIN: ${e.message}")
             }
         }
     }

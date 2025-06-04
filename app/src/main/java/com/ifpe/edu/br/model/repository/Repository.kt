@@ -13,14 +13,15 @@ import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
 import com.ifpe.edu.br.model.repository.persistence.manager.SharedPrefManager
 import com.ifpe.edu.br.model.repository.persistence.model.AirPowerToken
 import com.ifpe.edu.br.model.repository.persistence.model.AirPowerUser
+import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerConnectionContractImpl
+import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerManager
 import com.ifpe.edu.br.model.repository.remote.api.ThingsBoardConnectionContractImpl
 import com.ifpe.edu.br.model.repository.remote.api.ThingsBoardManager
 import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.Device
 import com.ifpe.edu.br.model.repository.remote.dto.ThingsBoardUser
+import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
-import com.ifpe.edu.br.model.util.AuthenticateFailureException
-import com.ifpe.edu.br.model.util.InvalidStateException
 import com.ifpe.edu.br.model.util.TokenExpiredException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,6 +34,10 @@ class Repository private constructor(context: Context) {
     private val thingsBoardConnection =
         ConnectionManager.getInstance().getConnectionById(ThingsBoardConnectionContractImpl)
     private val thingsBoardMgr = ThingsBoardManager(thingsBoardConnection)
+    private val airPowerServerConnection =
+        ConnectionManager.getInstance().getConnectionById(AirPowerServerConnectionContractImpl)
+    private val airPowerServerMgr = AirPowerServerManager(airPowerServerConnection)
+
 
     private val _currentUser = MutableLiveData<AirPowerUser?>()
     val currentUser: LiveData<AirPowerUser?> get() = _currentUser
@@ -78,6 +83,20 @@ class Repository private constructor(context: Context) {
         }
     }
 
+    suspend fun getAggregatedTelemetry(
+        query: AggregatedTelemetryQuery,
+        onSuccess: () -> Unit,
+        onFailureCallback: (e: Exception) -> Unit
+    ) {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getAggregatedTelemetry()")
+        try {
+            airPowerServerMgr.getAggregatedTelemetry(query) { onSuccess.invoke() }
+        } catch (e: Exception) {
+            onFailureCallback.invoke(e)
+            throw e
+        }
+    }
+
     suspend fun updateSession(
         onSuccessCallback: () -> Unit,
     ) {
@@ -113,6 +132,7 @@ class Repository private constructor(context: Context) {
         try {
             val devicesList = thingsBoardMgr.getAllDevicesForCustomer(user)
             withContext(Dispatchers.Main) {
+                AirPowerLog.e(TAG, "[$TAG]: Devices for user -> $devicesList")
                 _devices.value = devicesList
             }
         } catch (e: TokenExpiredException) {
