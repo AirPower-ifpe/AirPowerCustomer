@@ -19,13 +19,13 @@ data class AirPowerUser(
     @ColumnInfo(name = "USER_COSTUMER_ID")
     val customerId: String = "",
     @ColumnInfo(name = "USER_FIRST_NAME")
-    val firstName: String = "",
+    val firstName: String? = "",
     @ColumnInfo(name = "USER_LAST_NAME")
-    val lastName: String = "",
+    val lastName: String? = "",
     @ColumnInfo(name = "USER_NAME")
-    val name: String = "",
+    val name: String? = "",
     @ColumnInfo(name = "USER_PHONE")
-    val phone: String = "",
+    val phone: String? = "",
     @ColumnInfo(name = "USER_EMAIL")
     val email: String = ""
 ) {

@@ -20,8 +20,10 @@ object Constants {
     const val NAVIGATION_MAIN = "MAIN"
     const val NAVIGATION_AUTH = "AUTH"
 
-    const val URL_API = "https://192.168.1.34:8080"
+    const val THINGSBOARD_BASE_URL_API = "https://192.168.1.17:8080"
+    const val AIRPOWER_SERVER_BASE_URL_API = "https://192.168.1.17:8443"
 
     const val CONNECTION_ID_THINGSBOARD = 1
+    const val CONNECTION_ID_AIR_POWER_SERVER = 2
     const val KEY_COD_DRAWABLE: String = "drawable"
 }

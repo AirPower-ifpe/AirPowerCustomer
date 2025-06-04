@@ -16,12 +16,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.ifpe.edu.br.R
 import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.CustomColumn
+import com.ifpe.edu.br.common.components.RoundedButton
 import com.ifpe.edu.br.common.components.RoundedImageIcon
 import com.ifpe.edu.br.common.components.TextTitle
+import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 
 @Composable
@@ -43,6 +46,18 @@ fun DeviceScreen(
                 iconResId = R.drawable.airpower_icon,
                 modifier = Modifier.size(250.dp)
             )
+
+            RoundedButton(
+                text = "test me",
+                onClick = {
+                    mainViewModel.getAggregatedTelemetry(
+                        query = null,
+                        onSuccessCallback = {},
+                        onFailureCallback = {}
+                    )
+                }
+            )
+
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
         }
     )
