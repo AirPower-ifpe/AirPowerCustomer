@@ -7,6 +7,7 @@ import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.contracts.ErrorState
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
+import com.ifpe.edu.br.model.repository.model.DeviceCardModel
 import com.ifpe.edu.br.model.repository.persistence.model.AirPowerUser
 import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
@@ -16,6 +17,9 @@ import com.ifpe.edu.br.model.util.TokenExpiredException
 import com.ifpe.edu.br.view.manager.UIStateManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
@@ -38,6 +42,14 @@ class AirPowerViewModel(
     private var devicesJob: Job? = null
     private var telemetryJob: Job? = null
     private val devicesFetchInterval = 120_000L
+
+    // StateFlow para a lista de dispositivos a serem exibidos
+    private val _deviceCardsState = MutableStateFlow<List<DeviceCardModel>>(emptyList())
+    val deviceCards: StateFlow<List<DeviceCardModel>> = _deviceCardsState.asStateFlow()
+
+    // Estado para o carregamento da lista de devices
+    private val _isLoadingDevices = MutableStateFlow(false)
+    val isLoadingDevices: StateFlow<Boolean> = _isLoadingDevices.asStateFlow()
 
     fun authenticate(
         user: AuthUser,
@@ -88,7 +100,10 @@ class AirPowerViewModel(
             try {
                 repository.getAggregatedTelemetry(
                     query = AggregatedTelemetryQuery(
-                        deviceIds = listOf("e6dfad10-416b-11f0-918d-8b1a89ef9dab", "655eae80-4148-11f0-918d-8b1a89ef9dab"),
+                        deviceIds = listOf(
+                            "e6dfad10-416b-11f0-918d-8b1a89ef9dab",
+                            "655eae80-4148-11f0-918d-8b1a89ef9dab"
+                        ),
                         telemetryKeys = listOf("voltage", "current", "power"),
                         aggregationFunction = "AVG",
                         timeWindowHours = 12
@@ -170,6 +185,34 @@ class AirPowerViewModel(
         if (devicesJob?.isActive != true) {
             devicesJob = startDevicesFetcher()
         }
+
+        _deviceCardsState.value = listOf(
+            DeviceCardModel(
+                id = "1",
+                label = "Ar condicionado do 2º andar",
+                status = "online",
+            ),
+            DeviceCardModel(
+                id = "2",
+                label = "Ar condicionado do 2º andar",
+                status = "offline",
+            ),
+            DeviceCardModel(
+                id = "3",
+                label = "Ar condicionado do 2º andar",
+                status = "online",
+            ),
+            DeviceCardModel(
+                id = "4",
+                label = "Ar condicionado do 2º andar",
+                status = "online",
+            ),
+            DeviceCardModel(
+                id = "5",
+                label = "Ar condicionado do 2º andar",
+                status = "offline",
+            )
+        )
     }
 
     private fun handleException(e: Exception) {
