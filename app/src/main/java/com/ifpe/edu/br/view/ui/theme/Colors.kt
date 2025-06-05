@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 val tb_primary_light = Color(0xFF305680)
 val tb_secondary_light = Color(0xFFFF5722)
 val tb_tertiary_light = Color(0xFFEEEEEE)
-
+val app_default_solid_background_color = Color(0xD7DAD6D6)
 
 val a = Color(0xE9FAF9F9)
 val b = Color(0xD7C2BEBE)
