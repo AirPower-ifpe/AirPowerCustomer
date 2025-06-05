@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun TextTitle(
     textAlign: TextAlign = TextAlign.Start,
+    textColor: Color = MaterialTheme.colorScheme.onPrimary,
     message: String,
     fontSize: TextUnit = 20.sp,
     modifier: Modifier = Modifier
@@ -48,7 +49,7 @@ fun TextTitle(
     Text(
         text = message,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onPrimary,
+        color = textColor,
         fontSize = fontSize,
         textAlign = textAlign,
         modifier = modifier

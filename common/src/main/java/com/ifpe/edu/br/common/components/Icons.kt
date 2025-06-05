@@ -39,3 +39,23 @@ fun RoundedImageIcon(
         )
     }
 }
+
+@Composable
+fun ImageIcon(
+    description: String,
+    iconResId: Int,
+    modifier: Modifier = Modifier
+        .size(50.dp)
+) {
+    Box(
+        modifier = Modifier
+            .wrapContentSize()
+    ) {
+        Image(
+            painter = painterResource(id = iconResId),
+            contentDescription = description,
+            modifier = modifier,
+            alignment = Alignment.Center
+        )
+    }
+}
