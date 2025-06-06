@@ -24,8 +24,8 @@ import com.ifpe.edu.br.R
 import com.ifpe.edu.br.common.ui.theme.AirPowerCostumerTheme
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.util.AirPowerLog
-import com.ifpe.edu.br.view.screens.AuthScreen
-import com.ifpe.edu.br.view.screens.SplashScreen
+import com.ifpe.edu.br.view.ui.screens.AuthScreen
+import com.ifpe.edu.br.view.ui.screens.SplashScreen
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 import com.ifpe.edu.br.viewmodel.AirPowerViewModelProvider
 

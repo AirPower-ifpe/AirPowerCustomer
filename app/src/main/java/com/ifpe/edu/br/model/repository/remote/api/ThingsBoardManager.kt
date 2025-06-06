@@ -32,11 +32,10 @@ class ThingsBoardManager(connection: Retrofit) {
     private val apiService = connection.create(ThingsBoardAPIService::class.java)
     private val TAG = ThingsBoardManager::class.simpleName
 
-    suspend fun auth(
+    suspend fun authenticate(
         user: AuthUser,
-        onSuccess: () -> Unit
     ) {
-        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "auth()")
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "authenticate()")
         val userJson = Gson().toJson(user)
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val requestBody = RequestBody.create(mediaType, userJson)
@@ -48,10 +47,11 @@ class ThingsBoardManager(connection: Retrofit) {
                 JWTManager.handleAuthentication(
                     ThingsBoardConnectionContractImpl.getConnectionId(),
                     it
-                ) { onSuccess.invoke() }
+                ) { }
             }
         } else {
             val serverErrorWrapper = getServerErrorWrapper(serverResponse)
+            if (AirPowerLog.ISVERBOSE) AirPowerLog.e(TAG, "Authentication failed: ${serverErrorWrapper.message}")
             throw AuthenticateFailureException("[$TAG]: -> Authentication failure: message:${serverErrorWrapper.message}")
         }
     }

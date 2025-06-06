@@ -2,16 +2,15 @@ package com.ifpe.edu.br.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.common.CommonConstants
-import com.ifpe.edu.br.common.contracts.ErrorState
+import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
 import com.ifpe.edu.br.model.repository.model.DeviceCardModel
-import com.ifpe.edu.br.model.repository.persistence.model.AirPowerUser
 import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
-import com.ifpe.edu.br.model.repository.remote.dto.Id
-import com.ifpe.edu.br.model.repository.remote.dto.ThingsBoardUser
+import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AuthenticateFailureException
@@ -43,95 +42,41 @@ class AirPowerViewModel(
     private var currentUserJob: Job? = null
     private var devicesJob: Job? = null
     private var telemetryJob: Job? = null
-    private val devicesFetchInterval = 120_000L
+    private val devicesFetchInterval = 5_000L
 
-    // StateFlow para a lista de dispositivos a serem exibidos
-    private val _deviceCardsState = MutableStateFlow<List<DeviceCardModel>>(emptyList())
-    val deviceCards: StateFlow<List<DeviceCardModel>> = _deviceCardsState.asStateFlow()
-
-    // Estado para o carregamento da lista de devices
-    private val _isLoadingDevices = MutableStateFlow(false)
-    val isLoadingDevices: StateFlow<Boolean> = _isLoadingDevices.asStateFlow()
-
-    fun authenticate(
+    fun initSession(
         user: AuthUser,
-        onSuccessCallback: () -> Unit,
-        onFailureCallback: () -> Unit
     ) {
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()
             val minDelay = 1500L
-            uiStateManager.setErrorState(
-                Constants.STATE_ERROR,
-                ErrorState(
+            uiStateManager.setUIState(
+                Constants.AUTH_STATE,
+                UIState(
                     message = "Loading",
-                    errorCode = CommonConstants.State.STATE_LOADING
+                    stateCode = CommonConstants.State.STATE_LOADING
                 )
             )
-            var errorState = getDefaultErrorState()
+            var uiState = getDefaultUIState()
             try {
-                repository.authenticate(
-                    user = user,
-                    onSuccessCallback = {
-                        onSuccessCallback.invoke()
-                        uiStateManager.setErrorState(Constants.STATE_ERROR, errorState)
-                    },
-                    onFailureCallback = {
-                        onFailureCallback.invoke()
-                    }
-                )
+                repository.authenticate(user = user)
+                repository.retrieveCurrentUser()
+                uiState = UIState("", CommonConstants.State.STATE_SUCCESS)
             } catch (e: AuthenticateFailureException) {
-                errorState = ErrorState("${e.message}", CommonConstants.State.STATE_AUTH_FAILURE)
+                uiState = UIState("${e.message}", CommonConstants.State.STATE_AUTH_FAILURE)
             } catch (e: Exception) {
-                errorState = ErrorState("${e.message}", CommonConstants.State.STATE_NETWORK_ISSUE)
+                uiState = UIState("${e.message}", CommonConstants.State.STATE_NETWORK_ISSUE)
             } finally {
                 val timeDelayed = System.currentTimeMillis() - startTime
                 val timeLeft = (minDelay - timeDelayed).coerceAtLeast(0L)
                 delay(timeLeft)
-                uiStateManager.setErrorState(Constants.STATE_ERROR, errorState)
+                uiStateManager.setUIState(Constants.AUTH_STATE, uiState)
             }
         }
     }
 
-    fun getDeviceSummariesForUser(
-        user: ThingsBoardUser?,
-        onSuccessCallback: () -> Unit,
-        onFailureCallback: () -> Unit
-    ) {
-        viewModelScope.launch {
-            try {
-                if (repository.currentUser.value != null) {
-
-                    val user = ThingsBoardUser(
-                        id = Id(repository.currentUser.value!!.id, ""),
-                        authority = "",
-                        customerId = Id("", ""),
-                        email = "",
-                        firstName = "",
-                        lastName = "",
-                        name = "",
-                        phone = "",
-                        additionalInfo = mapOf(),
-                        createdTime = 0,
-                        tenantId = Id("", "")
-                    )
-
-
-                    repository.getDeviceSummariesForUser(
-                        user = user,
-                        onSuccess = {
-                            AirPowerLog.d(TAG, "DEU BOM AQUI HEIN")
-                        },
-                        onFailureCallback = {
-                            AirPowerLog.d(TAG, "NAO DEU BOM AQUI HEIN")
-                        }
-                    )
-                }
-
-            } catch (e: Exception) {
-                AirPowerLog.e(TAG, "DEU algo ruim AQUI HEIN: ${e.message}")
-            }
-        }
+    fun getDevicesSummary(): LiveData<List<DeviceSummary>> {
+        return repository.devicesSummary
     }
 
     fun getAggregatedTelemetry(
@@ -167,15 +112,15 @@ class AirPowerViewModel(
         viewModelScope.launch {
             try {
                 repository.updateSession {
-                    uiStateManager.setErrorState(
-                        Constants.STATE_ERROR, getDefaultErrorState()
+                    uiStateManager.setUIState(
+                        Constants.STATE_ERROR, getDefaultUIState()
                     )
                     onSuccessCallback.invoke()
                 }
             } catch (e: Exception) {
-                uiStateManager.setErrorState(
+                uiStateManager.setUIState(
                     Constants.STATE_ERROR,
-                    ErrorState(
+                    UIState(
                         "[$TAG]: -> ${e.message}",
                         Constants.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
                     )
@@ -201,67 +146,22 @@ class AirPowerViewModel(
         }
     }
 
-    fun retrieveCurrentUser(
-        onSuccessCallback: (user: AirPowerUser) -> Unit,
-        onFailureCallback: (e: Exception) -> Unit
-    ) {
-        viewModelScope.launch {
-            try {
-                repository.retrieveCurrentUser { onSuccessCallback(it!!) }
-            } catch (e: Exception) {
-                uiStateManager.setErrorState(
-                    Constants.STATE_ERROR,
-                    getDefaultErrorState()
-                )
-                onFailureCallback(e)
-            }
-        }
-    }
-
-    fun resetErrorState(stateId: String) {
-        uiStateManager.setErrorState(stateId, getDefaultErrorState())
+    fun resetUIState(stateId: String) {
+        uiStateManager.setUIState(stateId, getDefaultUIState())
     }
 
     fun startDataFetchers() {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "startDataFetchers()")
-        fetchCurrentUser()
+
         if (devicesJob?.isActive != true) {
             devicesJob = startDevicesFetcher()
         }
-
-        _deviceCardsState.value = listOf(
-            DeviceCardModel(
-                id = "1",
-                label = "Ar condicionado do 2º andar",
-                status = "online",
-            ),
-            DeviceCardModel(
-                id = "2",
-                label = "Ar condicionado do 2º andar",
-                status = "offline",
-            ),
-            DeviceCardModel(
-                id = "3",
-                label = "Ar condicionado do 2º andar",
-                status = "online",
-            ),
-            DeviceCardModel(
-                id = "4",
-                label = "Ar condicionado do 2º andar",
-                status = "online",
-            ),
-            DeviceCardModel(
-                id = "5",
-                label = "Ar condicionado do 2º andar",
-                status = "offline",
-            )
-        )
     }
 
     private fun handleException(e: Exception) {
-        uiStateManager.setErrorState(
+        uiStateManager.setUIState(
             Constants.STATE_ERROR,
-            ErrorState(
+            UIState(
                 "[$TAG] : -> ${e.message}",
                 Constants.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
             )
@@ -269,50 +169,21 @@ class AirPowerViewModel(
     }
 
     private fun handleTokenExpiredException(e: TokenExpiredException) {
-        uiStateManager.setErrorState(
+        uiStateManager.setUIState(
             Constants.STATE_ERROR,
-            ErrorState(
+            UIState(
                 "[$TAG] : -> ${e.message}",
                 Constants.THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED
             )
         )
     }
 
-    private fun fetchCurrentUser() {
-        viewModelScope.launch {
-            try {
-                repository.retrieveCurrentUser { }
-            } catch (e: TokenExpiredException) {
-                handleTokenExpiredException(e)
-            } catch (e: Exception) {
-                handleException(e)
-            }
-        }
-    }
-
-    private fun startCurrentUserFetcher(): Job {
-        return viewModelScope.launch {
-            try {
-                while (isActive) {
-                    repository.retrieveCurrentUser { }
-                    delay(1 * 1000L)
-                }
-            } catch (e: TokenExpiredException) {
-                handleTokenExpiredException(e)
-            } catch (e: Exception) {
-                handleException(e)
-            }
-        }
-    }
 
     private fun startDevicesFetcher(): Job {
         return viewModelScope.launch {
             try {
                 while (isActive) {
-                    while (!repository.isCurrentUserValid()) {
-                        delay(500)
-                    }
-                    repository.getDevicesForCurrentUser()
+                    repository.retrieveDeviceSummaryForCurrentUser()
                     delay(devicesFetchInterval)
                 }
             } catch (e: TokenExpiredException) {
@@ -323,10 +194,10 @@ class AirPowerViewModel(
         }
     }
 
-    private fun getDefaultErrorState(): ErrorState {
-        return ErrorState(
+    private fun getDefaultUIState(): UIState {
+        return UIState(
             CommonConstants.State.STATE_DEFAULT_MESSAGE,
-            CommonConstants.State.STATE_DEFAULT_CODE
+            CommonConstants.State.STATE_DEFAULT_SATATE_CODE
         )
     }
 }

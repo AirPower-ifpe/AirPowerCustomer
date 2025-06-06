@@ -1,4 +1,4 @@
-package com.ifpe.edu.br.view.screens
+package com.ifpe.edu.br.view.ui.screens
 
 /*
 * Trabalho de conclusão de curso - IFPE 2025
@@ -42,19 +42,6 @@ fun HomeScreen(
             .fillMaxSize(),
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
         layouts = listOf {
-            Spacer(modifier = Modifier.padding(vertical = 100.dp))
-
-            RoundedButton(
-                text = "click me",
-                onClick = {
-                    mainViewModel.getDeviceSummariesForUser(
-                        user = null,
-                        onSuccessCallback = {},
-                        onFailureCallback = {}
-                    )
-                }
-            )
-
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
 
             TextTitle(textAlign = TextAlign.Center, message = "HomeScreen")

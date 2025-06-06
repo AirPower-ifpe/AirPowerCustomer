@@ -1,4 +1,4 @@
-package com.ifpe.edu.br.view.screens
+package com.ifpe.edu.br.view.ui.screens
 
 /*
 * Trabalho de conclusão de curso - IFPE 2025
@@ -31,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
@@ -45,7 +44,7 @@ import com.ifpe.edu.br.common.components.CustomProgressDialog
 import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.components.RectButton
 import com.ifpe.edu.br.common.components.RoundedImageIcon
-import com.ifpe.edu.br.common.contracts.ErrorState
+import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.White
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.model.Constants
@@ -72,8 +71,8 @@ fun AuthScreen(
     val scrollState = rememberScrollState()
     val airPowerViewModel = viewModel as AirPowerViewModel
 
-    val errorState by airPowerViewModel.uiStateManager.observeError(id = Constants.STATE_ERROR)
-        .observeAsState(initial = ErrorState("", CommonConstants.State.STATE_DEFAULT_CODE))
+    val uiState by airPowerViewModel.uiStateManager.observeUIState(id = Constants.AUTH_STATE)
+        .observeAsState(initial = UIState("", CommonConstants.State.STATE_DEFAULT_SATATE_CODE))
 
     Box(
         modifier = Modifier
@@ -153,20 +152,11 @@ fun AuthScreen(
                             text = "Login",
                             fontSize = 15.sp,
                             onClick = {
-                                viewModel.authenticate(
+                                viewModel.initSession(
                                     AuthUser(
                                         username = login,
                                         password = password
-                                    ),
-                                    onSuccessCallback = {
-                                        navController.popBackStack()
-                                        AirPowerUtil.launchActivity(
-                                            componentActivity,
-                                            MainActivity::class.java
-                                        )
-                                        componentActivity.finish()
-                                    },
-                                    onFailureCallback = {}
+                                    )
                                 )
                             },
                             modifier = Modifier
@@ -180,7 +170,7 @@ fun AuthScreen(
         )
     }
 
-    when (errorState.errorCode) {
+    when (uiState.stateCode) {
         CommonConstants.State.STATE_AUTH_FAILURE -> {
             Box(
                 modifier = Modifier
@@ -196,7 +186,7 @@ fun AuthScreen(
                     text = "Credenciais inválidas",
                     textColor = tb_primary_light,
                     retryCallback = {
-                        viewModel.resetErrorState(Constants.STATE_ERROR)
+                        viewModel.resetUIState(Constants.AUTH_STATE)
                     }
                 ) { DefaultTransparentGradient() }
             }
@@ -217,7 +207,7 @@ fun AuthScreen(
                     text = "Houve um erro de conexão",
                     textColor = tb_primary_light,
                     retryCallback = {
-                        viewModel.resetErrorState(Constants.STATE_ERROR)
+                        viewModel.resetUIState(Constants.AUTH_STATE)
                     }
                 ) { modifier -> DefaultTransparentGradient(modifier) }
             }
@@ -238,6 +228,16 @@ fun AuthScreen(
                     DefaultTransparentGradient(modifier)
                 }
             }
+        }
+
+        CommonConstants.State.STATE_SUCCESS -> {
+            navController.popBackStack()
+            AirPowerUtil.launchActivity(
+                componentActivity,
+                MainActivity::class.java
+            )
+            viewModel.resetUIState(Constants.AUTH_STATE)
+            componentActivity.finish()
         }
     }
 }

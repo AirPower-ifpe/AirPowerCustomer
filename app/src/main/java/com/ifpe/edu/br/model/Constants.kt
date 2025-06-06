@@ -8,6 +8,7 @@ package com.ifpe.edu.br.model
 
 object Constants {
     const val STATE_ERROR = "STATE_ERROR"
+    const val AUTH_STATE = "AUTH_STATE"
     const val THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED = 11
     const val THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED = 10
     const val STATE_AUTH_REQUIRED = "STATE_AUTH_REQUIRED"

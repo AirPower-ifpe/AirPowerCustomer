@@ -1,4 +1,4 @@
-package com.ifpe.edu.br.view.screens
+package com.ifpe.edu.br.view.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -12,12 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -33,19 +32,20 @@ import com.ifpe.edu.br.common.components.CustomIconButton
 import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.components.CustomTopBar
 import com.ifpe.edu.br.common.components.TextTitle
-import com.ifpe.edu.br.model.repository.model.DeviceCardModel
+import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.view.ui.components.DeviceCard
 import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_color
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
+import java.util.UUID
 
 @Composable
 fun DeviceScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
-    val deviceCards by mainViewModel.deviceCards.collectAsState()
-    val isLoading by mainViewModel.isLoadingDevices.collectAsState()
+    val deviceSummary by mainViewModel.getDevicesSummary().observeAsState(initial = emptyList())
+
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -107,11 +107,10 @@ fun DeviceScreen(
                 .padding(top = innerPadding.calculateTopPadding())
         ) {
             when {
-                isLoading && deviceCards.isEmpty() -> {
-                    CircularProgressIndicator()
-                }
-
-                deviceCards.isEmpty() -> {
+//                isLoading && deviceSummary.isEmpty() -> {
+//                    CircularProgressIndicator()
+//                }
+                deviceSummary.isEmpty() -> {
                     CustomColumn(
                         modifier = Modifier.fillMaxSize(),
                         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
@@ -126,7 +125,7 @@ fun DeviceScreen(
                 }
 
                 else -> {
-                    DeviceGrid(deviceCards = deviceCards) { deviceId ->
+                    DeviceGrid(deviceCards = deviceSummary) { deviceId ->
                         // navController.navigate("deviceDetail/${deviceId}")
                     }
                 }
@@ -137,8 +136,8 @@ fun DeviceScreen(
 
 @Composable
 private fun DeviceGrid(
-    deviceCards: List<DeviceCardModel>,
-    onClick: (String) -> Unit
+    deviceCards: List<DeviceSummary>,
+    onClick: (UUID) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
