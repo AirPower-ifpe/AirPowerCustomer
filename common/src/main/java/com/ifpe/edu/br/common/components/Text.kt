@@ -118,7 +118,7 @@ fun CustomInputText(
 
 @Composable
 fun CustomText(
-    text: String,
+    text: String?,
     alignment: TextAlign = TextAlign.Left,
     color: Color = MaterialTheme.colorScheme.onPrimary,
     fontSize: TextUnit = 16.sp,
@@ -127,9 +127,10 @@ fun CustomText(
         .wrapContentWidth()
         .padding(start = 4.dp, end = 4.dp)
 ) {
+    val customText = text ?: ""
     Text(
         textAlign = alignment,
-        text = text,
+        text = customText,
         color = color,
         fontSize = fontSize,
         fontWeight = fontWeight,

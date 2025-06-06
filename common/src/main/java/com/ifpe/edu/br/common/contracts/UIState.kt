@@ -8,12 +8,12 @@ package com.ifpe.edu.br.common.contracts
 // Copyright (c) 2025 IFPE. All rights reserved.
 
 
-data class ErrorState(
+data class UIState(
     val message: String,
-    val errorCode: Int
+    val stateCode: Int
 ) {
     override fun toString(): String {
-        return "ErrorState(message='$message', errorCode=$errorCode)"
+        return "UIState(message='$message', stateCode=$stateCode)"
     }
 }
 
