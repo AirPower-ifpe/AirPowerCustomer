@@ -10,6 +10,8 @@ import com.ifpe.edu.br.model.repository.Repository
 import com.ifpe.edu.br.model.repository.model.DeviceCardModel
 import com.ifpe.edu.br.model.repository.persistence.model.AirPowerUser
 import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
+import com.ifpe.edu.br.model.repository.remote.dto.Id
+import com.ifpe.edu.br.model.repository.remote.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AuthenticateFailureException
@@ -87,6 +89,47 @@ class AirPowerViewModel(
                 val timeLeft = (minDelay - timeDelayed).coerceAtLeast(0L)
                 delay(timeLeft)
                 uiStateManager.setErrorState(Constants.STATE_ERROR, errorState)
+            }
+        }
+    }
+
+    fun getDeviceSummariesForUser(
+        user: ThingsBoardUser?,
+        onSuccessCallback: () -> Unit,
+        onFailureCallback: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                if (repository.currentUser.value != null) {
+
+                    val user = ThingsBoardUser(
+                        id = Id(repository.currentUser.value!!.id, ""),
+                        authority = "",
+                        customerId = Id("", ""),
+                        email = "",
+                        firstName = "",
+                        lastName = "",
+                        name = "",
+                        phone = "",
+                        additionalInfo = mapOf(),
+                        createdTime = 0,
+                        tenantId = Id("", "")
+                    )
+
+
+                    repository.getDeviceSummariesForUser(
+                        user = user,
+                        onSuccess = {
+                            AirPowerLog.d(TAG, "DEU BOM AQUI HEIN")
+                        },
+                        onFailureCallback = {
+                            AirPowerLog.d(TAG, "NAO DEU BOM AQUI HEIN")
+                        }
+                    )
+                }
+
+            } catch (e: Exception) {
+                AirPowerLog.e(TAG, "DEU algo ruim AQUI HEIN: ${e.message}")
             }
         }
     }

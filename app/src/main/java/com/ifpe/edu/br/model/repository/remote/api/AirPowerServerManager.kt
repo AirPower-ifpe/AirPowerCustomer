@@ -2,6 +2,8 @@ package com.ifpe.edu.br.model.repository.remote.api
 
 import com.google.gson.Gson
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceAggregatedTelemetry
+import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
+import com.ifpe.edu.br.model.repository.remote.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.dto.ThingsBordErrorResponse
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
@@ -43,6 +45,26 @@ class AirPowerServerManager(connection: Retrofit) {
         } else {
             val serverErrorWrapper = getServerErrorWrapper(serverResponse)
             throw AuthenticateFailureException("[$TAG]: -> getAggregatedTelemetry failure: message:${serverErrorWrapper.message}")
+        }
+        return emptyList()
+    }
+
+    suspend fun getDeviceSummariesForUser(
+        user: ThingsBoardUser,
+        onSuccess: () -> Unit
+    ): List<DeviceSummary> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceSummariesForUser()")
+        val serverResponse = apiService.getDeviceSummariesForUser(user.id.id)
+        val responseCode = serverResponse.code()
+        if (responseCode == HttpsURLConnection.HTTP_OK) {
+            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceSummariesForUser: HTTP_OK")
+            serverResponse.body()?.let {
+                onSuccess.invoke()
+                return it
+            }
+        } else {
+            val serverErrorWrapper = getServerErrorWrapper(serverResponse)
+            throw AuthenticateFailureException("[$TAG]: -> getDeviceSummariesForUser failure: message:${serverErrorWrapper.message}")
         }
         return emptyList()
     }
