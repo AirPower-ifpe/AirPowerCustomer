@@ -1,4 +1,4 @@
-package com.ifpe.edu.br.view.screens
+package com.ifpe.edu.br.view.ui.screens
 
 /*
 * Trabalho de conclusão de curso - IFPE 2025

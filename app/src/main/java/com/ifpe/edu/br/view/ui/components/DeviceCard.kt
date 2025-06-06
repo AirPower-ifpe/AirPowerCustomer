@@ -35,12 +35,14 @@ import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.components.ImageIcon
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.model.repository.model.DeviceCardModel
+import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
+import java.util.UUID
 
 @Composable
 fun DeviceCard(
-    device: DeviceCardModel,
-    onClick: (deviceId: String) -> Unit,
+    device: DeviceSummary,
+    onClick: (deviceId: UUID) -> Unit,
 ) {
     CustomCard(
         modifier = Modifier
@@ -88,11 +90,12 @@ fun DeviceCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
+                    val status = if (device.isActive) "online" else "offline"
                     CustomText(
-                        text = device.status,
+                        text = status,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
-                        color = getStatusColor(device.status),
+                        color = getStatusColor(status),
                         alignment = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )

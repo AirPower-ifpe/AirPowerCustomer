@@ -8,23 +8,28 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.ifpe.edu.br.core.api.ConnectionManager
+import com.ifpe.edu.br.model.repository.model.DeviceCardModel
 import com.ifpe.edu.br.model.repository.persistence.AirPowerDatabase
 import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
 import com.ifpe.edu.br.model.repository.persistence.manager.SharedPrefManager
 import com.ifpe.edu.br.model.repository.persistence.model.AirPowerToken
 import com.ifpe.edu.br.model.repository.persistence.model.AirPowerUser
+import com.ifpe.edu.br.model.repository.persistence.model.toThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerConnectionContractImpl
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerManager
 import com.ifpe.edu.br.model.repository.remote.api.ThingsBoardConnectionContractImpl
 import com.ifpe.edu.br.model.repository.remote.api.ThingsBoardManager
 import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
-import com.ifpe.edu.br.model.repository.remote.dto.Device
-import com.ifpe.edu.br.model.repository.remote.dto.Id
+import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
+import com.ifpe.edu.br.model.util.AuthenticateFailureException
 import com.ifpe.edu.br.model.util.TokenExpiredException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 class Repository private constructor(context: Context) {
@@ -39,12 +44,11 @@ class Repository private constructor(context: Context) {
         ConnectionManager.getInstance().getConnectionById(AirPowerServerConnectionContractImpl)
     private val airPowerServerMgr = AirPowerServerManager(airPowerServerConnection)
 
+    private val _devicesSummary = MutableLiveData<List<DeviceSummary>>(emptyList())
+    val devicesSummary: LiveData<List<DeviceSummary>> get() = _devicesSummary
 
-    private val _currentUser = MutableLiveData<AirPowerUser?>()
-    val currentUser: LiveData<AirPowerUser?> get() = _currentUser
-
-    private val _devices = MutableLiveData<List<Device>>()
-    val devices: MutableLiveData<List<Device>> get() = _devices
+//    private val _deviceCardsState = MutableStateFlow<List<DeviceCardModel>>(emptyList())
+//    val deviceCards: StateFlow<List<DeviceCardModel>> = _deviceCardsState.asStateFlow()
 
     companion object {
         @Volatile
@@ -72,14 +76,13 @@ class Repository private constructor(context: Context) {
 
     suspend fun authenticate(
         user: AuthUser,
-        onSuccessCallback: () -> Unit,
-        onFailureCallback: (e: Exception) -> Unit
     ) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "authenticate()")
         try {
-            thingsBoardMgr.auth(user) { onSuccessCallback.invoke() }
+            thingsBoardMgr.authenticate(user)
         } catch (e: Exception) {
-            onFailureCallback.invoke(e)
+            if (AirPowerLog.ISLOGABLE)
+                AirPowerLog.e(TAG, "Exception -> authenticate() -> ${e.message}")
             throw e
         }
     }
@@ -98,17 +101,20 @@ class Repository private constructor(context: Context) {
         }
     }
 
-    suspend fun getDeviceSummariesForUser(
-        user: ThingsBoardUser,
-        onSuccess: () -> Unit,
-        onFailureCallback: (e: Exception) -> Unit
-    ) {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getDeviceSummariesForUser()")
+    suspend fun retrieveDeviceSummaryForCurrentUser() {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveDeviceSummaryForCurrentUser()")
         try {
-            val result = airPowerServerMgr.getDeviceSummariesForUser(user) { onSuccess.invoke() }
-            AirPowerLog.e(TAG, result.toString()) // todo apagar
+            _devicesSummary.value =
+                getCurrentUser().let {
+                    AirPowerLog.e(TAG, "user is valid")
+                    airPowerServerMgr.getDeviceSummariesForUser(it.toThingsBoardUser())
+                }
+            AirPowerLog.e(TAG, devicesSummary.value.toString())
+        } catch (e: TokenExpiredException) {
+            AirPowerLog.d(TAG, "[$TAG]: TokenExpiredException -> ${e.message}")
+            throw e
         } catch (e: Exception) {
-            onFailureCallback.invoke(e)
+            AirPowerLog.d(TAG, "[$TAG]: getDeviceSummariesForUser -> ${e.message}")
             throw e
         }
     }
@@ -137,27 +143,7 @@ class Repository private constructor(context: Context) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "logout()")
         val connectionId = ThingsBoardConnectionContractImpl.getConnectionId()
         JWTManager.resetTokenForConnection(connectionId)
-        currentUser.value?.let { delete(it) }
-        _currentUser.value = null
-    }
-
-    suspend fun getDevicesForCurrentUser() {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getDevicesForCurrentUser()")
-        val user = currentUser.value
-            ?: throw IllegalStateException("[$TAG]: Exception -> [current user is null]")
-        try {
-            val devicesList = thingsBoardMgr.getAllDevicesForCustomer(user)
-            withContext(Dispatchers.Main) {
-                AirPowerLog.e(TAG, "[$TAG]: Devices for user -> $devicesList")
-                _devices.value = devicesList
-            }
-        } catch (e: TokenExpiredException) {
-            AirPowerLog.d(TAG, "[$TAG]: TokenExpiredException -> ${e.message}")
-            throw e
-        } catch (e: Exception) {
-            AirPowerLog.d(TAG, "[$TAG]: Exception -> ${e.message}")
-            throw e
-        }
+        userDao.deleteAll()
     }
 
     suspend fun getTokenByConnectionId(connection: Int): AirPowerToken? {
@@ -274,22 +260,22 @@ class Repository private constructor(context: Context) {
         )
     }
 
-    suspend fun retrieveCurrentUser(
-        onSuccessCallback: (user: AirPowerUser?) -> Unit
-    ) {
+    suspend fun retrieveCurrentUser() {
         try {
             if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveCurrentUser()")
-            val user = thingsBoardMgr.getCurrentUser()
-            _currentUser.value = user.toAirPowerUser()
-            onSuccessCallback.invoke(_currentUser.value)
-        } catch (e: Exception) {
+            userDao.insert(thingsBoardMgr.getCurrentUser().toAirPowerUser())
+        } catch (e: AuthenticateFailureException) {
             if (AirPowerLog.ISLOGABLE)
                 AirPowerLog.w(TAG, "[$TAG]: Exception: -> ${e.message}")
+            throw e
+        } catch (e: Exception) {
+            if (AirPowerLog.ISLOGABLE)
+                AirPowerLog.e(TAG, "[$TAG]: Exception: -> ${e.message}")
             throw e
         }
     }
 
-    fun isCurrentUserValid(): Boolean {
-        return _currentUser.value != null
+    private fun getCurrentUser(): AirPowerUser {
+        return userDao.findAll()[0]
     }
 }

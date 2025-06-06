@@ -7,7 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.rememberNavController
 import com.ifpe.edu.br.R
 import com.ifpe.edu.br.model.util.AirPowerLog
-import com.ifpe.edu.br.view.screens.MainScreen
+import com.ifpe.edu.br.view.ui.screens.MainScreen
 import com.ifpe.edu.br.view.ui.theme.AirPowerCostumerTheme
 import com.ifpe.edu.br.viewmodel.AirPowerViewModelProvider
 

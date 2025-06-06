@@ -50,8 +50,7 @@ class AirPowerServerManager(connection: Retrofit) {
     }
 
     suspend fun getDeviceSummariesForUser(
-        user: ThingsBoardUser,
-        onSuccess: () -> Unit
+        user: ThingsBoardUser
     ): List<DeviceSummary> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceSummariesForUser()")
         val serverResponse = apiService.getDeviceSummariesForUser(user.id.id)
@@ -59,7 +58,6 @@ class AirPowerServerManager(connection: Retrofit) {
         if (responseCode == HttpsURLConnection.HTTP_OK) {
             if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceSummariesForUser: HTTP_OK")
             serverResponse.body()?.let {
-                onSuccess.invoke()
                 return it
             }
         } else {

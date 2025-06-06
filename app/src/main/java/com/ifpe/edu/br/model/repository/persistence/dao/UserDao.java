@@ -31,4 +31,7 @@ public interface UserDao {
 
     @Query("SELECT * FROM AIR_POWER_USER")
     List<AirPowerUser> findAll();
+
+    @Query("DELETE FROM AIR_POWER_USER")
+    void deleteAll();
 }

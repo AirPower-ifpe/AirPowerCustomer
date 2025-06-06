@@ -1,4 +1,4 @@
-package com.ifpe.edu.br.view.screens
+package com.ifpe.edu.br.view.ui.screens
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
@@ -26,7 +26,7 @@ import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomNavigationBar
 import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.components.GradientBackground
-import com.ifpe.edu.br.common.contracts.ErrorState
+import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientDark
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
 import com.ifpe.edu.br.model.Constants
@@ -52,8 +52,8 @@ fun MainScreen(
 ) {
     val TAG = "MainScreen"
 
-    val errorState by mainViewModel.uiStateManager.observeError(id = Constants.STATE_ERROR)
-        .observeAsState(initial = ErrorState("", CommonConstants.State.STATE_DEFAULT_CODE))
+    val uiState by mainViewModel.uiStateManager.observeUIState(id = Constants.AUTH_STATE)
+        .observeAsState(initial = UIState("", CommonConstants.State.STATE_DEFAULT_SATATE_CODE))
 
     LaunchedEffect(Unit) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "LaunchedEffect()")
@@ -92,7 +92,7 @@ fun MainScreen(
         )
     }
 
-    when (errorState.errorCode) {
+    when (uiState.stateCode) {
         CommonConstants.State.STATE_AUTH_FAILURE -> {
             AuthFailure(navController, componentActivity)
         }
