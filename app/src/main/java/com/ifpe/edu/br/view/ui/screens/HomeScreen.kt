@@ -46,15 +46,6 @@ fun HomeScreen(
 
             TextTitle(textAlign = TextAlign.Center, message = "HomeScreen")
 
-            CustomCard(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(cardCornerRadius))
-                    .fillMaxWidth()
-                    .height(250.dp)
-                    .background(tb_primary_light),
-                layouts = listOf {
-                    CustomBarChart()
-                })
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
         }
     )

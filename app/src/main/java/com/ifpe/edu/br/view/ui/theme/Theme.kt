@@ -10,6 +10,8 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import com.ifpe.edu.br.common.ui.theme.Ceu70
+import com.ifpe.edu.br.common.ui.theme.ColorPrimaryLight
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
