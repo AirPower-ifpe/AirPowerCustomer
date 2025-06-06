@@ -19,6 +19,7 @@ import com.ifpe.edu.br.model.repository.remote.api.ThingsBoardConnectionContract
 import com.ifpe.edu.br.model.repository.remote.api.ThingsBoardManager
 import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.Device
+import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.model.repository.remote.dto.ThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
@@ -91,6 +92,21 @@ class Repository private constructor(context: Context) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getAggregatedTelemetry()")
         try {
             airPowerServerMgr.getAggregatedTelemetry(query) { onSuccess.invoke() }
+        } catch (e: Exception) {
+            onFailureCallback.invoke(e)
+            throw e
+        }
+    }
+
+    suspend fun getDeviceSummariesForUser(
+        user: ThingsBoardUser,
+        onSuccess: () -> Unit,
+        onFailureCallback: (e: Exception) -> Unit
+    ) {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getDeviceSummariesForUser()")
+        try {
+            val result = airPowerServerMgr.getDeviceSummariesForUser(user) { onSuccess.invoke() }
+            AirPowerLog.e(TAG, result.toString()) // todo apagar
         } catch (e: Exception) {
             onFailureCallback.invoke(e)
             throw e

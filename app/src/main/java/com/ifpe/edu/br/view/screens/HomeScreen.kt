@@ -24,6 +24,7 @@ import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.CustomBarChart
 import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
+import com.ifpe.edu.br.common.components.RoundedButton
 import com.ifpe.edu.br.common.components.TextTitle
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
@@ -42,7 +43,22 @@ fun HomeScreen(
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
         layouts = listOf {
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
+
+            RoundedButton(
+                text = "click me",
+                onClick = {
+                    mainViewModel.getDeviceSummariesForUser(
+                        user = null,
+                        onSuccessCallback = {},
+                        onFailureCallback = {}
+                    )
+                }
+            )
+
+            Spacer(modifier = Modifier.padding(vertical = 100.dp))
+
             TextTitle(textAlign = TextAlign.Center, message = "HomeScreen")
+
             CustomCard(
                 modifier = Modifier
                     .clip(RoundedCornerShape(cardCornerRadius))
