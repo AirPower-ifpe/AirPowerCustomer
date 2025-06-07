@@ -29,7 +29,7 @@ fun DeviceScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
-    val deviceSummary by mainViewModel.getDevicesSummary().observeAsState(initial = emptyList())
+    val devicesSummary by mainViewModel.getDevicesSummary().observeAsState(initial = emptyList())
 
     val context = LocalContext.current
 
@@ -38,7 +38,7 @@ fun DeviceScreen(
     }
 
     when {
-        deviceSummary.isEmpty() -> {
+        devicesSummary.isEmpty() -> {
             CustomColumn(
                 modifier = Modifier.fillMaxSize(),
                 alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
@@ -53,8 +53,8 @@ fun DeviceScreen(
         }
 
         else -> {
-            DeviceGrid(deviceCards = deviceSummary) { deviceId ->
-                navController.navigate(Screen.DeviceDetail.route)
+            DeviceGrid(deviceCards = devicesSummary) { deviceId ->
+                navController.navigate(Screen.DeviceDetail.createRoute(deviceId.toString()))
             }
         }
     }

@@ -5,6 +5,7 @@ package com.ifpe.edu.br.model.repository
 * Project: AirPower Costumer
 */
 import android.content.Context
+import android.content.res.Resources.NotFoundException
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.ifpe.edu.br.core.api.ConnectionManager
@@ -248,7 +249,21 @@ class Repository private constructor(context: Context) {
         return userDao.findAll()[0]
     }
 
+
     fun isUserLoggedIn(): Boolean {
         return userDao.findAll().size == 1
+    }
+    
+    fun getDeviceById(id: String): DeviceSummary {
+        devicesSummary.value?.forEach { devicesSummary ->
+            if (AirPowerLog.ISLOGABLE)
+                AirPowerLog.e(TAG, "[$TAG]: devicesSummary:$devicesSummary   id: $id" )
+            if (devicesSummary.id.toString() == id) {
+                return devicesSummary
+            }
+        }
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.e(TAG, "[$TAG]: Exception: -> device not found")
+        throw NotFoundException("[$TAG]: Exception: -> device not found")
     }
 }

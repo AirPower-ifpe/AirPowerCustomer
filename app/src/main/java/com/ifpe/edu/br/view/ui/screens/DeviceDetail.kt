@@ -3,7 +3,6 @@ package com.ifpe.edu.br.view.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -41,7 +40,7 @@ fun DeviceDetailScreen(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val devices = mainViewModel.getDevicesSummary().observeAsState(initial = emptyList())
+    val device = mainViewModel.getDeviceById(deviceId)
     CustomColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -58,16 +57,22 @@ fun DeviceDetailScreen(
                         color = tb_primary_light,
                         text = "Informaçõs do dispositivo"
                     )
-
-                    devices.value.forEach { device ->
-                        if (device.id.toString() == deviceId) {
-                            CustomText(
-                                color = tb_primary_light,
-                                text = device.label
-                            )
-                        }
-                    }
-
+                    CustomText(
+                        color = tb_primary_light,
+                        text = device.label
+                    )
+                    CustomText(
+                        color = tb_primary_light,
+                        text = device.type
+                    )
+                    CustomText(
+                        color = tb_primary_light,
+                        text = device.isActive.toString()
+                    )
+                    CustomText(
+                        color = tb_primary_light,
+                        text = device.name
+                    )
                 }
             )
 
@@ -173,7 +178,7 @@ private fun DeviceInfo(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        items(deviceCards, key = { it.id }) { deviceItem ->
+        items(deviceCards, key = { it }) { deviceItem ->
             DeviceCard(device = deviceItem, onClick = onClick)
         }
     }

@@ -2,7 +2,6 @@ package com.ifpe.edu.br.model.repository.remote.dto
 
 import java.util.UUID
 
-
 // Trabalho de conclusão de curso - IFPE 2025
 // Author: Willian Santos
 // Project: AirPower Costumer

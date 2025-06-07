@@ -267,7 +267,13 @@ class AirPowerViewModel(
         )
     }
 
+
     fun isUserLoggedIn(): Boolean {
         return repository.isUserLoggedIn()
     }
+
+    fun getDeviceById(deviceId: String): DeviceSummary {
+        return repository.getDeviceById(deviceId)
+    }
+
 }
