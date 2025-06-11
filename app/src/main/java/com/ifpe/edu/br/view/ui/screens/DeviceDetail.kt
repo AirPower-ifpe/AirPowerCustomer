@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.ifpe.edu.br.common.CommonConstants
+import com.ifpe.edu.br.common.components.CustomBarChart
 import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomText
@@ -46,7 +47,6 @@ fun DeviceDetailScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val device = mainViewModel.getDeviceById(deviceId)
-
     CustomColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -110,43 +110,35 @@ private fun AlarmsCard() {
 
 @Composable
 private fun DeviceConsumptionCard() {
+
     CustomCard(
         paddingStart = 15.dp,
         paddingEnd = 15.dp,
         paddingTop = 5.dp,
         paddingBottom = 5.dp,
         layouts = listOf {
-            CustomText(
-                color = tb_primary_light,
-                text = "Consumo do dispositivo"
-            )
-            CustomText(
-                color = tb_primary_light,
-                text = "Consumo do dispositivo"
-            )
-            CustomText(
-                color = tb_primary_light,
-                text = "Consumo do dispositivo"
-            )
-            CustomText(
-                color = tb_primary_light,
-                text = "Consumo do dispositivo"
-            )
-            CustomText(
-                color = tb_primary_light,
-                text = "Consumo do dispositivo"
-            )
-            CustomText(
-                color = tb_primary_light,
-                text = "Consumo do dispositivo"
-            )
-            CustomText(
-                color = tb_primary_light,
-                text = "Consumo do dispositivo"
-            )
-            CustomText(
-                color = tb_primary_light,
-                text = "Consumo do dispositivo"
+            CustomColumn(
+                layouts = listOf {
+
+                    Spacer(modifier = Modifier.padding(vertical = 4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        CustomText(
+                            color = tb_primary_light,
+                            text = "Consumo do dispositivo",
+                            fontSize = 20.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.padding(vertical = 12.dp))
+
+                    CustomBarChart()
+
+                    Spacer(modifier = Modifier.padding(vertical = 4.dp))
+                }
             )
         }
     )

@@ -3,7 +3,9 @@ package com.ifpe.edu.br.common.components
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -25,7 +27,7 @@ fun CustomBarChart(
 
 ) {
     ColumnChart(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp),
+        modifier = Modifier.height(200.dp).padding(horizontal = 22.dp),
         data = remember {
             listOf(
                 Bars(
@@ -34,12 +36,189 @@ fun CustomBarChart(
                         Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
                     ),
                 ),
+
                 Bars(
                     label = "2",
                     values = listOf(
                         Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
                     ),
-                )
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
+                Bars(
+                    label = "2",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 60.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+                Bars(
+                    label = "1",
+                    values = listOf(
+                        Bars.Data(label = "aaa", value = 70.0, color = SolidColor(ColorPrimaryDark))
+                    ),
+                ),
+
             )
         },
         animationSpec = spring(
