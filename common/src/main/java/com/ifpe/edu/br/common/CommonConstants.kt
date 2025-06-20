@@ -21,7 +21,7 @@ class CommonConstants {
         const val STATE_AUTH_LOADING = 1
         const val STATE_AUTH_FAILURE = 2
         const val STATE_TOKEN_EXPIRED = 3
-        const val STATE_NETWORK_ISSUE = 4
+        const val STATE_SERVER_INTERNAL_ISSUE = 4
         const val STATE_LOADING = 5
     }
 }

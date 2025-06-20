@@ -115,7 +115,7 @@ private fun navigateMainActivity(
 }
 
 private fun navigateAuthScreen(navController: NavController) {
-    navController.navigate(Constants.NAVIGATION_AUTH) {
-        popUpTo(Constants.NAVIGATION_INITIAL) { inclusive = true }
+    navController.navigate(Constants.Navigation.NAVIGATION_AUTH) {
+        popUpTo(Constants.Navigation.NAVIGATION_INITIAL) { inclusive = true }
     }
 }

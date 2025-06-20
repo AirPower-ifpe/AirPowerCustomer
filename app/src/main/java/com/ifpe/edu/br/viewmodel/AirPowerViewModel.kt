@@ -8,8 +8,7 @@ import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
-import com.ifpe.edu.br.model.repository.model.DeviceCardModel
-import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
+import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
@@ -18,9 +17,6 @@ import com.ifpe.edu.br.model.util.TokenExpiredException
 import com.ifpe.edu.br.view.manager.UIStateManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
@@ -51,7 +47,7 @@ class AirPowerViewModel(
             val startTime = System.currentTimeMillis()
             val minDelay = 1500L
             uiStateManager.setUIState(
-                Constants.AUTH_STATE,
+                Constants.UIState.AUTH_STATE,
                 UIState(
                     message = "Loading",
                     stateCode = CommonConstants.State.STATE_LOADING
@@ -65,12 +61,12 @@ class AirPowerViewModel(
             } catch (e: AuthenticateFailureException) {
                 uiState = UIState("${e.message}", CommonConstants.State.STATE_AUTH_FAILURE)
             } catch (e: Exception) {
-                uiState = UIState("${e.message}", CommonConstants.State.STATE_NETWORK_ISSUE)
+                uiState = UIState("${e.message}", CommonConstants.State.STATE_SERVER_INTERNAL_ISSUE)
             } finally {
                 val timeDelayed = System.currentTimeMillis() - startTime
                 val timeLeft = (minDelay - timeDelayed).coerceAtLeast(0L)
                 delay(timeLeft)
-                uiStateManager.setUIState(Constants.AUTH_STATE, uiState)
+                uiStateManager.setUIState(Constants.UIState.AUTH_STATE, uiState)
             }
         }
     }
@@ -101,6 +97,7 @@ class AirPowerViewModel(
                 )
             } catch (e: Exception) {
                 AirPowerLog.e(TAG, "DEU MERDA AQUI HEIN: ${e.message}")
+                // todo adicionar trabatamento aqui
             }
         }
     }
@@ -113,16 +110,16 @@ class AirPowerViewModel(
             try {
                 repository.updateSession {
                     uiStateManager.setUIState(
-                        Constants.STATE_ERROR, getDefaultUIState()
+                        Constants.UIState.STATE_ERROR, getDefaultUIState()
                     )
                     onSuccessCallback.invoke()
                 }
             } catch (e: Exception) {
                 uiStateManager.setUIState(
-                    Constants.STATE_ERROR,
+                    Constants.UIState.STATE_ERROR,
                     UIState(
                         "[$TAG]: -> ${e.message}",
-                        Constants.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
+                        Constants.ResponseErrorCodes.INVALID_AIRPOWER_TOKEN
                     )
                 )
                 onFailureCallback.invoke()
@@ -160,20 +157,20 @@ class AirPowerViewModel(
 
     private fun handleException(e: Exception) {
         uiStateManager.setUIState(
-            Constants.STATE_ERROR,
+            Constants.UIState.STATE_ERROR,
             UIState(
                 "[$TAG] : -> ${e.message}",
-                Constants.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
+                Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
             )
         )
     }
 
     private fun handleTokenExpiredException(e: TokenExpiredException) {
         uiStateManager.setUIState(
-            Constants.STATE_ERROR,
+            Constants.UIState.STATE_ERROR,
             UIState(
                 "[$TAG] : -> ${e.message}",
-                Constants.THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED
+                Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED
             )
         )
     }
@@ -188,8 +185,10 @@ class AirPowerViewModel(
                 }
             } catch (e: TokenExpiredException) {
                 handleTokenExpiredException(e)
+                // todo adicionar tratamento aqui
             } catch (e: Exception) {
                 handleException(e)
+                // todo adicionar tratamento aqui
             }
         }
     }

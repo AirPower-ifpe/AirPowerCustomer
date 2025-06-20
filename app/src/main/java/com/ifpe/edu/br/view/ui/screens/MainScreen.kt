@@ -52,7 +52,7 @@ fun MainScreen(
 ) {
     val TAG = "MainScreen"
 
-    val uiState by mainViewModel.uiStateManager.observeUIState(id = Constants.AUTH_STATE)
+    val uiState by mainViewModel.uiStateManager.observeUIState(id = Constants.UIState.AUTH_STATE)
         .observeAsState(initial = UIState("", CommonConstants.State.STATE_DEFAULT_SATATE_CODE))
 
     LaunchedEffect(Unit) {
@@ -80,8 +80,10 @@ fun MainScreen(
                         )
                     }
                 ) { innerPadding ->
-                    GradientBackground(if (isSystemInDarkTheme()) defaultBackgroundGradientDark
-                    else defaultBackgroundGradientLight)
+                    GradientBackground(
+                        if (isSystemInDarkTheme()) defaultBackgroundGradientDark
+                        else defaultBackgroundGradientLight
+                    )
                     NavHostContainer(
                         navController = navController,
                         modifier = Modifier.padding(innerPadding),
@@ -97,15 +99,15 @@ fun MainScreen(
             AuthFailure(navController, componentActivity)
         }
 
-        CommonConstants.State.STATE_NETWORK_ISSUE -> {
+        CommonConstants.State.STATE_SERVER_INTERNAL_ISSUE -> {
             NetworkIssue(navController, componentActivity)
         }
 
-        Constants.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED -> {
+        Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED -> {
             UpdateSessionFailure(navController, componentActivity)
         }
 
-        Constants.THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED -> {
+        Constants.ResponseErrorCodes.INVALID_AIRPOWER_TOKEN -> {
             mainViewModel.updateSession(
                 onSuccessCallback = {
                     mainViewModel.startDataFetchers()

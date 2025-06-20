@@ -48,7 +48,7 @@ import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.White
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.model.Constants
-import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
+import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.MainActivity
@@ -71,7 +71,7 @@ fun AuthScreen(
     val scrollState = rememberScrollState()
     val airPowerViewModel = viewModel as AirPowerViewModel
 
-    val uiState by airPowerViewModel.uiStateManager.observeUIState(id = Constants.AUTH_STATE)
+    val uiState by airPowerViewModel.uiStateManager.observeUIState(id = Constants.UIState.AUTH_STATE)
         .observeAsState(initial = UIState("", CommonConstants.State.STATE_DEFAULT_SATATE_CODE))
 
     Box(
@@ -186,13 +186,13 @@ fun AuthScreen(
                     text = "Credenciais inválidas",
                     textColor = tb_primary_light,
                     retryCallback = {
-                        viewModel.resetUIState(Constants.AUTH_STATE)
+                        viewModel.resetUIState(Constants.UIState.AUTH_STATE)
                     }
                 ) { DefaultTransparentGradient() }
             }
         }
 
-        CommonConstants.State.STATE_NETWORK_ISSUE -> {
+        CommonConstants.State.STATE_SERVER_INTERNAL_ISSUE -> {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -207,7 +207,7 @@ fun AuthScreen(
                     text = "Houve um erro de conexão",
                     textColor = tb_primary_light,
                     retryCallback = {
-                        viewModel.resetUIState(Constants.AUTH_STATE)
+                        viewModel.resetUIState(Constants.UIState.AUTH_STATE)
                     }
                 ) { modifier -> DefaultTransparentGradient(modifier) }
             }
@@ -236,7 +236,7 @@ fun AuthScreen(
                 componentActivity,
                 MainActivity::class.java
             )
-            viewModel.resetUIState(Constants.AUTH_STATE)
+            viewModel.resetUIState(Constants.UIState.AUTH_STATE)
             componentActivity.finish()
         }
     }

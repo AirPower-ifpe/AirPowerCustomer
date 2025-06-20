@@ -7,7 +7,7 @@ package com.ifpe.edu.br.model.repository.persistence.manager
 */
 import com.ifpe.edu.br.model.repository.Repository
 import com.ifpe.edu.br.model.repository.persistence.model.AirPowerToken
-import com.ifpe.edu.br.model.repository.remote.dto.Token
+import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.util.AirPowerLog
 import java.util.Base64
 

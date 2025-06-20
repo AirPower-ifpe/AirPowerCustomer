@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
-import android.os.Bundle;
 
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.res.ResourcesCompat;
@@ -35,7 +34,7 @@ public class AirPowerUtil {
         Resources resources = context.getResources();
         Drawable drawable;
         try {
-            int idDrawable = resources.getIdentifier(name, Constants.KEY_COD_DRAWABLE,
+            int idDrawable = resources.getIdentifier(name, Constants.ResKeys.KEY_COD_DRAWABLE,
                     context.getPackageName());
             drawable = ResourcesCompat.getDrawable(resources, idDrawable, null);
         } catch (Exception e) {

@@ -10,21 +10,21 @@ import android.app.Application
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import com.ifpe.edu.br.core.api.ConnectionManager
-import com.ifpe.edu.br.model.repository.remote.api.ThingsBoardConnectionContractImpl
+import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerConnectionContractImpl
 import com.ifpe.edu.br.model.util.AirPowerLog
 
 object AirPowerViewModelProvider {
     private val tag = AirPowerViewModelProvider::class.simpleName
     private var singletonViewModel: AirPowerViewModel? = null
-    private val thingsBoardConnection =
-        ConnectionManager.getInstance().getConnectionById(ThingsBoardConnectionContractImpl)
+    private val airPowerConnection =
+        ConnectionManager.getInstance().getConnectionById(AirPowerServerConnectionContractImpl)
     fun getInstance(
         application: Application,
     ): AirPowerViewModel {
         if (singletonViewModel == null) {
             if (AirPowerLog.ISLOGABLE)
                 AirPowerLog.d(tag, "AirPowerViewModel -> create instance")
-            val factory = AirPowerViewModelFactory(application, thingsBoardConnection)
+            val factory = AirPowerViewModelFactory(application, airPowerConnection)
             singletonViewModel = ViewModelProvider(
                 ViewModelStore(),
                 factory

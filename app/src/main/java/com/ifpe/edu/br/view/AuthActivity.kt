@@ -73,9 +73,9 @@ private fun InitializeNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = Constants.NAVIGATION_INITIAL
+        startDestination = Constants.Navigation.NAVIGATION_INITIAL
     ) {
-        composable(Constants.NAVIGATION_INITIAL) {
+        composable(Constants.Navigation.NAVIGATION_INITIAL) {
             SplashScreen(
                 navController = navController,
                 viewModel = mainViewModel,
@@ -83,7 +83,7 @@ private fun InitializeNavigation(
             )
         }
 
-        composable(Constants.NAVIGATION_AUTH) {
+        composable(Constants.Navigation.NAVIGATION_AUTH) {
             AuthScreen(
                 navController = navController,
                 viewModel = mainViewModel,

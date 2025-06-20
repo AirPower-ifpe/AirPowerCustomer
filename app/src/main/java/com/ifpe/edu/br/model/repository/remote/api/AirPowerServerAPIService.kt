@@ -2,6 +2,8 @@ package com.ifpe.edu.br.model.repository.remote.api
 
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
+import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
+import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -18,6 +20,15 @@ import retrofit2.http.Path
 
 
 interface AirPowerServerAPIService {
+
+    @POST("/api/v1/auth/token")
+    suspend fun refreshToken(@Body requestBody: RequestBody): Response<Token>
+
+    @POST("/api/v1/auth/login")
+    suspend fun auth(@Body requestBody: RequestBody): Response<Token>
+
+    @GET("/api/v1/user/me")
+    suspend fun getCurrentUser(): Response<AirPowerBoardUser>
 
     @POST("/test/api/v1/devices/telemetry/aggregate")
     suspend fun getAggregatedTelemetry(@Body requestBody: RequestBody): Response<TelemetryAggregationResponse>
