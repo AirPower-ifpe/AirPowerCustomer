@@ -24,7 +24,7 @@ import java.util.Locale;
 public class AirPowerUtil {
 
     private static final String TAG = AirPowerUtil.class.getSimpleName();
-    private static boolean isVerbose = false;
+    private static boolean isVerbose = true;
 
     public static Drawable getDrawable(String name, Context context) {
         if (context == null) {

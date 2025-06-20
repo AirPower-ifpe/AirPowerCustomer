@@ -18,9 +18,11 @@ import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerConnectionContr
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerManager
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
+import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
+import com.ifpe.edu.br.model.util.ResultWrapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -65,13 +67,9 @@ class Repository private constructor(context: Context) {
 
     suspend fun authenticate(
         user: AuthUser,
-    ) {
+    ): ResultWrapper<Token> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "authenticate()")
-        try {
-            airPowerServerMgr.authenticate(user)
-        } catch (e: Exception) {
-            throw e
-        }
+        return airPowerServerMgr.authenticate(user)
     }
 
     suspend fun getAggregatedTelemetry(
@@ -111,6 +109,15 @@ class Repository private constructor(context: Context) {
         } catch (e: Exception) {
             throw e
         }
+    }
+
+    suspend fun retrieveCurrentUser():ResultWrapper<AirPowerBoardUser> {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveCurrentUser()")
+        val currentUserResult = airPowerServerMgr.getCurrentUser()
+        if (currentUserResult is ResultWrapper.Success) {
+            userDao.insert(currentUserResult.value.toAirPowerUser())
+        }
+        return  currentUserResult
     }
 
     suspend fun isSessionExpired(): Boolean {
@@ -239,15 +246,6 @@ class Repository private constructor(context: Context) {
             name = name,
             phone = phone
         )
-    }
-
-    suspend fun retrieveCurrentUser() {
-        try {
-            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveCurrentUser()")
-            userDao.insert(airPowerServerMgr.getCurrentUser().toAirPowerUser())
-        } catch (e: Exception) {
-            throw e
-        }
     }
 
     private fun getCurrentUser(): AirPowerUser {

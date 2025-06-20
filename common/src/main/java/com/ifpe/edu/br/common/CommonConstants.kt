@@ -15,7 +15,7 @@ class CommonConstants {
 
     object State {
         const val STATE_DEFAULT_MESSAGE = "STATE_DEFAULT_MESSAGE"
-        const val STATE_DEFAULT_SATATE_CODE = -1
+        const val STATE_DEFAULT_STATE_CODE = -1
 
         const val STATE_SUCCESS = 0
         const val STATE_AUTH_LOADING = 1

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -53,7 +54,7 @@ fun MainScreen(
     val TAG = "MainScreen"
 
     val uiState by mainViewModel.uiStateManager.observeUIState(id = Constants.UIState.AUTH_STATE)
-        .observeAsState(initial = UIState("", CommonConstants.State.STATE_DEFAULT_SATATE_CODE))
+        .collectAsState()
 
     LaunchedEffect(Unit) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "LaunchedEffect()")
@@ -107,7 +108,7 @@ fun MainScreen(
             UpdateSessionFailure(navController, componentActivity)
         }
 
-        Constants.ResponseErrorCodes.INVALID_AIRPOWER_TOKEN -> {
+        Constants.ResponseErrorId.AP_GENERIC_ERROR -> {
             mainViewModel.updateSession(
                 onSuccessCallback = {
                     mainViewModel.startDataFetchers()

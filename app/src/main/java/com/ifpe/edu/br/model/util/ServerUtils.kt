@@ -19,7 +19,7 @@ object ServerUtils {
             val errorBody = serverResponse.errorBody()?.string()
             errorBody ?: AirPowerErrorResponse(
                 HttpsURLConnection.HTTP_INTERNAL_ERROR,
-                Constants.ResponseErrorCodes.INVALID_RESPONSE,
+                Constants.ResponseErrorId.AP_GENERIC_ERROR,
                 "Invalid server response error",
                 System.currentTimeMillis()
             )
@@ -28,7 +28,7 @@ object ServerUtils {
             AirPowerLog.e(TAG, "Unexpected error while handling server response: ${e.message}")
             AirPowerErrorResponse(
                 HttpsURLConnection.HTTP_INTERNAL_ERROR,
-                Constants.ResponseErrorCodes.INVALID_RESPONSE,
+                Constants.ResponseErrorId.AP_GENERIC_ERROR,
                 "Unexpected error while handling server response",
                 System.currentTimeMillis()
             )

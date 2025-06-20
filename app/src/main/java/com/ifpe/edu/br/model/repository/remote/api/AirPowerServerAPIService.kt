@@ -25,10 +25,10 @@ interface AirPowerServerAPIService {
     suspend fun refreshToken(@Body requestBody: RequestBody): Response<Token>
 
     @POST("/api/v1/auth/login")
-    suspend fun auth(@Body requestBody: RequestBody): Response<Token>
+    suspend fun auth(@Body requestBody: RequestBody): Token
 
     @GET("/api/v1/user/me")
-    suspend fun getCurrentUser(): Response<AirPowerBoardUser>
+    suspend fun getCurrentUser(): AirPowerBoardUser
 
     @POST("/test/api/v1/devices/telemetry/aggregate")
     suspend fun getAggregatedTelemetry(@Body requestBody: RequestBody): Response<TelemetryAggregationResponse>

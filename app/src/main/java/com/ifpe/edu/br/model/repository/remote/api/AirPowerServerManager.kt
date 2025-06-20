@@ -12,8 +12,8 @@ import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.repository.remote.query.RefreshTokenQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AuthenticateFailureException
-import com.ifpe.edu.br.model.util.ExceptionHandler
 import com.ifpe.edu.br.model.util.InvalidStateException
+import com.ifpe.edu.br.model.util.ResultWrapper
 import com.ifpe.edu.br.model.util.ServerUtils
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -34,33 +34,19 @@ class AirPowerServerManager(connection: Retrofit) {
 
     suspend fun authenticate(
         user: AuthUser,
-    ) {
+    ): ResultWrapper<Token> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "authenticate()")
         val userJson = Gson().toJson(user)
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val requestBody = RequestBody.create(mediaType, userJson)
-        val serverResponse = apiService.auth(requestBody)
-        val responseCode = serverResponse.code()
-        if (responseCode == HttpsURLConnection.HTTP_OK) {
-            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "Authentication success: HTTP_OK")
-            serverResponse.body()?.let {
-                JWTManager.handleAuthentication(
-                    AirPowerServerConnectionContractImpl.getConnectionId(),
-                    it
-                ) { }
-            }
-        } else {
-            val serverErrorWrapper = ServerUtils.getServerErrorWrapper(serverResponse)
-            if (serverErrorWrapper.errorCode == Constants.ResponseErrorCodes.INVALID_AIRPOWER_TOKEN) {
-                if (AirPowerLog.ISVERBOSE) AirPowerLog.e(
-                    TAG,
-                    "Authentication failed: ${serverErrorWrapper.message}"
-                )
-                throw AuthenticateFailureException("[$TAG]: -> Authentication failure: message:${serverErrorWrapper.message}")
-            } else {
-                throw InvalidStateException("[$TAG]: -> Unhandled issue message:${serverErrorWrapper.message} code: ${serverErrorWrapper.errorCode}")
-            }
+        val response = safeApiCall { apiService.auth(requestBody) }
+        if (response is ResultWrapper.Success) {
+            JWTManager.handleAuthentication(
+                AirPowerServerConnectionContractImpl.getConnectionId(),
+                response.value
+            ) { }
         }
+        return response
     }
 
     suspend fun refreshToken(
@@ -88,7 +74,7 @@ class AirPowerServerManager(connection: Retrofit) {
             }
         } else {
             val serverErrorWrapper = ServerUtils.getServerErrorWrapper(serverResponse)
-            if (serverErrorWrapper.errorCode == Constants.ResponseErrorCodes.INVALID_AIRPOWER_TOKEN) {
+            if (serverErrorWrapper.errorCode == Constants.ResponseErrorId.AP_GENERIC_ERROR) {
                 if (AirPowerLog.ISVERBOSE) AirPowerLog.e(
                     TAG,
                     "RefreshToken failed: ${serverErrorWrapper.message}"
@@ -100,28 +86,9 @@ class AirPowerServerManager(connection: Retrofit) {
         }
     }
 
-    suspend fun getCurrentUser(): AirPowerBoardUser {
+    suspend fun getCurrentUser(): ResultWrapper<AirPowerBoardUser> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getCurrentUser()")
-        val serverResponse = apiService.getCurrentUser()
-        if (serverResponse.code() == HttpsURLConnection.HTTP_OK) {
-            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getCurrentUser(): HTTP_OK")
-            val thingsBoardUser = serverResponse.body()
-            return thingsBoardUser ?: throw InvalidStateException("[$TAG]: ThingsBoardUser is null")
-        } else {
-            val serverErrorWrapper = ServerUtils.getServerErrorWrapper(serverResponse)
-            if (serverErrorWrapper.errorCode == Constants.ResponseErrorCodes.INVALID_AIRPOWER_TOKEN) {
-                if (AirPowerLog.ISVERBOSE) AirPowerLog.w(
-                    TAG,
-                    "INVALID_AIRPOWER_TOKEN"
-                )
-                throw AuthenticateFailureException("[$TAG]: message: ${serverErrorWrapper.message}")
-            } else {
-                throw InvalidStateException("[$TAG]: untracked failure: server " +
-                        "code: ${serverErrorWrapper.errorCode} " +
-                        "message: ${serverErrorWrapper.message}"
-                )
-            }
-        }
+        return safeApiCall { apiService.getCurrentUser() }
     }
 
     suspend fun getAggregatedTelemetry(
@@ -142,16 +109,17 @@ class AirPowerServerManager(connection: Retrofit) {
             }
         } else {
             val serverErrorWrapper = ServerUtils.getServerErrorWrapper(serverResponse)
-            if (serverErrorWrapper.errorCode == Constants.ResponseErrorCodes.INVALID_AIRPOWER_TOKEN) {
+            if (serverErrorWrapper.errorCode == Constants.ResponseErrorId.AP_GENERIC_ERROR) {
                 if (AirPowerLog.ISVERBOSE) AirPowerLog.w(
                     TAG,
                     "INVALID_AIRPOWER_TOKEN"
                 )
                 throw AuthenticateFailureException("[$TAG]: -> getAggregatedTelemetry failure: message ${serverErrorWrapper.message}")
             } else {
-                throw InvalidStateException("[$TAG]: untracked failure: server " +
-                        "code: ${serverErrorWrapper.errorCode} " +
-                        "message: ${serverErrorWrapper.message}"
+                throw InvalidStateException(
+                    "[$TAG]: untracked failure: server " +
+                            "code: ${serverErrorWrapper.errorCode} " +
+                            "message: ${serverErrorWrapper.message}"
                 )
             }
         }

@@ -7,38 +7,36 @@ package com.ifpe.edu.br.model
 */
 class Constants {
 
-    object ResponseErrorCodes {
+    object ResponseErrorId {
         // --- Autenticação AirPower (1xxx) ---
-        const val INVALID_AIRPOWER_TOKEN = 1
-
-        const val INVALID_JWT_TOKEN = 11
-        const val INVALID_REFRESH_TOKEN = 12
-
-        const val ACCESS_DENIED = 13
-
-        // --- Erros de Requisição (2xxx) ---
-        const val INVALID_ARGUMENTS = 2
-        const val INVALID_RESPONSE = 21
+        const val AP_JWT_EXPIRED = 10
+        const val AP_REFRESH_TOKEN_EXPIRED = 11
+        const val AP_GENERIC_ERROR = 12
 
         // --- Erros Mapeados do ThingsBoard (3xxx) ---
-        const val TB_AUTHENTICATION_FAILED = 31
-        const val TB_JWT_EXPIRED = 32
-        const val TB_PERMISSION_DENIED = 33
-        const val TB_ITEM_NOT_FOUND = 34
-        const val TB_TOO_MANY_REQUESTS = 35
-        const val TB_GENERIC_ERROR = 36
+        const val TB_INVALID_CREDENTIALS = 30
+        const val TB_REFRESH_TOKEN_EXPIRED = 31
+        const val TB_GENERIC_ERROR = 32
 
         // --- Erros Genéricos (9xxx) ---
-        const val UNKNOWN_INTERNAL_ERROR = 9
+        const val UNKNOWN_INTERNAL_ERROR = 90
     }
 
     object UIState {
+        const val STATE_SUCCESS = -1
+        const val STATE_TB_INVALID_CREDENTIALS = 1
+        const val STATE_TB_REFRESH_TOKEN_EXPIRED = 2
+        const val STATE_AP_GENERIC_ERROR = 3
+        const val STATE_AP_REFRESH_TOKEN_EXPIRED = 4
+        const val STATE_AP_JWT_EXPIRED = 5
+        const val STATE_UNKNOWN_INTERNAL_ERROR = 6
+        const val STATE_NETWORK_ISSUE = 7
         const val STATE_ERROR = "STATE_ERROR"
         const val AUTH_STATE = "AUTH_STATE"
-        const val STATE_AUTH_REQUIRED = "STATE_AUTH_REQUIRED"
-        const val STATE_CONNECTION_FAILURE = "STATE_CONNECTION_FAILURE"
-        const val STATE_AUTH_FAILURE = "STATE_AUTH_FAILURE"
-        const val STATE_AUTH_LOADING = "STATE_AUTH_LOADING"
+    }
+
+    object UIStateId{
+        const val SESSION = "SESSION"
     }
 
     @Deprecated("Replace with navigation approach")
