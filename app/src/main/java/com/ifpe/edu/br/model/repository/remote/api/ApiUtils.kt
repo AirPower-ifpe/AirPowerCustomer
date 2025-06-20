@@ -50,13 +50,13 @@ suspend fun <T> safeApiCall(apiCall: suspend () -> T): ResultWrapper<T> {
 
 private fun mapErrorCode(errorID: Int): ErrorCode {
     when (errorID) {
-        Constants.ResponseErrorId.TB_INVALID_CREDENTIALS -> ErrorCode.TB_INVALID_CREDENTIALS
-        Constants.ResponseErrorId.TB_REFRESH_TOKEN_EXPIRED -> ErrorCode.TB_REFRESH_TOKEN_EXPIRED
-        Constants.ResponseErrorId.TB_GENERIC_ERROR -> ErrorCode.TB_GENERIC_ERROR
+        Constants.ResponseErrorCode.TB_INVALID_CREDENTIALS -> ErrorCode.TB_INVALID_CREDENTIALS
+        Constants.ResponseErrorCode.TB_REFRESH_TOKEN_EXPIRED -> ErrorCode.TB_REFRESH_TOKEN_EXPIRED
+        Constants.ResponseErrorCode.TB_GENERIC_ERROR -> ErrorCode.TB_GENERIC_ERROR
 
-        Constants.ResponseErrorId.AP_JWT_EXPIRED -> ErrorCode.AP_JWT_EXPIRED
-        Constants.ResponseErrorId.AP_REFRESH_TOKEN_EXPIRED -> ErrorCode.AP_REFRESH_TOKEN_EXPIRED
-        Constants.ResponseErrorId.AP_GENERIC_ERROR -> ErrorCode.AP_GENERIC_ERROR
+        Constants.ResponseErrorCode.AP_JWT_EXPIRED -> ErrorCode.AP_JWT_EXPIRED
+        Constants.ResponseErrorCode.AP_REFRESH_TOKEN_EXPIRED -> ErrorCode.AP_REFRESH_TOKEN_EXPIRED
+        Constants.ResponseErrorCode.AP_GENERIC_ERROR -> ErrorCode.AP_GENERIC_ERROR
     }
     return ErrorCode.UNKNOWN_INTERNAL_ERROR
 }

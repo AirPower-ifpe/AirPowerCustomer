@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,7 +26,6 @@ import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomNavigationBar
 import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.components.GradientBackground
-import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientDark
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
 import com.ifpe.edu.br.model.Constants
@@ -53,7 +51,7 @@ fun MainScreen(
 ) {
     val TAG = "MainScreen"
 
-    val uiState by mainViewModel.uiStateManager.observeUIState(id = Constants.UIState.AUTH_STATE)
+    val uiState by mainViewModel.uiStateManager.observeUIState(id = Constants.UIStateKey.AUTH_KEY)
         .collectAsState()
 
     LaunchedEffect(Unit) {
@@ -95,28 +93,28 @@ fun MainScreen(
         )
     }
 
-    when (uiState.stateCode) {
-        CommonConstants.State.STATE_AUTH_FAILURE -> {
-            AuthFailure(navController, componentActivity)
-        }
-
-        CommonConstants.State.STATE_SERVER_INTERNAL_ISSUE -> {
-            NetworkIssue(navController, componentActivity)
-        }
-
-        Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED -> {
-            UpdateSessionFailure(navController, componentActivity)
-        }
-
-        Constants.ResponseErrorId.AP_GENERIC_ERROR -> {
-            mainViewModel.updateSession(
-                onSuccessCallback = {
-                    mainViewModel.startDataFetchers()
-                },
-                onFailureCallback = {}
-            )
-        }
-    }
+//    when (uiState.state) {
+//        CommonConstants.State.STATE_AUTH_FAILURE -> {
+//           // AuthFailure(navController, componentActivity)
+//        }
+//
+//        CommonConstants.State.STATE_SERVER_INTERNAL_ISSUE -> {
+//            //NetworkIssue(navController, componentActivity)
+//        }
+//
+//        Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED -> {
+//            //UpdateSessionFailure(navController, componentActivity)
+//        }
+//
+//        Constants.ResponseErrorCode.AP_GENERIC_ERROR -> {
+//            mainViewModel.updateSession(
+//                onSuccessCallback = {
+//                    mainViewModel.startDataFetchers()
+//                },
+//                onFailureCallback = {}
+//            )
+//        }
+//    }
 }
 
 @Composable

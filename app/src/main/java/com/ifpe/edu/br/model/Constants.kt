@@ -7,40 +7,46 @@ package com.ifpe.edu.br.model
 */
 class Constants {
 
-    object ResponseErrorId {
-        // --- Autenticação AirPower (1xxx) ---
-        const val AP_JWT_EXPIRED = 10
-        const val AP_REFRESH_TOKEN_EXPIRED = 11
-        const val AP_GENERIC_ERROR = 12
+    object ResponseErrorCode {
+        // --- Erros Mapeados do ThingsBoard (2xxx) ---
+        const val TB_INVALID_CREDENTIALS = 20
+        const val TB_REFRESH_TOKEN_EXPIRED = 21
+        const val TB_GENERIC_ERROR = 22
 
-        // --- Erros Mapeados do ThingsBoard (3xxx) ---
-        const val TB_INVALID_CREDENTIALS = 30
-        const val TB_REFRESH_TOKEN_EXPIRED = 31
-        const val TB_GENERIC_ERROR = 32
+        // --- Autenticação AirPower (3xxx) ---
+        const val AP_JWT_EXPIRED = 30
+        const val AP_REFRESH_TOKEN_EXPIRED = 31
+        const val AP_GENERIC_ERROR = 32
 
         // --- Erros Genéricos (9xxx) ---
         const val UNKNOWN_INTERNAL_ERROR = 90
+
+        const val SUCCESS = 0
+        const val EMPTY_STATE_MESSAGE = ""
+        const val EMPTY_STATE_CODE = -1
     }
 
     object UIState {
-        const val STATE_SUCCESS = -1
-        const val STATE_TB_INVALID_CREDENTIALS = 1
-        const val STATE_TB_REFRESH_TOKEN_EXPIRED = 2
-        const val STATE_AP_GENERIC_ERROR = 3
-        const val STATE_AP_REFRESH_TOKEN_EXPIRED = 4
-        const val STATE_AP_JWT_EXPIRED = 5
-        const val STATE_UNKNOWN_INTERNAL_ERROR = 6
-        const val STATE_NETWORK_ISSUE = 7
-        const val STATE_ERROR = "STATE_ERROR"
-        const val AUTH_STATE = "AUTH_STATE"
+        const val EMPTY_STATE = "EMPTY_STATE"
+        const val STATE_UPDATE_SESSION = "STATE_UPDATE_SESSION"
+        const val STATE_REFRESH_TOKEN = "STATE_REFRESH_TOKEN"
+        const val STATE_LOADING = "LOADING"
+        const val STATE_REQUEST_LOGIN = "STATE_REQUEST_LOGIN"
+        const val STATE_NETWORK_ISSUE = "NETWORK_ISSUE"
+        const val STATE_SUCCESS = "SUCCESS"
+        const val GENERIC_ERROR = "GENERIC_ERROR"
+        const val STATE_AUTHENTICATION_FAILURE = "AUTHENTICATION_FAILURE"
     }
 
-    object UIStateId{
+    object UIStateKey {
+        const val STATE_ERROR = "STATE_ERROR"
         const val SESSION = "SESSION"
+        const val AUTH_KEY = "AUTH_STATE"
+        const val LOGIN_KEY = "STATE_LOGIN"
     }
 
     @Deprecated("Replace with navigation approach")
-    object Navigation{
+    object Navigation {
         const val NAVIGATION_INITIAL = "START"
         const val NAVIGATION_MAIN = "MAIN"
         const val NAVIGATION_AUTH = "AUTH"
@@ -51,12 +57,12 @@ class Constants {
         const val CONNECTION_ID_AIR_POWER_SERVER = 2
     }
 
-    object ResKeys{
+    object ResKeys {
         const val KEY_COD_DRAWABLE: String = "drawable"
     }
 
     @Deprecated("Replace with new approach")
-    object DeprecatedValues{
+    object DeprecatedValues {
         const val THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED = 11
         const val THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED = 10
     }

@@ -74,7 +74,7 @@ class AirPowerServerManager(connection: Retrofit) {
             }
         } else {
             val serverErrorWrapper = ServerUtils.getServerErrorWrapper(serverResponse)
-            if (serverErrorWrapper.errorCode == Constants.ResponseErrorId.AP_GENERIC_ERROR) {
+            if (serverErrorWrapper.errorCode == Constants.ResponseErrorCode.AP_GENERIC_ERROR) {
                 if (AirPowerLog.ISVERBOSE) AirPowerLog.e(
                     TAG,
                     "RefreshToken failed: ${serverErrorWrapper.message}"
@@ -109,7 +109,7 @@ class AirPowerServerManager(connection: Retrofit) {
             }
         } else {
             val serverErrorWrapper = ServerUtils.getServerErrorWrapper(serverResponse)
-            if (serverErrorWrapper.errorCode == Constants.ResponseErrorId.AP_GENERIC_ERROR) {
+            if (serverErrorWrapper.errorCode == Constants.ResponseErrorCode.AP_GENERIC_ERROR) {
                 if (AirPowerLog.ISVERBOSE) AirPowerLog.w(
                     TAG,
                     "INVALID_AIRPOWER_TOKEN"

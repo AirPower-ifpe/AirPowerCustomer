@@ -8,6 +8,7 @@ package com.ifpe.edu.br.view.manager
 
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.contracts.UIStateManagerContract
+import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.util.AirPowerLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,13 +59,13 @@ class UIStateManager : UIStateManagerContract {
         return intStates.getOrPut(id) { MutableStateFlow(0) }.asStateFlow()
     }
 
-    override fun setUIState(id: String, value: UIState) {
-        val stateFlow = uiStates.getOrPut(id) { MutableStateFlow(UIState("", 0)) }
+    override fun setUIState(key: String, value: UIState) {
+        val stateFlow = uiStates.getOrPut(key) { MutableStateFlow(UIState(Constants.UIState.EMPTY_STATE)) }
         if (AirPowerLog.ISVERBOSE) {
             AirPowerLog.d(
                 TAG,
-                "setUIState($id): current={message=\"${stateFlow.value.message}\", code=${stateFlow.value.stateCode}}, " +
-                        "new={message=\"${value.message}\", code=${value.stateCode}}"
+                "setUIState($key): current={state=\"${stateFlow.value.state}\"}" +
+                        " new={state=\"${value.state}\", }"
             )
         }
         stateFlow.value = value
@@ -72,7 +73,7 @@ class UIStateManager : UIStateManagerContract {
 
     override fun observeUIState(id: String): StateFlow<UIState> {
         return uiStates.getOrPut(id) {
-            MutableStateFlow(UIState("", 0))
+            MutableStateFlow(UIState(Constants.UIState.EMPTY_STATE))
         }.asStateFlow()
     }
 

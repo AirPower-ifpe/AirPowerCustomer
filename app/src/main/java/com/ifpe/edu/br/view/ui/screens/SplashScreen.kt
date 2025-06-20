@@ -33,6 +33,7 @@ import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.components.GradientBackground
 import com.ifpe.edu.br.common.components.RoundedImageIcon
+import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientDark
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
 import com.ifpe.edu.br.model.Constants
@@ -50,8 +51,9 @@ fun SplashScreen(
     viewModel: AirPowerViewModel,
     componentActivity: ComponentActivity
 ) {
-    val stateId = Constants.UIStateId.SESSION
-    val sessionState = viewModel.uiStateManager.observeUIState(stateId).collectAsState()
+    val stateKey = Constants.UIStateKey.SESSION
+    val sessionState = viewModel.uiStateManager.observeUIState(stateKey)
+        .collectAsState(initial = UIState(Constants.UIState.EMPTY_STATE))
 
     GradientBackground(
         if (isSystemInDarkTheme()) defaultBackgroundGradientDark
@@ -78,7 +80,7 @@ fun SplashScreen(
         }
     )
 
-    if (sessionState.value.stateCode == Constants.ResponseErrorId.AP_REFRESH_TOKEN_EXPIRED) {
+    if (sessionState.value.state == Constants.UIState.STATE_REQUEST_LOGIN) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -90,10 +92,10 @@ fun SplashScreen(
                     .fillMaxSize(),
                 drawableResId = R.drawable.auth_issue,
                 iconSize = 150.dp,
-                text = sessionState.value.message,
+                text = "A sessão expirou, faça login novamente",
                 textColor = tb_primary_light,
                 retryCallback = {
-                    viewModel.resetUIState(stateId)
+                    viewModel.resetUIState(stateKey)
                     navigateAuthScreen(navController)
                 }
             ) { DefaultTransparentGradient() }
@@ -109,8 +111,9 @@ private fun AuthScreenPostDelayed(
 ) {
     var hasNavigated by rememberSaveable { mutableStateOf(false) }
     val hasCheckedToken = rememberSaveable { mutableStateOf(false) }
-    val stateId = Constants.UIStateId.SESSION
-    val sessionState = viewModel.uiStateManager.observeUIState(stateId).collectAsState()
+    val stateKey = Constants.UIStateKey.SESSION
+    val sessionState = viewModel.uiStateManager.observeUIState(stateKey)
+        .collectAsState(initial = UIState(Constants.UIState.EMPTY_STATE))
 
     LaunchedEffect(hasCheckedToken.value) {
         if (!hasCheckedToken.value) {
@@ -121,27 +124,31 @@ private fun AuthScreenPostDelayed(
     }
 
     if (!hasNavigated) {
-        when (sessionState.value.stateCode) {
-            Constants.ResponseErrorId.AP_JWT_EXPIRED -> {
+        when (sessionState.value.state) {
+            Constants.UIState.STATE_REFRESH_TOKEN -> {
                 hasNavigated = true
-                viewModel.updateSession(
+                viewModel.updateSession( // TODO aqui vai mudar pra o novo apprach
                     onSuccessCallback = {
-                        viewModel.resetUIState(stateId)
+                        AirPowerLog.e("willjsan", "onSuccessCallback")
+                        viewModel.resetUIState(stateKey)
                         navigateMainActivity(navController, componentActivity)
                     },
                     onFailureCallback = {
-                        viewModel.requestLogin(stateId)
+                        AirPowerLog.e("willjsan", "onFailureCallback")
+                        viewModel.requestLogin(stateKey)
                     }
                 )
             }
 
             Constants.UIState.STATE_SUCCESS -> {
+                AirPowerLog.e("willjsan", "STATE_SUCCESS")
                 hasNavigated = true
-                viewModel.resetUIState(stateId)
+                viewModel.resetUIState(stateKey)
                 navigateMainActivity(navController, componentActivity)
             }
         }
     }
+    AirPowerLog.e("willjsan", "navigated")
 }
 
 private fun navigateMainActivity(

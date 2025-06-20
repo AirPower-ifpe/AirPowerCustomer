@@ -24,10 +24,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -40,6 +40,8 @@ import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomInputText
+import com.ifpe.edu.br.common.components.CustomProgressDialog
+import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.components.RectButton
 import com.ifpe.edu.br.common.components.RoundedImageIcon
 import com.ifpe.edu.br.common.contracts.UIState
@@ -48,6 +50,9 @@ import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.util.AirPowerLog
+import com.ifpe.edu.br.model.util.AirPowerUtil
+import com.ifpe.edu.br.view.MainActivity
+import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
 import com.ifpe.edu.br.view.ui.theme.tb_tertiary_light
@@ -65,8 +70,9 @@ fun AuthScreen(
     }
     val scrollState = rememberScrollState()
     val airPowerViewModel = viewModel as AirPowerViewModel
-
-    val uiState by airPowerViewModel.uiStateManager.observeUIState(id = Constants.UIState.AUTH_STATE).collectAsState()
+    val stateId = Constants.UIStateKey.LOGIN_KEY
+    val sessionState = airPowerViewModel.uiStateManager.observeUIState(stateId)
+        .collectAsState(initial = UIState(Constants.UIState.EMPTY_STATE))
 
     Box(
         modifier = Modifier
@@ -164,74 +170,74 @@ fun AuthScreen(
         )
     }
 
-//    when (uiState.stateCode) {
-//        Constants.UIState.STATE_TB_INVALID_CREDENTIALS -> {
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .background(Color.Black.copy(alpha = 0.9f))
-//            ) {
-//                FailureDialog(
-//                    modifier = Modifier
-//                        .align(Alignment.Center)
-//                        .fillMaxSize(),
-//                    drawableResId = R.drawable.auth_issue,
-//                    iconSize = 150.dp,
-//                    text = uiState.message,
-//                    textColor = tb_primary_light,
-//                    retryCallback = {
-//                        viewModel.resetUIState(Constants.UIState.AUTH_STATE)
-//                    }
-//                ) { DefaultTransparentGradient() }
-//            }
-//        }
-//
-//        Constants.UIState.STATE_NETWORK_ISSUE -> {
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .background(Color.Black.copy(alpha = 0.8f))
-//            ) {
-//                FailureDialog(
-//                    modifier = Modifier
-//                        .align(Alignment.Center)
-//                        .fillMaxSize(),
-//                    drawableResId = R.drawable.network_issue,
-//                    iconSize = 150.dp,
-//                    text = uiState.message,
-//                    textColor = tb_primary_light,
-//                    retryCallback = {
-//                        viewModel.resetUIState(Constants.UIState.AUTH_STATE)
-//                    }
-//                ) { modifier -> DefaultTransparentGradient(modifier) }
-//            }
-//        }
-//
-//        CommonConstants.State.STATE_LOADING -> {
-//            Box(
-//                modifier = Modifier
-//                    .background(Color.Black.copy(alpha = 0.5f))
-//            ) {
-//                CustomProgressDialog(
-//                    modifier = Modifier
-//                        .align(Alignment.Center)
-//                        .fillMaxSize(),
-//                    indicatorColor = tb_secondary_light,
-//                    textColor = tb_primary_light
-//                ) { modifier ->
-//                    DefaultTransparentGradient(modifier)
-//                }
-//            }
-//        }
-//
-//        CommonConstants.State.STATE_SUCCESS -> {
-//            navController.popBackStack()
-//            AirPowerUtil.launchActivity(
-//                componentActivity,
-//                MainActivity::class.java
-//            )
-//            viewModel.resetUIState(Constants.UIState.AUTH_STATE)
-//            componentActivity.finish()
-//        }
-//    }
+    when (sessionState.value.state) {
+        Constants.UIState.STATE_REQUEST_LOGIN -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.9f))
+            ) {
+                FailureDialog(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxSize(),
+                    drawableResId = R.drawable.auth_issue,
+                    iconSize = 150.dp,
+                    text = sessionState.value.state,
+                    textColor = tb_primary_light,
+                    retryCallback = {
+                        viewModel.resetUIState(stateId)
+                    }
+                ) { DefaultTransparentGradient() }
+            }
+        }
+
+        Constants.UIState.GENERIC_ERROR -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.8f))
+            ) {
+                FailureDialog(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxSize(),
+                    drawableResId = R.drawable.network_issue,
+                    iconSize = 150.dp,
+                    text = sessionState.value.state,
+                    textColor = tb_primary_light,
+                    retryCallback = {
+                        viewModel.resetUIState(stateId)
+                    }
+                ) { modifier -> DefaultTransparentGradient(modifier) }
+            }
+        }
+
+        Constants.UIState.STATE_LOADING -> {
+            Box(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.5f))
+            ) {
+                CustomProgressDialog(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxSize(),
+                    indicatorColor = tb_secondary_light,
+                    textColor = tb_primary_light
+                ) { modifier ->
+                    DefaultTransparentGradient(modifier)
+                }
+            }
+        }
+
+        Constants.UIState.STATE_SUCCESS -> {
+            navController.popBackStack()
+            AirPowerUtil.launchActivity(
+                componentActivity,
+                MainActivity::class.java
+            )
+            viewModel.resetUIState(stateId)
+            componentActivity.finish()
+        }
+    }
 }

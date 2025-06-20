@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
-import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
@@ -47,25 +46,25 @@ class AirPowerViewModel(
     ) {
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()
-            val uiStateKey = Constants.UIState.AUTH_STATE
+            val uiStateKey = Constants.UIStateKey.LOGIN_KEY
             uiStateManager.setUIState(
                 uiStateKey,
-                UIState(
-                    message = "Loading",
-                    stateCode = CommonConstants.State.STATE_LOADING
-                )
+                UIState(Constants.UIState.STATE_LOADING)
             )
             var isAuthSuccess = false
             when (val authResponse = repository.authenticate(user = user)) {
                 is ResultWrapper.ApiError -> {
+                    AirPowerLog.e("willjsan", "handleApiError")
                     handleApiError(authResponse.errorCode, uiStateKey, startTime)
                 }
 
                 is ResultWrapper.NetworkError -> {
+                    AirPowerLog.e("willjsan", "handleNetworkError")
                     handleNetworkError(uiStateKey, startTime)
                 }
 
                 is ResultWrapper.Success<*> -> {
+                    AirPowerLog.e("willjsan", "sucesso")
                     isAuthSuccess = true
                 }
             }
@@ -73,6 +72,8 @@ class AirPowerViewModel(
             var isGetUserSuccess = false
             when (val currentUserResponse = repository.retrieveCurrentUser()) {
                 is ResultWrapper.ApiError -> {
+                    AirPowerLog.e("willjsan", "sucesso")
+
                     handleApiError(
                         currentUserResponse.errorCode,
                         uiStateKey,
@@ -81,10 +82,14 @@ class AirPowerViewModel(
                 }
 
                 is ResultWrapper.NetworkError -> {
+                    AirPowerLog.e("willjsan", "sucesso")
+
                     handleNetworkError(uiStateKey, startTime)
                 }
 
                 is ResultWrapper.Success<*> -> {
+                    AirPowerLog.e("willjsan", "sucesso")
+
                     isGetUserSuccess = true
                 }
             }
@@ -93,7 +98,7 @@ class AirPowerViewModel(
                 delay(getTimeLeftDelay(startTime))
                 uiStateManager.setUIState(
                     uiStateKey,
-                    UIState("", CommonConstants.State.STATE_SUCCESS)
+                    UIState(Constants.UIState.EMPTY_STATE) // todo ver isso aqui
                 )
             }
         }
@@ -142,19 +147,19 @@ class AirPowerViewModel(
         viewModelScope.launch {
             try {
                 repository.updateSession {
-                    uiStateManager.setUIState(
-                        Constants.UIState.STATE_ERROR, getDefaultUIState()
-                    )
+//                    uiStateManager.setUIState(
+//                        Constants.UIState.STATE_ERROR, getDefaultUIState()
+//                    )
                     onSuccessCallback.invoke()
                 }
             } catch (e: Exception) {
-                uiStateManager.setUIState(
-                    Constants.UIState.STATE_ERROR,
-                    UIState(
-                        "[$TAG]: -> ${e.message}",
-                        Constants.ResponseErrorId.AP_GENERIC_ERROR
-                    )
-                )
+//                uiStateManager.setUIState(
+//                    Constants.UIState.STATE_ERROR,
+//                    UIState(
+//                        "[$TAG]: -> ${e.message}",
+//                        Constants.ResponseErrorId.AP_GENERIC_ERROR
+//                    )
+//                )
                 onFailureCallback.invoke()
             }
         }
@@ -162,22 +167,16 @@ class AirPowerViewModel(
 
     fun isTokenExpired() {
         viewModelScope.launch {
-            val uiStateKey = Constants.UIStateId.SESSION
+            val uiStateKey = Constants.UIStateKey.SESSION
             if (repository.isSessionExpired()) {
                 uiStateManager.setUIState(
                     uiStateKey,
-                    UIState(
-                        ErrorCode.AP_JWT_EXPIRED.defaultMessage,
-                        ErrorCode.AP_JWT_EXPIRED.errorCode
-                    )
+                    UIState(Constants.UIState.STATE_REFRESH_TOKEN)
                 )
             } else {
                 uiStateManager.setUIState(
                     uiStateKey,
-                    UIState(
-                        "success",
-                        Constants.UIState.STATE_SUCCESS
-                    )
+                    UIState(Constants.UIState.EMPTY_STATE) // todo ver isso aqui
                 )
             }
         }
@@ -192,7 +191,7 @@ class AirPowerViewModel(
     }
 
     fun resetUIState(stateId: String) {
-        uiStateManager.setUIState(stateId, getDefaultUIState())
+        uiStateManager.setUIState(stateId, getEmptyValueUIState())
     }
 
     fun startDataFetchers() {
@@ -204,23 +203,23 @@ class AirPowerViewModel(
     }
 
     private fun handleException(e: Exception) {
-        uiStateManager.setUIState(
-            Constants.UIState.STATE_ERROR,
-            UIState(
-                "[$TAG] : -> ${e.message}",
-                Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
-            )
-        )
+//        uiStateManager.setUIState(
+//            Constants.UIState.STATE_ERROR,
+//            UIState(
+//                "[$TAG] : -> ${e.message}",
+//                Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
+//            )
+//        )
     }
 
     private fun handleTokenExpiredException(e: TokenExpiredException) {
-        uiStateManager.setUIState(
-            Constants.UIState.STATE_ERROR,
-            UIState(
-                "[$TAG] : -> ${e.message}",
-                Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED
-            )
-        )
+//        uiStateManager.setUIState(
+//            Constants.UIState.STATE_ERROR,
+//            UIState(
+//                "[$TAG] : -> ${e.message}",
+//                Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED
+//            )
+//        )
     }
 
     private fun startDevicesFetcher(): Job {
@@ -240,11 +239,8 @@ class AirPowerViewModel(
         }
     }
 
-    private fun getDefaultUIState(): UIState {
-        return UIState(
-            CommonConstants.State.STATE_DEFAULT_MESSAGE,
-            CommonConstants.State.STATE_DEFAULT_STATE_CODE
-        )
+    private fun getEmptyValueUIState(): UIState {
+        return UIState(Constants.UIState.EMPTY_STATE)
     }
 
     private suspend fun handleApiError(
@@ -255,56 +251,44 @@ class AirPowerViewModel(
         delay(getTimeLeftDelay(startTime))
         when (code) {
             ErrorCode.TB_INVALID_CREDENTIALS -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.d(TAG, "TB_INVALID_CREDENTIALS -> STATE_AUTHENTICATION_FAILURE")
                 uiStateManager.setUIState(
-                    uiStateKey, UIState(
-                        code.defaultMessage,
-                        Constants.UIState.STATE_TB_INVALID_CREDENTIALS
-                    )
+                    uiStateKey, UIState(Constants.UIState.STATE_AUTHENTICATION_FAILURE)
                 )
             }
 
             ErrorCode.TB_REFRESH_TOKEN_EXPIRED -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.d(TAG, "TB_REFRESH_TOKEN_EXPIRED -> STATE_REQUEST_LOGIN")
                 uiStateManager.setUIState(
-                    uiStateKey, UIState(
-                        code.defaultMessage,
-                        Constants.UIState.STATE_TB_REFRESH_TOKEN_EXPIRED
-                    )
-                )
-            }
-            
-            ErrorCode.AP_GENERIC_ERROR -> {
-                uiStateManager.setUIState(
-                    uiStateKey, UIState(
-                        code.defaultMessage,
-                        Constants.UIState.STATE_AP_GENERIC_ERROR
-                    )
+                    uiStateKey,
+                    UIState(Constants.UIState.STATE_REQUEST_LOGIN)
                 )
             }
 
             ErrorCode.AP_REFRESH_TOKEN_EXPIRED -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.d(TAG, "AP_REFRESH_TOKEN_EXPIRED -> STATE_REQUEST_LOGIN")
                 uiStateManager.setUIState(
-                    uiStateKey, UIState(
-                        code.defaultMessage,
-                        Constants.UIState.STATE_AP_REFRESH_TOKEN_EXPIRED
-                    )
+                    uiStateKey,
+                    UIState(Constants.UIState.STATE_REQUEST_LOGIN)
                 )
             }
-            
+
             ErrorCode.AP_JWT_EXPIRED -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.d(TAG, "AP_JWT_EXPIRED -> STATE_UPDATE_SESSION")
                 uiStateManager.setUIState(
-                    uiStateKey, UIState(
-                        code.defaultMessage,
-                        Constants.UIState.STATE_AP_JWT_EXPIRED
-                    )
+                    uiStateKey, UIState(Constants.UIState.STATE_UPDATE_SESSION)
                 )
             }
-            
-            else ->  {
+
+            else -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.d(TAG, "else -> GENERIC_ERROR")
                 uiStateManager.setUIState(
-                    uiStateKey, UIState(
-                        code.defaultMessage,
-                        Constants.UIState.STATE_UNKNOWN_INTERNAL_ERROR
-                    )
+                    uiStateKey, UIState(Constants.UIState.GENERIC_ERROR)
                 )
             }
         }
@@ -317,7 +301,6 @@ class AirPowerViewModel(
         delay(getTimeLeftDelay(startTime))
         uiStateManager.setUIState(
             uiStateKey, UIState(
-                "Um erro de conexão ocorreu",
                 Constants.UIState.STATE_NETWORK_ISSUE
             )
         )
@@ -325,10 +308,7 @@ class AirPowerViewModel(
 
     fun requestLogin(stateId: String) {
         uiStateManager.setUIState(
-            stateId, UIState(
-                "Sessão Expirada, por favor faça login novamente",
-                Constants.ResponseErrorId.AP_REFRESH_TOKEN_EXPIRED
-            )
+            stateId, UIState(Constants.UIState.STATE_REQUEST_LOGIN)
         )
     }
 }
