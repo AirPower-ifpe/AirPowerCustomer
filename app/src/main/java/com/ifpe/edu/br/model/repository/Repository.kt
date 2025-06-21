@@ -111,13 +111,28 @@ class Repository private constructor(context: Context) {
         }
     }
 
-    suspend fun retrieveCurrentUser():ResultWrapper<AirPowerBoardUser> {
+    suspend fun retrieveCurrentUser(): ResultWrapper<AirPowerBoardUser> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveCurrentUser()")
         val currentUserResult = airPowerServerMgr.getCurrentUser()
         if (currentUserResult is ResultWrapper.Success) {
-            userDao.insert(currentUserResult.value.toAirPowerUser())
+            val storedUserSet = userDao.findAll()
+            var storedUser: AirPowerUser? = null
+            if (storedUserSet.isNotEmpty()) {
+                storedUser = storedUserSet[0]
+            }
+            val incomingUser = currentUserResult.value.toAirPowerUser()
+            if (storedUser == null) {
+                userDao.insert(incomingUser)
+            } else {
+                if (storedUser.id == incomingUser.id) {
+                    userDao.update(incomingUser)
+                } else {
+                    userDao.deleteAll()
+                    userDao.insert(incomingUser)
+                }
+            }
         }
-        return  currentUserResult
+        return currentUserResult
     }
 
     suspend fun isSessionExpired(): Boolean {
