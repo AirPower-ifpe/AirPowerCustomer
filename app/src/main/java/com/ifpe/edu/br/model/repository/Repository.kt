@@ -251,4 +251,8 @@ class Repository private constructor(context: Context) {
     private fun getCurrentUser(): AirPowerUser {
         return userDao.findAll()[0]
     }
+
+    fun isUserLoggedIn(): Boolean {
+        return userDao.findAll().size == 1
+    }
 }

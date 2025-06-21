@@ -37,7 +37,6 @@ import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientDark
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
 import com.ifpe.edu.br.model.Constants
-import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.MainActivity
 import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
@@ -81,24 +80,29 @@ fun SplashScreen(
     )
 
     if (sessionState.value.state == Constants.UIState.STATE_REQUEST_LOGIN) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.9f))
-        ) {
-            FailureDialog(
+        if (viewModel.isUserLoggedIn()) {
+            Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxSize(),
-                drawableResId = R.drawable.auth_issue,
-                iconSize = 150.dp,
-                text = "A sessão expirou, faça login novamente",
-                textColor = tb_primary_light,
-                retryCallback = {
-                    viewModel.resetUIState(stateKey)
-                    navigateAuthScreen(navController)
-                }
-            ) { DefaultTransparentGradient() }
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.9f))
+            ) {
+                FailureDialog(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxSize(),
+                    drawableResId = R.drawable.auth_issue,
+                    iconSize = 150.dp,
+                    text = "A sessão expirou, faça login novamente",
+                    textColor = tb_primary_light,
+                    retryCallback = {
+                        viewModel.resetUIState(stateKey)
+                        navigateAuthScreen(navController)
+                    }
+                ) { DefaultTransparentGradient() }
+            }
+        } else {
+            viewModel.resetUIState(stateKey)
+            navigateAuthScreen(navController)
         }
     }
 }
@@ -118,7 +122,7 @@ private fun AuthScreenPostDelayed(
     LaunchedEffect(hasCheckedToken.value) {
         if (!hasCheckedToken.value) {
             delay(1500)
-            viewModel.isTokenExpired()
+            viewModel.isSessionExpired()
             hasCheckedToken.value = true
         }
     }

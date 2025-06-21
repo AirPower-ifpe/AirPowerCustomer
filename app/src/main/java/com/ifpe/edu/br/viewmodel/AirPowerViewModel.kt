@@ -156,7 +156,7 @@ class AirPowerViewModel(
         }
     }
 
-    fun isTokenExpired() {
+    fun isSessionExpired() {
         viewModelScope.launch {
             val uiStateKey = Constants.UIStateKey.SESSION
             if (repository.isSessionExpired()) {
@@ -301,5 +301,9 @@ class AirPowerViewModel(
         uiStateManager.setUIState(
             stateId, UIState(Constants.UIState.STATE_REQUEST_LOGIN)
         )
+    }
+
+    fun isUserLoggedIn(): Boolean {
+        return repository.isUserLoggedIn()
     }
 }
