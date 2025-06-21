@@ -129,26 +129,22 @@ private fun AuthScreenPostDelayed(
                 hasNavigated = true
                 viewModel.updateSession( // TODO aqui vai mudar pra o novo apprach
                     onSuccessCallback = {
-                        AirPowerLog.e("willjsan", "onSuccessCallback")
                         viewModel.resetUIState(stateKey)
                         navigateMainActivity(navController, componentActivity)
                     },
                     onFailureCallback = {
-                        AirPowerLog.e("willjsan", "onFailureCallback")
                         viewModel.requestLogin(stateKey)
                     }
                 )
             }
 
             Constants.UIState.STATE_SUCCESS -> {
-                AirPowerLog.e("willjsan", "STATE_SUCCESS")
                 hasNavigated = true
                 viewModel.resetUIState(stateKey)
                 navigateMainActivity(navController, componentActivity)
             }
         }
     }
-    AirPowerLog.e("willjsan", "navigated")
 }
 
 private fun navigateMainActivity(

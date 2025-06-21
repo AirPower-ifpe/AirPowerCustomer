@@ -64,8 +64,8 @@ class UIStateManager : UIStateManagerContract {
         if (AirPowerLog.ISVERBOSE) {
             AirPowerLog.d(
                 TAG,
-                "setUIState($key): current={state=\"${stateFlow.value.state}\"}" +
-                        " new={state=\"${value.state}\", }"
+                "setUIState($key): Current state = {state=\"${stateFlow.value.state}\"}" +
+                        " new state = {state=\"${value.state}\"}"
             )
         }
         stateFlow.value = value

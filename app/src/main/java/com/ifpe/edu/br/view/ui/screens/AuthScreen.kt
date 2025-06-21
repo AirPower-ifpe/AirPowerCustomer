@@ -202,9 +202,30 @@ fun AuthScreen(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .fillMaxSize(),
+                    drawableResId = R.drawable.generic_error,
+                    iconSize = 150.dp,
+                    text = "Um erro inesperado ocorreu",
+                    textColor = tb_primary_light,
+                    retryCallback = {
+                        viewModel.resetUIState(stateId)
+                    }
+                ) { modifier -> DefaultTransparentGradient(modifier) }
+            }
+        }
+
+        Constants.UIState.STATE_NETWORK_ISSUE -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.8f))
+            ) {
+                FailureDialog(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxSize(),
                     drawableResId = R.drawable.network_issue,
                     iconSize = 150.dp,
-                    text = sessionState.value.state,
+                    text = "Houve um problema de conexão com o servidor",
                     textColor = tb_primary_light,
                     retryCallback = {
                         viewModel.resetUIState(stateId)
