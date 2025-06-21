@@ -9,6 +9,7 @@ import com.ifpe.edu.br.model.repository.Repository
 import com.ifpe.edu.br.model.repository.persistence.model.AirPowerToken
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.util.AirPowerLog
+import org.json.JSONObject
 import java.util.Base64
 
 object JWTManager {
@@ -65,6 +66,43 @@ object JWTManager {
         authCallback(storedToken)
     }
 
+//    suspend fun isTokenExpiredForConnection(connectionId: Int): Boolean {
+//        val tokenByClient = repository.getTokenByConnectionId(connectionId) ?: return true.also {
+//            AirPowerLog.w(TAG, "Token not found for connectionId: $connectionId")
+//        }
+//
+//        val jwtParts = tokenByClient.jwt.split(".")
+//        if (jwtParts.size != 3) return true.also {
+//            if (AirPowerLog.ISVERBOSE)
+//                AirPowerLog.w(TAG, "Invalid JWT format")
+//        }
+//
+//        return try {
+//            val decodedPayload = Base64.getUrlDecoder().decode(jwtParts[1]).decodeToString()
+//            val expIndex = decodedPayload.indexOf("\"exp\"")
+//
+//            if (expIndex != -1) {
+//                val expValue = decodedPayload.substring(expIndex)
+//                    .substringAfter(":")
+//                    .substringBefore(",")
+//                    .trim()
+//                    .toLong()
+//
+//                val now = System.currentTimeMillis() / 1000
+//                if (AirPowerLog.ISVERBOSE)
+//                    AirPowerLog.d(TAG, "exp: $expValue, system time: $now")
+//                expValue < now
+//            } else {
+//                if (AirPowerLog.ISVERBOSE)
+//                    AirPowerLog.e(TAG, "Expiration time not found")
+//                true
+//            }
+//        } catch (e: Exception) {
+//            AirPowerLog.e(TAG, "Error parsing JWT: ${e.message}")
+//            true
+//        }
+//    }
+
     suspend fun isTokenExpiredForConnection(connectionId: Int): Boolean {
         val tokenByClient = repository.getTokenByConnectionId(connectionId) ?: return true.also {
             AirPowerLog.w(TAG, "Token not found for connectionId: $connectionId")
@@ -77,30 +115,24 @@ object JWTManager {
         }
 
         return try {
-            val decodedPayload = Base64.getUrlDecoder().decode(jwtParts[1]).decodeToString()
-            val expIndex = decodedPayload.indexOf("\"exp\"")
+            val payloadJson = decodeJwtPayload(jwtParts[1])
+            val exp = payloadJson.getLong("exp")
+            val now = System.currentTimeMillis() / 1000
 
-            if (expIndex != -1) {
-                val expValue = decodedPayload.substring(expIndex)
-                    .substringAfter(":")
-                    .substringBefore(",")
-                    .trim()
-                    .toLong()
-
-                val now = System.currentTimeMillis() / 1000
-                if (AirPowerLog.ISVERBOSE)
-                    AirPowerLog.d(TAG, "exp: $expValue, system time: $now")
-                expValue < now
-            } else {
-                if (AirPowerLog.ISVERBOSE)
-                    AirPowerLog.e(TAG, "Expiration time not found")
-                true
-            }
+            if (AirPowerLog.ISVERBOSE)
+                AirPowerLog.d(TAG, "exp: $exp, now: $now")
+            exp < now
         } catch (e: Exception) {
             AirPowerLog.e(TAG, "Error parsing JWT: ${e.message}")
             true
         }
     }
+
+    private fun decodeJwtPayload(encodedPayload: String): JSONObject {
+        val decoded = Base64.getUrlDecoder().decode(encodedPayload)
+        return JSONObject(String(decoded))
+    }
+
 
     suspend fun getJwtForConnectionId(connectionId: Int): String {
         if (AirPowerLog.ISVERBOSE)

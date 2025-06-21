@@ -91,7 +91,7 @@ class Repository private constructor(context: Context) {
         try {
             _devicesSummary.value =
                 getCurrentUser().let {
-                    AirPowerLog.e(TAG, "user is valid")
+                    AirPowerLog.d(TAG, "user is valid")
                     airPowerServerMgr.getDeviceSummariesForUser(it.toThingsBoardUser())
                 }
             AirPowerLog.e(TAG, devicesSummary.value.toString())

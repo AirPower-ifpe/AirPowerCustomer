@@ -54,17 +54,14 @@ class AirPowerViewModel(
             var isAuthSuccess = false
             when (val authResponse = repository.authenticate(user = user)) {
                 is ResultWrapper.ApiError -> {
-                    AirPowerLog.e("willjsan", "handleApiError")
                     handleApiError(authResponse.errorCode, uiStateKey, startTime)
                 }
 
                 is ResultWrapper.NetworkError -> {
-                    AirPowerLog.e("willjsan", "handleNetworkError")
                     handleNetworkError(uiStateKey, startTime)
                 }
 
                 is ResultWrapper.Success<*> -> {
-                    AirPowerLog.e("willjsan", "sucesso")
                     isAuthSuccess = true
                 }
             }
@@ -72,8 +69,6 @@ class AirPowerViewModel(
             var isGetUserSuccess = false
             when (val currentUserResponse = repository.retrieveCurrentUser()) {
                 is ResultWrapper.ApiError -> {
-                    AirPowerLog.e("willjsan", "sucesso")
-
                     handleApiError(
                         currentUserResponse.errorCode,
                         uiStateKey,
@@ -82,14 +77,10 @@ class AirPowerViewModel(
                 }
 
                 is ResultWrapper.NetworkError -> {
-                    AirPowerLog.e("willjsan", "sucesso")
-
                     handleNetworkError(uiStateKey, startTime)
                 }
 
                 is ResultWrapper.Success<*> -> {
-                    AirPowerLog.e("willjsan", "sucesso")
-
                     isGetUserSuccess = true
                 }
             }
@@ -98,7 +89,7 @@ class AirPowerViewModel(
                 delay(getTimeLeftDelay(startTime))
                 uiStateManager.setUIState(
                     uiStateKey,
-                    UIState(Constants.UIState.EMPTY_STATE) // todo ver isso aqui
+                    UIState(Constants.UIState.STATE_SUCCESS)
                 )
             }
         }
@@ -176,7 +167,7 @@ class AirPowerViewModel(
             } else {
                 uiStateManager.setUIState(
                     uiStateKey,
-                    UIState(Constants.UIState.EMPTY_STATE) // todo ver isso aqui
+                    UIState(Constants.UIState.STATE_SUCCESS)
                 )
             }
         }
