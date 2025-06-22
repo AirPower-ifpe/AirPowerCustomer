@@ -50,8 +50,12 @@ fun SplashScreen(
     viewModel: AirPowerViewModel,
     componentActivity: ComponentActivity
 ) {
-    val stateKey = Constants.UIStateKey.SESSION
-    val sessionState = viewModel.uiStateManager.observeUIState(stateKey)
+    val sessionStateKey = Constants.UIStateKey.SESSION
+    val sessionState = viewModel.uiStateManager.observeUIState(sessionStateKey)
+        .collectAsState(initial = UIState(Constants.UIState.EMPTY_STATE))
+
+    val updateSessionStateKey = Constants.UIStateKey.REFRESH_TOKEN_KEY
+    val updateSessionUIState = viewModel.uiStateManager.observeUIState(updateSessionStateKey)
         .collectAsState(initial = UIState(Constants.UIState.EMPTY_STATE))
 
     GradientBackground(
@@ -79,31 +83,45 @@ fun SplashScreen(
         }
     )
 
-    if (sessionState.value.state == Constants.UIState.STATE_REQUEST_LOGIN) {
-        if (viewModel.isUserLoggedIn()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.9f))
-            ) {
-                FailureDialog(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxSize(),
-                    drawableResId = R.drawable.auth_issue,
-                    iconSize = 150.dp,
-                    text = "A sessão expirou, faça login novamente",
-                    textColor = tb_primary_light,
-                    retryCallback = {
-                        viewModel.resetUIState(stateKey)
-                        navigateAuthScreen(navController)
-                    }
-                ) { DefaultTransparentGradient() }
+    if (updateSessionUIState.value.state == Constants.UIState.STATE_SUCCESS) {
+        viewModel.resetUIState(updateSessionStateKey)
+        navigateMainActivity(navController, componentActivity)
+    } else {
+        if (updateSessionUIState.value.state != Constants.UIState.EMPTY_STATE) {
+            if (viewModel.isUserLoggedIn()) {
+                ExpiredSessionWarningScreen(viewModel, updateSessionStateKey, navController)
+            } else {
+                viewModel.resetUIState(updateSessionStateKey)
+                navigateAuthScreen(navController)
             }
-        } else {
-            viewModel.resetUIState(stateKey)
-            navigateAuthScreen(navController)
         }
+    }
+}
+
+@Composable
+private fun ExpiredSessionWarningScreen(
+    viewModel: AirPowerViewModel,
+    sessionStateKey: String,
+    navController: NavHostController
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.9f))
+    ) {
+        FailureDialog(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxSize(),
+            drawableResId = R.drawable.auth_issue,
+            iconSize = 150.dp,
+            text = "A sessão expirou, faça login novamente",
+            textColor = tb_primary_light,
+            retryCallback = {
+                viewModel.resetUIState(sessionStateKey)
+                navigateAuthScreen(navController)
+            }
+        ) { DefaultTransparentGradient() }
     }
 }
 
@@ -131,15 +149,8 @@ private fun AuthScreenPostDelayed(
         when (sessionState.value.state) {
             Constants.UIState.STATE_REFRESH_TOKEN -> {
                 hasNavigated = true
-                viewModel.updateSession( // TODO aqui vai mudar pra o novo apprach
-                    onSuccessCallback = {
-                        viewModel.resetUIState(stateKey)
-                        navigateMainActivity(navController, componentActivity)
-                    },
-                    onFailureCallback = {
-                        viewModel.requestLogin(stateKey)
-                    }
-                )
+                viewModel.resetUIState(stateKey)
+                viewModel.updateSession()
             }
 
             Constants.UIState.STATE_SUCCESS -> {

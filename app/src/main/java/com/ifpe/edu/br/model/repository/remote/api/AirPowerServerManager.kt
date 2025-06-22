@@ -7,6 +7,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.DeviceAggregatedTelemetry
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
+import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
 import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.repository.remote.query.RefreshTokenQuery
@@ -49,41 +50,29 @@ class AirPowerServerManager(connection: Retrofit) {
         return response
     }
 
-    suspend fun refreshToken(
-        onSuccess: () -> Unit
-    ) {
+    suspend fun refreshToken(): ResultWrapper<Token> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "refreshToken()")
         val jwtManager = JWTManager
         val token = jwtManager
             .getTokenForConnectionId(AirPowerServerConnectionContractImpl.getConnectionId())
-        if (!jwtManager.isTokenValid(token))
-            throw InvalidStateException("[$TAG]: -> Token is not valid")
+        if (!jwtManager.isTokenValid(token)){
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Token is not valid")
+            return ResultWrapper.ApiError(ErrorCode.AP_REFRESH_TOKEN_EXPIRED)
+        }
+
         val refreshTokenQuery = Gson().toJson(token?.let { RefreshTokenQuery(it.refreshToken) })
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val requestBody = RequestBody.create(mediaType, refreshTokenQuery)
-        val serverResponse = apiService.refreshToken(requestBody)
-        if (serverResponse.code() == HttpsURLConnection.HTTP_OK) {
+
+        val tokenResultWrapper = safeApiCall { apiService.refreshToken(requestBody) }
+        if (tokenResultWrapper is ResultWrapper.Success) {
             if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "refreshToken(): HTTP_OK")
-            serverResponse.body()?.let {
-                jwtManager.handleRefreshToken(
-                    AirPowerServerConnectionContractImpl.getConnectionId(),
-                    it
-                ) {
-                    onSuccess.invoke()
-                }
-            }
-        } else {
-            val serverErrorWrapper = ServerUtils.getServerErrorWrapper(serverResponse)
-            if (serverErrorWrapper.errorCode == Constants.ResponseErrorCode.AP_GENERIC_ERROR) {
-                if (AirPowerLog.ISVERBOSE) AirPowerLog.e(
-                    TAG,
-                    "RefreshToken failed: ${serverErrorWrapper.message}"
-                )
-                throw AuthenticateFailureException("[$TAG]: -> RefreshToken failure: message:${serverErrorWrapper.message}")
-            } else {
-                throw InvalidStateException("[$TAG]: -> Unhandled issue message:${serverErrorWrapper.message} code: ${serverErrorWrapper.errorCode}")
-            }
+            jwtManager.handleRefreshToken(
+                AirPowerServerConnectionContractImpl.getConnectionId(),
+                tokenResultWrapper.value
+            ) {}
         }
+        return tokenResultWrapper
     }
 
     suspend fun getCurrentUser(): ResultWrapper<AirPowerBoardUser> {

@@ -100,15 +100,9 @@ class Repository private constructor(context: Context) {
         }
     }
 
-    suspend fun updateSession(
-        onSuccessCallback: () -> Unit,
-    ) {
+    suspend fun updateSession(): ResultWrapper<Token> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "updateSession()")
-        try {
-            airPowerServerMgr.refreshToken { onSuccessCallback.invoke() }
-        } catch (e: Exception) {
-            throw e
-        }
+        return airPowerServerMgr.refreshToken()
     }
 
     suspend fun retrieveCurrentUser(): ResultWrapper<AirPowerBoardUser> {

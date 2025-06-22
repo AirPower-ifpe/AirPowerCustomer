@@ -54,11 +54,13 @@ class AirPowerViewModel(
             var isAuthSuccess = false
             when (val authResponse = repository.authenticate(user = user)) {
                 is ResultWrapper.ApiError -> {
-                    handleApiError(authResponse.errorCode, uiStateKey, startTime)
+                    delay(getTimeLeftDelay(startTime))
+                    handleApiError(authResponse.errorCode, uiStateKey)
                 }
 
                 is ResultWrapper.NetworkError -> {
-                    handleNetworkError(uiStateKey, startTime)
+                    delay(getTimeLeftDelay(startTime))
+                    handleNetworkError(uiStateKey)
                 }
 
                 is ResultWrapper.Success<*> -> {
@@ -69,15 +71,16 @@ class AirPowerViewModel(
             var isGetUserSuccess = false
             when (val currentUserResponse = repository.retrieveCurrentUser()) {
                 is ResultWrapper.ApiError -> {
+                    delay(getTimeLeftDelay(startTime))
                     handleApiError(
                         currentUserResponse.errorCode,
-                        uiStateKey,
-                        startTime
+                        uiStateKey
                     )
                 }
 
                 is ResultWrapper.NetworkError -> {
-                    handleNetworkError(uiStateKey, startTime)
+                    delay(getTimeLeftDelay(startTime))
+                    handleNetworkError(uiStateKey)
                 }
 
                 is ResultWrapper.Success<*> -> {
@@ -92,6 +95,7 @@ class AirPowerViewModel(
                     UIState(Constants.UIState.STATE_SUCCESS)
                 )
             }
+
         }
     }
 
@@ -131,27 +135,24 @@ class AirPowerViewModel(
         }
     }
 
-    fun updateSession(
-        onSuccessCallback: () -> Unit,
-        onFailureCallback: () -> Unit
-    ) {
+    fun updateSession() {
         viewModelScope.launch {
-            try {
-                repository.updateSession {
-//                    uiStateManager.setUIState(
-//                        Constants.UIState.STATE_ERROR, getDefaultUIState()
-//                    )
-                    onSuccessCallback.invoke()
+            val uiStateKey = Constants.UIStateKey.REFRESH_TOKEN_KEY
+            when (val refreshTokenResultWrapper = repository.updateSession()) {
+                is ResultWrapper.ApiError -> {
+                    handleApiError(refreshTokenResultWrapper.errorCode, uiStateKey)
                 }
-            } catch (e: Exception) {
-//                uiStateManager.setUIState(
-//                    Constants.UIState.STATE_ERROR,
-//                    UIState(
-//                        "[$TAG]: -> ${e.message}",
-//                        Constants.ResponseErrorId.AP_GENERIC_ERROR
-//                    )
-//                )
-                onFailureCallback.invoke()
+
+                is ResultWrapper.NetworkError -> {
+                    handleNetworkError(uiStateKey)
+                }
+
+                is ResultWrapper.Success<*> -> {
+                    uiStateManager.setUIState(
+                        uiStateKey,
+                        UIState(Constants.UIState.STATE_SUCCESS)
+                    )
+                }
             }
         }
     }
@@ -234,12 +235,11 @@ class AirPowerViewModel(
         return UIState(Constants.UIState.EMPTY_STATE)
     }
 
-    private suspend fun handleApiError(
+    private fun handleApiError(
         code: ErrorCode,
-        uiStateKey: String,
-        startTime: Long
+        uiStateKey: String
     ) {
-        delay(getTimeLeftDelay(startTime))
+
         when (code) {
             ErrorCode.TB_INVALID_CREDENTIALS -> {
                 if (AirPowerLog.ISVERBOSE)
@@ -285,11 +285,7 @@ class AirPowerViewModel(
         }
     }
 
-    private suspend fun handleNetworkError(
-        uiStateKey: String,
-        startTime: Long
-    ) {
-        delay(getTimeLeftDelay(startTime))
+    private fun handleNetworkError(uiStateKey: String) {
         uiStateManager.setUIState(
             uiStateKey, UIState(
                 Constants.UIState.STATE_NETWORK_ISSUE

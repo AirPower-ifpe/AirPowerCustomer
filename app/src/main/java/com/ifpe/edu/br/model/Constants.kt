@@ -43,6 +43,7 @@ class Constants {
         const val SESSION = "SESSION"
         const val AUTH_KEY = "AUTH_STATE"
         const val LOGIN_KEY = "STATE_LOGIN"
+        const val REFRESH_TOKEN_KEY = "REFRESH_TOKEN_KEY"
     }
 
     @Deprecated("Replace with navigation approach")

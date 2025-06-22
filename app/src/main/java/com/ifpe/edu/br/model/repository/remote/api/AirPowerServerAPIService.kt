@@ -22,7 +22,7 @@ import retrofit2.http.Path
 interface AirPowerServerAPIService {
 
     @POST("/api/v1/auth/token")
-    suspend fun refreshToken(@Body requestBody: RequestBody): Response<Token>
+    suspend fun refreshToken(@Body requestBody: RequestBody): Token
 
     @POST("/api/v1/auth/login")
     suspend fun auth(@Body requestBody: RequestBody): Token
