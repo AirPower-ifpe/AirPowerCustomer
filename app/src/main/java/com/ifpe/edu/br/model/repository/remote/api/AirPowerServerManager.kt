@@ -5,6 +5,7 @@ import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceAggregatedTelemetry
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
+import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
@@ -55,7 +56,7 @@ class AirPowerServerManager(connection: Retrofit) {
         val jwtManager = JWTManager
         val token = jwtManager
             .getTokenForConnectionId(AirPowerServerConnectionContractImpl.getConnectionId())
-        if (!jwtManager.isTokenValid(token)){
+        if (!jwtManager.isTokenValid(token)) {
             if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Token is not valid")
             return ResultWrapper.ApiError(ErrorCode.AP_REFRESH_TOKEN_EXPIRED)
         }
@@ -81,38 +82,13 @@ class AirPowerServerManager(connection: Retrofit) {
     }
 
     suspend fun getAggregatedTelemetry(
-        query: AggregatedTelemetryQuery,
-        onSuccess: () -> Unit
-    ): List<DeviceAggregatedTelemetry> {
+        query: AggregatedTelemetryQuery
+    ): ResultWrapper<TelemetryAggregationResponse> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getAggregatedTelemetry()")
         val queryJson = Gson().toJson(query)
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val requestBody = RequestBody.create(mediaType, queryJson)
-        val serverResponse = apiService.getAggregatedTelemetry(requestBody)
-        val responseCode = serverResponse.code()
-        if (responseCode == HttpsURLConnection.HTTP_OK) {
-            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getAggregatedTelemetry: HTTP_OK")
-            serverResponse.body()?.let {
-                onSuccess.invoke()
-                return it.results
-            }
-        } else {
-            val serverErrorWrapper = ServerUtils.getServerErrorWrapper(serverResponse)
-            if (serverErrorWrapper.errorCode == Constants.ResponseErrorCode.AP_GENERIC_ERROR) {
-                if (AirPowerLog.ISVERBOSE) AirPowerLog.w(
-                    TAG,
-                    "INVALID_AIRPOWER_TOKEN"
-                )
-                throw AuthenticateFailureException("[$TAG]: -> getAggregatedTelemetry failure: message ${serverErrorWrapper.message}")
-            } else {
-                throw InvalidStateException(
-                    "[$TAG]: untracked failure: server " +
-                            "code: ${serverErrorWrapper.errorCode} " +
-                            "message: ${serverErrorWrapper.message}"
-                )
-            }
-        }
-        return emptyList()
+        return safeApiCall { apiService.getAggregatedTelemetry(requestBody) }
     }
 
     suspend fun getDeviceSummariesForUser(

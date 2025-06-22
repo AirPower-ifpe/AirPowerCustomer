@@ -44,6 +44,7 @@ class Constants {
         const val AUTH_KEY = "AUTH_STATE"
         const val LOGIN_KEY = "STATE_LOGIN"
         const val REFRESH_TOKEN_KEY = "REFRESH_TOKEN_KEY"
+        const val AGG_TELEMETRY_STATE = "AGG_TELEMETRY_STATE"
     }
 
     @Deprecated("Replace with navigation approach")

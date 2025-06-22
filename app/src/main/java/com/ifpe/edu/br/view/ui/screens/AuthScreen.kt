@@ -70,8 +70,8 @@ fun AuthScreen(
     }
     val scrollState = rememberScrollState()
     val airPowerViewModel = viewModel as AirPowerViewModel
-    val stateId = Constants.UIStateKey.LOGIN_KEY
-    val sessionState = airPowerViewModel.uiStateManager.observeUIState(stateId)
+    val authStateKey = Constants.UIStateKey.LOGIN_KEY
+    val sessionState = airPowerViewModel.uiStateManager.observeUIState(authStateKey)
         .collectAsState(initial = UIState(Constants.UIState.EMPTY_STATE))
 
     Box(
@@ -186,7 +186,7 @@ fun AuthScreen(
                     text = sessionState.value.state,
                     textColor = tb_primary_light,
                     retryCallback = {
-                        viewModel.resetUIState(stateId)
+                        viewModel.resetUIState(authStateKey)
                     }
                 ) { DefaultTransparentGradient() }
             }
@@ -207,7 +207,7 @@ fun AuthScreen(
                     text = "Um erro inesperado ocorreu",
                     textColor = tb_primary_light,
                     retryCallback = {
-                        viewModel.resetUIState(stateId)
+                        viewModel.resetUIState(authStateKey)
                     }
                 ) { modifier -> DefaultTransparentGradient(modifier) }
             }
@@ -228,7 +228,7 @@ fun AuthScreen(
                     text = "Houve um problema de conexão com o servidor",
                     textColor = tb_primary_light,
                     retryCallback = {
-                        viewModel.resetUIState(stateId)
+                        viewModel.resetUIState(authStateKey)
                     }
                 ) { modifier -> DefaultTransparentGradient(modifier) }
             }
@@ -257,7 +257,7 @@ fun AuthScreen(
                 componentActivity,
                 MainActivity::class.java
             )
-            viewModel.resetUIState(stateId)
+            viewModel.resetUIState(authStateKey)
             componentActivity.finish()
         }
     }

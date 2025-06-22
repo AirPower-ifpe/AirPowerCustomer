@@ -31,7 +31,7 @@ interface AirPowerServerAPIService {
     suspend fun getCurrentUser(): AirPowerBoardUser
 
     @POST("/test/api/v1/devices/telemetry/aggregate")
-    suspend fun getAggregatedTelemetry(@Body requestBody: RequestBody): Response<TelemetryAggregationResponse>
+    suspend fun getAggregatedTelemetry(@Body requestBody: RequestBody): TelemetryAggregationResponse
 
     @GET("/test/api/v1/user/{userId}/devices-summary")
     suspend fun getDeviceSummariesForUser(

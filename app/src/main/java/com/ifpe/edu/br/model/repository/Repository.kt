@@ -17,6 +17,7 @@ import com.ifpe.edu.br.model.repository.persistence.model.toThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerConnectionContractImpl
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerManager
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
+import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
@@ -73,17 +74,10 @@ class Repository private constructor(context: Context) {
     }
 
     suspend fun getAggregatedTelemetry(
-        query: AggregatedTelemetryQuery,
-        onSuccess: () -> Unit,
-        onFailureCallback: (e: Exception) -> Unit
-    ) {
+        query: AggregatedTelemetryQuery
+    ): ResultWrapper<TelemetryAggregationResponse> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getAggregatedTelemetry()")
-        try {
-            airPowerServerMgr.getAggregatedTelemetry(query) { onSuccess.invoke() }
-        } catch (e: Exception) {
-            onFailureCallback.invoke(e)
-            throw e
-        }
+        return airPowerServerMgr.getAggregatedTelemetry(query)
     }
 
     suspend fun retrieveDeviceSummaryForCurrentUser() {

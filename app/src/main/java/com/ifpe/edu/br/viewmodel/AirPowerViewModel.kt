@@ -90,12 +90,8 @@ class AirPowerViewModel(
 
             if (isAuthSuccess && isGetUserSuccess) {
                 delay(getTimeLeftDelay(startTime))
-                uiStateManager.setUIState(
-                    uiStateKey,
-                    UIState(Constants.UIState.STATE_SUCCESS)
-                )
+                handleSuccess(uiStateKey)
             }
-
         }
     }
 
@@ -114,23 +110,31 @@ class AirPowerViewModel(
         onFailureCallback: () -> Unit
     ) {
         viewModelScope.launch {
-            try {
-                repository.getAggregatedTelemetry(
-                    query = AggregatedTelemetryQuery(
-                        deviceIds = listOf(
-                            "e6dfad10-416b-11f0-918d-8b1a89ef9dab",
-                            "655eae80-4148-11f0-918d-8b1a89ef9dab"
-                        ),
-                        telemetryKeys = listOf("voltage", "current", "power"),
-                        aggregationFunction = "AVG",
-                        timeWindowHours = 12
+            val aggStateKey = Constants.UIStateKey.AGG_TELEMETRY_STATE
+            val aggResultWrapper = repository.getAggregatedTelemetry(
+                query = AggregatedTelemetryQuery(
+                    deviceIds = listOf(
+                        "e6dfad10-416b-11f0-918d-8b1a89ef9dab",
+                        "655eae80-4148-11f0-918d-8b1a89ef9dab"
                     ),
-                    onSuccess = {},
-                    onFailureCallback = {}
+                    telemetryKeys = listOf("voltage", "current", "power"),
+                    aggregationFunction = "AVG",
+                    timeWindowHours = 12
                 )
-            } catch (e: Exception) {
-                AirPowerLog.e(TAG, "DEU MERDA AQUI HEIN: ${e.message}")
-                // todo adicionar trabatamento aqui
+            )
+
+            when (aggResultWrapper) {
+                is ResultWrapper.Success -> {
+                    handleSuccess(aggStateKey)
+                }
+
+                is ResultWrapper.ApiError -> {
+                    handleApiError(aggResultWrapper.errorCode, aggStateKey)
+                }
+
+                ResultWrapper.NetworkError -> {
+                    handleNetworkError(aggStateKey)
+                }
             }
         }
     }
@@ -148,10 +152,7 @@ class AirPowerViewModel(
                 }
 
                 is ResultWrapper.Success<*> -> {
-                    uiStateManager.setUIState(
-                        uiStateKey,
-                        UIState(Constants.UIState.STATE_SUCCESS)
-                    )
+                    handleSuccess(uiStateKey)
                 }
             }
         }
@@ -166,12 +167,16 @@ class AirPowerViewModel(
                     UIState(Constants.UIState.STATE_REFRESH_TOKEN)
                 )
             } else {
-                uiStateManager.setUIState(
-                    uiStateKey,
-                    UIState(Constants.UIState.STATE_SUCCESS)
-                )
+                handleSuccess(uiStateKey)
             }
         }
+    }
+
+    private fun handleSuccess(aggStateKey: String) {
+        uiStateManager.setUIState(
+            aggStateKey,
+            UIState(Constants.UIState.STATE_SUCCESS)
+        )
     }
 
     fun logout() {
