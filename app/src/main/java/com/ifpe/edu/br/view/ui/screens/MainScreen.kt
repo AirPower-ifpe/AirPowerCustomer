@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,7 +26,6 @@ import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomNavigationBar
 import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.components.GradientBackground
-import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientDark
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
 import com.ifpe.edu.br.model.Constants
@@ -52,8 +51,8 @@ fun MainScreen(
 ) {
     val TAG = "MainScreen"
 
-    val uiState by mainViewModel.uiStateManager.observeUIState(id = Constants.AUTH_STATE)
-        .observeAsState(initial = UIState("", CommonConstants.State.STATE_DEFAULT_SATATE_CODE))
+    val uiState by mainViewModel.uiStateManager.observeUIState(id = Constants.UIStateKey.AUTH_KEY)
+        .collectAsState()
 
     LaunchedEffect(Unit) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "LaunchedEffect()")
@@ -80,8 +79,10 @@ fun MainScreen(
                         )
                     }
                 ) { innerPadding ->
-                    GradientBackground(if (isSystemInDarkTheme()) defaultBackgroundGradientDark
-                    else defaultBackgroundGradientLight)
+                    GradientBackground(
+                        if (isSystemInDarkTheme()) defaultBackgroundGradientDark
+                        else defaultBackgroundGradientLight
+                    )
                     NavHostContainer(
                         navController = navController,
                         modifier = Modifier.padding(innerPadding),
@@ -92,28 +93,28 @@ fun MainScreen(
         )
     }
 
-    when (uiState.stateCode) {
-        CommonConstants.State.STATE_AUTH_FAILURE -> {
-            AuthFailure(navController, componentActivity)
-        }
-
-        CommonConstants.State.STATE_NETWORK_ISSUE -> {
-            NetworkIssue(navController, componentActivity)
-        }
-
-        Constants.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED -> {
-            UpdateSessionFailure(navController, componentActivity)
-        }
-
-        Constants.THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED -> {
-            mainViewModel.updateSession(
-                onSuccessCallback = {
-                    mainViewModel.startDataFetchers()
-                },
-                onFailureCallback = {}
-            )
-        }
-    }
+//    when (uiState.state) {
+//        CommonConstants.State.STATE_AUTH_FAILURE -> {
+//           // AuthFailure(navController, componentActivity)
+//        }
+//
+//        CommonConstants.State.STATE_SERVER_INTERNAL_ISSUE -> {
+//            //NetworkIssue(navController, componentActivity)
+//        }
+//
+//        Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED -> {
+//            //UpdateSessionFailure(navController, componentActivity)
+//        }
+//
+//        Constants.ResponseErrorCode.AP_GENERIC_ERROR -> {
+//            mainViewModel.updateSession(
+//                onSuccessCallback = {
+//                    mainViewModel.startDataFetchers()
+//                },
+//                onFailureCallback = {}
+//            )
+//        }
+//    }
 }
 
 @Composable

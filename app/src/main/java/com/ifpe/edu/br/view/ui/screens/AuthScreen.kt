@@ -22,8 +22,8 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -48,7 +48,7 @@ import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.White
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.model.Constants
-import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
+import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.MainActivity
@@ -70,9 +70,9 @@ fun AuthScreen(
     }
     val scrollState = rememberScrollState()
     val airPowerViewModel = viewModel as AirPowerViewModel
-
-    val uiState by airPowerViewModel.uiStateManager.observeUIState(id = Constants.AUTH_STATE)
-        .observeAsState(initial = UIState("", CommonConstants.State.STATE_DEFAULT_SATATE_CODE))
+    val authStateKey = Constants.UIStateKey.LOGIN_KEY
+    val sessionState = airPowerViewModel.uiStateManager.observeUIState(authStateKey)
+        .collectAsState(initial = UIState(Constants.UIState.EMPTY_STATE))
 
     Box(
         modifier = Modifier
@@ -170,8 +170,8 @@ fun AuthScreen(
         )
     }
 
-    when (uiState.stateCode) {
-        CommonConstants.State.STATE_AUTH_FAILURE -> {
+    when (sessionState.value.state) {
+        Constants.UIState.STATE_REQUEST_LOGIN -> {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -183,16 +183,37 @@ fun AuthScreen(
                         .fillMaxSize(),
                     drawableResId = R.drawable.auth_issue,
                     iconSize = 150.dp,
-                    text = "Credenciais inválidas",
+                    text = sessionState.value.state,
                     textColor = tb_primary_light,
                     retryCallback = {
-                        viewModel.resetUIState(Constants.AUTH_STATE)
+                        viewModel.resetUIState(authStateKey)
                     }
                 ) { DefaultTransparentGradient() }
             }
         }
 
-        CommonConstants.State.STATE_NETWORK_ISSUE -> {
+        Constants.UIState.GENERIC_ERROR -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.8f))
+            ) {
+                FailureDialog(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxSize(),
+                    drawableResId = R.drawable.generic_error,
+                    iconSize = 150.dp,
+                    text = "Um erro inesperado ocorreu",
+                    textColor = tb_primary_light,
+                    retryCallback = {
+                        viewModel.resetUIState(authStateKey)
+                    }
+                ) { modifier -> DefaultTransparentGradient(modifier) }
+            }
+        }
+
+        Constants.UIState.STATE_NETWORK_ISSUE -> {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -204,16 +225,16 @@ fun AuthScreen(
                         .fillMaxSize(),
                     drawableResId = R.drawable.network_issue,
                     iconSize = 150.dp,
-                    text = "Houve um erro de conexão",
+                    text = "Houve um problema de conexão com o servidor",
                     textColor = tb_primary_light,
                     retryCallback = {
-                        viewModel.resetUIState(Constants.AUTH_STATE)
+                        viewModel.resetUIState(authStateKey)
                     }
                 ) { modifier -> DefaultTransparentGradient(modifier) }
             }
         }
 
-        CommonConstants.State.STATE_LOADING -> {
+        Constants.UIState.STATE_LOADING -> {
             Box(
                 modifier = Modifier
                     .background(Color.Black.copy(alpha = 0.5f))
@@ -230,13 +251,13 @@ fun AuthScreen(
             }
         }
 
-        CommonConstants.State.STATE_SUCCESS -> {
+        Constants.UIState.STATE_SUCCESS -> {
             navController.popBackStack()
             AirPowerUtil.launchActivity(
                 componentActivity,
                 MainActivity::class.java
             )
-            viewModel.resetUIState(Constants.AUTH_STATE)
+            viewModel.resetUIState(authStateKey)
             componentActivity.finish()
         }
     }

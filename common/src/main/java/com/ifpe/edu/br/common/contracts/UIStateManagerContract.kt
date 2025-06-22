@@ -1,6 +1,6 @@
 package com.ifpe.edu.br.common.contracts
 
-import androidx.lifecycle.LiveData
+import kotlinx.coroutines.flow.StateFlow
 
 
 // Trabalho de conclusão de curso - IFPE 2025
@@ -12,11 +12,11 @@ import androidx.lifecycle.LiveData
 
 interface UIStateManagerContract {
     fun setBooleanState(id: String, value: Boolean)
-    fun observeBoolean(id: String): LiveData<Boolean>
+    fun observeBoolean(id: String): StateFlow<Boolean>
     fun setStringState(id: String, value: String)
-    fun observeString(id: String): LiveData<String>
+    fun observeString(id: String): StateFlow<String>
     fun setIntState(id: String, value: Int)
-    fun observeInt(id: String): LiveData<Int>
+    fun observeInt(id: String): StateFlow<Int>
     fun setUIState(id: String, value: UIState)
-    fun observeUIState(id: String): LiveData<UIState>
+    fun observeUIState(id: String): StateFlow<UIState>
 }

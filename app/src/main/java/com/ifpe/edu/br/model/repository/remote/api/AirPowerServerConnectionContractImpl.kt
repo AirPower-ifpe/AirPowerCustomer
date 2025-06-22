@@ -1,5 +1,6 @@
 package com.ifpe.edu.br.model.repository.remote.api
 
+import com.ifpe.edu.br.BuildConfig
 import com.ifpe.edu.br.core.contracts.IConnectionManager
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
@@ -24,12 +25,12 @@ import javax.net.ssl.X509TrustManager
 object AirPowerServerConnectionContractImpl : IConnectionManager {
 
     private val TAG: String = AirPowerServerConnectionContractImpl.javaClass.simpleName
-
+    private val apiUrl = BuildConfig.API_URL
     override fun getJwtInterceptor(): Interceptor {
         return Interceptor { chain ->
             val originalRequest = chain.request()
             val jwtToken = runBlocking {
-                JWTManager.getJwtForConnectionId(ThingsBoardConnectionContractImpl.getConnectionId())
+                JWTManager.getJwtForConnectionId(getConnectionId())
             }
             val newRequest = originalRequest.newBuilder()
                 .addHeader("Authorization", "Bearer $jwtToken")
@@ -42,7 +43,7 @@ object AirPowerServerConnectionContractImpl : IConnectionManager {
         val sslContext = SSLContext.getInstance("TLS")
         sslContext.init(
             null,
-            arrayOf(ThingsBoardConnectionContractImpl.getX509TrustManager()),
+            arrayOf(getX509TrustManager()),
             SecureRandom()
         )
         return sslContext.socketFactory
@@ -94,11 +95,11 @@ object AirPowerServerConnectionContractImpl : IConnectionManager {
     }
 
     override fun getConnectionId(): Int {
-        return Constants.CONNECTION_ID_AIR_POWER_SERVER
+        return Constants.ServerConnectionIds.CONNECTION_ID_AIR_POWER_SERVER
     }
 
     override fun getBaseURL(): String {
-        return Constants.AIRPOWER_SERVER_BASE_URL_API
+        return apiUrl
     }
 
     override fun getConnectionTimeout(): Long {

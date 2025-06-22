@@ -4,23 +4,18 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
-import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
-import com.ifpe.edu.br.model.repository.model.DeviceCardModel
-import com.ifpe.edu.br.model.repository.remote.dto.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
+import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
+import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
-import com.ifpe.edu.br.model.util.AuthenticateFailureException
-import com.ifpe.edu.br.model.util.TokenExpiredException
+import com.ifpe.edu.br.model.util.ResultWrapper
 import com.ifpe.edu.br.view.manager.UIStateManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
@@ -43,36 +38,65 @@ class AirPowerViewModel(
     private var devicesJob: Job? = null
     private var telemetryJob: Job? = null
     private val devicesFetchInterval = 5_000L
+    private val minDelay = 1500L
 
     fun initSession(
         user: AuthUser,
     ) {
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()
-            val minDelay = 1500L
+            val uiStateKey = Constants.UIStateKey.LOGIN_KEY
             uiStateManager.setUIState(
-                Constants.AUTH_STATE,
-                UIState(
-                    message = "Loading",
-                    stateCode = CommonConstants.State.STATE_LOADING
-                )
+                uiStateKey,
+                UIState(Constants.UIState.STATE_LOADING)
             )
-            var uiState = getDefaultUIState()
-            try {
-                repository.authenticate(user = user)
-                repository.retrieveCurrentUser()
-                uiState = UIState("", CommonConstants.State.STATE_SUCCESS)
-            } catch (e: AuthenticateFailureException) {
-                uiState = UIState("${e.message}", CommonConstants.State.STATE_AUTH_FAILURE)
-            } catch (e: Exception) {
-                uiState = UIState("${e.message}", CommonConstants.State.STATE_NETWORK_ISSUE)
-            } finally {
-                val timeDelayed = System.currentTimeMillis() - startTime
-                val timeLeft = (minDelay - timeDelayed).coerceAtLeast(0L)
-                delay(timeLeft)
-                uiStateManager.setUIState(Constants.AUTH_STATE, uiState)
+            var isAuthSuccess = false
+            when (val authResponse = repository.authenticate(user = user)) {
+                is ResultWrapper.ApiError -> {
+                    delay(getTimeLeftDelay(startTime))
+                    handleApiError(authResponse.errorCode, uiStateKey)
+                }
+
+                is ResultWrapper.NetworkError -> {
+                    delay(getTimeLeftDelay(startTime))
+                    handleNetworkError(uiStateKey)
+                }
+
+                is ResultWrapper.Success<*> -> {
+                    isAuthSuccess = true
+                }
+            }
+
+            var isGetUserSuccess = false
+            when (val currentUserResponse = repository.retrieveCurrentUser()) {
+                is ResultWrapper.ApiError -> {
+                    delay(getTimeLeftDelay(startTime))
+                    handleApiError(
+                        currentUserResponse.errorCode,
+                        uiStateKey
+                    )
+                }
+
+                is ResultWrapper.NetworkError -> {
+                    delay(getTimeLeftDelay(startTime))
+                    handleNetworkError(uiStateKey)
+                }
+
+                is ResultWrapper.Success<*> -> {
+                    isGetUserSuccess = true
+                }
+            }
+
+            if (isAuthSuccess && isGetUserSuccess) {
+                delay(getTimeLeftDelay(startTime))
+                handleSuccess(uiStateKey)
             }
         }
+    }
+
+    private fun getTimeLeftDelay(startTime: Long): Long {
+        val timeDelayed = System.currentTimeMillis() - startTime
+        return (minDelay - timeDelayed).coerceAtLeast(0L)
     }
 
     fun getDevicesSummary(): LiveData<List<DeviceSummary>> {
@@ -80,62 +104,64 @@ class AirPowerViewModel(
     }
 
     fun getAggregatedTelemetry(
-        query: AggregatedTelemetryQuery?,
-        onSuccessCallback: () -> Unit,
-        onFailureCallback: () -> Unit
+        query: AggregatedTelemetryQuery
     ) {
         viewModelScope.launch {
-            try {
-                repository.getAggregatedTelemetry(
-                    query = AggregatedTelemetryQuery(
-                        deviceIds = listOf(
-                            "e6dfad10-416b-11f0-918d-8b1a89ef9dab",
-                            "655eae80-4148-11f0-918d-8b1a89ef9dab"
-                        ),
-                        telemetryKeys = listOf("voltage", "current", "power"),
-                        aggregationFunction = "AVG",
-                        timeWindowHours = 12
-                    ),
-                    onSuccess = {},
-                    onFailureCallback = {}
-                )
-            } catch (e: Exception) {
-                AirPowerLog.e(TAG, "DEU MERDA AQUI HEIN: ${e.message}")
-            }
-        }
-    }
-
-    fun updateSession(
-        onSuccessCallback: () -> Unit,
-        onFailureCallback: () -> Unit
-    ) {
-        viewModelScope.launch {
-            try {
-                repository.updateSession {
-                    uiStateManager.setUIState(
-                        Constants.STATE_ERROR, getDefaultUIState()
-                    )
-                    onSuccessCallback.invoke()
+            val aggStateKey = Constants.UIStateKey.AGG_TELEMETRY_STATE
+            when (val aggResultWrapper = repository.getAggregatedTelemetry(query)) {
+                is ResultWrapper.Success -> {
+                    handleSuccess(aggStateKey)
                 }
-            } catch (e: Exception) {
-                uiStateManager.setUIState(
-                    Constants.STATE_ERROR,
-                    UIState(
-                        "[$TAG]: -> ${e.message}",
-                        Constants.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
-                    )
-                )
-                onFailureCallback.invoke()
+
+                is ResultWrapper.ApiError -> {
+                    handleApiError(aggResultWrapper.errorCode, aggStateKey)
+                }
+
+                ResultWrapper.NetworkError -> {
+                    handleNetworkError(aggStateKey)
+                }
             }
         }
     }
 
-
-    fun isTokenExpired(callback: (Boolean) -> Unit) {
+    fun updateSession() {
         viewModelScope.launch {
-            val isExpired = repository.isSessionExpired()
-            callback(isExpired)
+            val uiStateKey = Constants.UIStateKey.REFRESH_TOKEN_KEY
+            when (val refreshTokenResultWrapper = repository.updateSession()) {
+                is ResultWrapper.ApiError -> {
+                    handleApiError(refreshTokenResultWrapper.errorCode, uiStateKey)
+                }
+
+                is ResultWrapper.NetworkError -> {
+                    handleNetworkError(uiStateKey)
+                }
+
+                is ResultWrapper.Success<*> -> {
+                    handleSuccess(uiStateKey)
+                }
+            }
         }
+    }
+
+    fun isSessionExpired() {
+        viewModelScope.launch {
+            val uiStateKey = Constants.UIStateKey.SESSION
+            if (repository.isSessionExpired()) {
+                uiStateManager.setUIState(
+                    uiStateKey,
+                    UIState(Constants.UIState.STATE_REFRESH_TOKEN)
+                )
+            } else {
+                handleSuccess(uiStateKey)
+            }
+        }
+    }
+
+    private fun handleSuccess(aggStateKey: String) {
+        uiStateManager.setUIState(
+            aggStateKey,
+            UIState(Constants.UIState.STATE_SUCCESS)
+        )
     }
 
     fun logout() {
@@ -147,57 +173,101 @@ class AirPowerViewModel(
     }
 
     fun resetUIState(stateId: String) {
-        uiStateManager.setUIState(stateId, getDefaultUIState())
+        uiStateManager.setUIState(stateId, getEmptyValueUIState())
     }
 
     fun startDataFetchers() {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "startDataFetchers()")
-
         if (devicesJob?.isActive != true) {
             devicesJob = startDevicesFetcher()
         }
     }
 
-    private fun handleException(e: Exception) {
-        uiStateManager.setUIState(
-            Constants.STATE_ERROR,
-            UIState(
-                "[$TAG] : -> ${e.message}",
-                Constants.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED
-            )
-        )
-    }
-
-    private fun handleTokenExpiredException(e: TokenExpiredException) {
-        uiStateManager.setUIState(
-            Constants.STATE_ERROR,
-            UIState(
-                "[$TAG] : -> ${e.message}",
-                Constants.THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED
-            )
-        )
-    }
-
-
     private fun startDevicesFetcher(): Job {
         return viewModelScope.launch {
-            try {
-                while (isActive) {
-                    repository.retrieveDeviceSummaryForCurrentUser()
-                    delay(devicesFetchInterval)
+            val deviceSummarySummaryKey = Constants.UIStateKey.DEVICE_SUMMARY_KEY
+            while (isActive) {
+                when (val resultWrapper = repository.retrieveDeviceSummaryForCurrentUser()) {
+                    is ResultWrapper.Success -> {
+                        handleSuccess(deviceSummarySummaryKey)
+                    }
+
+                    is ResultWrapper.ApiError -> {
+                        handleApiError(resultWrapper.errorCode, deviceSummarySummaryKey)
+                    }
+
+                    ResultWrapper.NetworkError -> {
+                        handleNetworkError(deviceSummarySummaryKey)
+                    }
                 }
-            } catch (e: TokenExpiredException) {
-                handleTokenExpiredException(e)
-            } catch (e: Exception) {
-                handleException(e)
+                delay(devicesFetchInterval)
             }
         }
     }
 
-    private fun getDefaultUIState(): UIState {
-        return UIState(
-            CommonConstants.State.STATE_DEFAULT_MESSAGE,
-            CommonConstants.State.STATE_DEFAULT_SATATE_CODE
+    private fun getEmptyValueUIState(): UIState {
+        return UIState(Constants.UIState.EMPTY_STATE)
+    }
+
+    private fun handleApiError(
+        code: ErrorCode,
+        uiStateKey: String
+    ) {
+
+        when (code) {
+            ErrorCode.TB_INVALID_CREDENTIALS -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.d(TAG, "TB_INVALID_CREDENTIALS -> STATE_AUTHENTICATION_FAILURE")
+                uiStateManager.setUIState(
+                    uiStateKey, UIState(Constants.UIState.STATE_AUTHENTICATION_FAILURE)
+                )
+            }
+
+            ErrorCode.TB_REFRESH_TOKEN_EXPIRED -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.d(TAG, "TB_REFRESH_TOKEN_EXPIRED -> STATE_REQUEST_LOGIN")
+                uiStateManager.setUIState(
+                    uiStateKey,
+                    UIState(Constants.UIState.STATE_REQUEST_LOGIN)
+                )
+            }
+
+            ErrorCode.AP_REFRESH_TOKEN_EXPIRED -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.d(TAG, "AP_REFRESH_TOKEN_EXPIRED -> STATE_REQUEST_LOGIN")
+                uiStateManager.setUIState(
+                    uiStateKey,
+                    UIState(Constants.UIState.STATE_REQUEST_LOGIN)
+                )
+            }
+
+            ErrorCode.AP_JWT_EXPIRED -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.d(TAG, "AP_JWT_EXPIRED -> STATE_UPDATE_SESSION")
+                uiStateManager.setUIState(
+                    uiStateKey, UIState(Constants.UIState.STATE_UPDATE_SESSION) // todo o srver tem q mandar esse codigo quando a sessao expira
+                )
+            }
+
+            else -> {
+                if (AirPowerLog.ISVERBOSE)
+                    AirPowerLog.d(TAG, "else -> GENERIC_ERROR")
+                uiStateManager.setUIState(
+                    uiStateKey, UIState(Constants.UIState.GENERIC_ERROR)
+                )
+            }
+        }
+    }
+
+    private fun handleNetworkError(uiStateKey: String) {
+        uiStateManager.setUIState(
+            uiStateKey, UIState(
+                Constants.UIState.STATE_NETWORK_ISSUE
+            )
         )
+    }
+
+    fun isUserLoggedIn(): Boolean {
+        return repository.isUserLoggedIn()
     }
 }

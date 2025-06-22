@@ -5,26 +5,68 @@ package com.ifpe.edu.br.model
 * Author: Willian Santos
 * Project: AirPower Costumer
 */
+class Constants {
 
-object Constants {
-    const val STATE_ERROR = "STATE_ERROR"
-    const val AUTH_STATE = "AUTH_STATE"
-    const val THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED = 11
-    const val THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED = 10
-    const val STATE_AUTH_REQUIRED = "STATE_AUTH_REQUIRED"
+    object ResponseErrorCode {
+        // --- Erros Mapeados do ThingsBoard (2xxx) ---
+        const val TB_INVALID_CREDENTIALS = 20
+        const val TB_REFRESH_TOKEN_EXPIRED = 21
+        const val TB_GENERIC_ERROR = 22
 
-    const val STATE_CONNECTION_FAILURE = "STATE_CONNECTION_FAILURE"
-    const val STATE_AUTH_FAILURE = "STATE_AUTH_FAILURE"
-    const val STATE_AUTH_LOADING = "STATE_AUTH_LOADING"
+        // --- Autenticação AirPower (3xxx) ---
+        const val AP_JWT_EXPIRED = 30
+        const val AP_REFRESH_TOKEN_EXPIRED = 31
+        const val AP_GENERIC_ERROR = 32
 
-    const val NAVIGATION_INITIAL = "START"
-    const val NAVIGATION_MAIN = "MAIN"
-    const val NAVIGATION_AUTH = "AUTH"
+        // --- Erros Genéricos (9xxx) ---
+        const val UNKNOWN_INTERNAL_ERROR = 90
 
-    const val THINGSBOARD_BASE_URL_API = "https://192.168.1.17:8080"
-    const val AIRPOWER_SERVER_BASE_URL_API = "https://192.168.1.17:8443"
+        const val SUCCESS = 0
+        const val EMPTY_STATE_MESSAGE = ""
+        const val EMPTY_STATE_CODE = -1
+    }
 
-    const val CONNECTION_ID_THINGSBOARD = 1
-    const val CONNECTION_ID_AIR_POWER_SERVER = 2
-    const val KEY_COD_DRAWABLE: String = "drawable"
+    object UIState {
+        const val EMPTY_STATE = "EMPTY_STATE"
+        const val STATE_UPDATE_SESSION = "STATE_UPDATE_SESSION"
+        const val STATE_REFRESH_TOKEN = "STATE_REFRESH_TOKEN"
+        const val STATE_LOADING = "LOADING"
+        const val STATE_REQUEST_LOGIN = "STATE_REQUEST_LOGIN"
+        const val STATE_NETWORK_ISSUE = "NETWORK_ISSUE"
+        const val STATE_SUCCESS = "SUCCESS"
+        const val GENERIC_ERROR = "GENERIC_ERROR"
+        const val STATE_AUTHENTICATION_FAILURE = "AUTHENTICATION_FAILURE"
+    }
+
+    object UIStateKey {
+        const val STATE_ERROR = "STATE_ERROR"
+        const val SESSION = "SESSION"
+        const val AUTH_KEY = "AUTH_STATE"
+        const val LOGIN_KEY = "STATE_LOGIN"
+        const val REFRESH_TOKEN_KEY = "REFRESH_TOKEN_KEY"
+        const val AGG_TELEMETRY_STATE = "AGG_TELEMETRY_STATE"
+        const val DEVICE_SUMMARY_KEY = "DEVICE_SUMMARY_KEY"
+    }
+
+    @Deprecated("Replace with navigation approach")
+    object Navigation {
+        const val NAVIGATION_INITIAL = "START"
+        const val NAVIGATION_MAIN = "MAIN"
+        const val NAVIGATION_AUTH = "AUTH"
+    }
+
+    object ServerConnectionIds {
+        const val CONNECTION_ID_THINGSBOARD = 1
+        const val CONNECTION_ID_AIR_POWER_SERVER = 2
+    }
+
+    object ResKeys {
+        const val KEY_COD_DRAWABLE: String = "drawable"
+    }
+
+    @Deprecated("Replace with new approach")
+    object DeprecatedValues {
+        const val THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED = 11
+        const val THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED = 10
+    }
 }

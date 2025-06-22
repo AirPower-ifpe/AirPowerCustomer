@@ -49,7 +49,7 @@ fun DeviceScreen(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        mainViewModel.startDataFetchers()
+        //mainViewModel.startDataFetchers()
     }
 
     Scaffold(

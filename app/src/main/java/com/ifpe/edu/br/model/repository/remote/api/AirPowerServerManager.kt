@@ -1,16 +1,24 @@
 package com.ifpe.edu.br.model.repository.remote.api
 
 import com.google.gson.Gson
+import com.ifpe.edu.br.model.Constants
+import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceAggregatedTelemetry
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
-import com.ifpe.edu.br.model.repository.remote.dto.ThingsBoardUser
-import com.ifpe.edu.br.model.repository.remote.dto.ThingsBordErrorResponse
+import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
+import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
+import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
+import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
+import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
+import com.ifpe.edu.br.model.repository.remote.query.RefreshTokenQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AuthenticateFailureException
+import com.ifpe.edu.br.model.util.InvalidStateException
+import com.ifpe.edu.br.model.util.ResultWrapper
+import com.ifpe.edu.br.model.util.ServerUtils
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
-import retrofit2.Response
 import retrofit2.Retrofit
 import javax.net.ssl.HttpsURLConnection
 
@@ -26,64 +34,67 @@ class AirPowerServerManager(connection: Retrofit) {
     private val apiService = connection.create(AirPowerServerAPIService::class.java)
     private val TAG = AirPowerServerManager::class.simpleName
 
+    suspend fun authenticate(
+        user: AuthUser,
+    ): ResultWrapper<Token> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "authenticate()")
+        val userJson = Gson().toJson(user)
+        val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+        val requestBody = RequestBody.create(mediaType, userJson)
+        val response = safeApiCall { apiService.auth(requestBody) }
+        if (response is ResultWrapper.Success) {
+            JWTManager.handleAuthentication(
+                AirPowerServerConnectionContractImpl.getConnectionId(),
+                response.value
+            ) { }
+        }
+        return response
+    }
+
+    suspend fun refreshToken(): ResultWrapper<Token> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "refreshToken()")
+        val jwtManager = JWTManager
+        val token = jwtManager
+            .getTokenForConnectionId(AirPowerServerConnectionContractImpl.getConnectionId())
+        if (!jwtManager.isTokenValid(token)) {
+            if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "Token is not valid")
+            return ResultWrapper.ApiError(ErrorCode.AP_REFRESH_TOKEN_EXPIRED)
+        }
+
+        val refreshTokenQuery = Gson().toJson(token?.let { RefreshTokenQuery(it.refreshToken) })
+        val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+        val requestBody = RequestBody.create(mediaType, refreshTokenQuery)
+
+        val tokenResultWrapper = safeApiCall { apiService.refreshToken(requestBody) }
+        if (tokenResultWrapper is ResultWrapper.Success) {
+            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "refreshToken(): HTTP_OK")
+            jwtManager.handleRefreshToken(
+                AirPowerServerConnectionContractImpl.getConnectionId(),
+                tokenResultWrapper.value
+            ) {}
+        }
+        return tokenResultWrapper
+    }
+
+    suspend fun getCurrentUser(): ResultWrapper<AirPowerBoardUser> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getCurrentUser()")
+        return safeApiCall { apiService.getCurrentUser() }
+    }
+
     suspend fun getAggregatedTelemetry(
-        query: AggregatedTelemetryQuery,
-        onSuccess: () -> Unit
-    ): List<DeviceAggregatedTelemetry> {
+        query: AggregatedTelemetryQuery
+    ): ResultWrapper<TelemetryAggregationResponse> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getAggregatedTelemetry()")
         val queryJson = Gson().toJson(query)
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val requestBody = RequestBody.create(mediaType, queryJson)
-        val serverResponse = apiService.getAggregatedTelemetry(requestBody)
-        val responseCode = serverResponse.code()
-        if (responseCode == HttpsURLConnection.HTTP_OK) {
-            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getAggregatedTelemetry: HTTP_OK")
-            serverResponse.body()?.let {
-                onSuccess.invoke()
-                return it.results
-            }
-        } else {
-            val serverErrorWrapper = getServerErrorWrapper(serverResponse)
-            throw AuthenticateFailureException("[$TAG]: -> getAggregatedTelemetry failure: message:${serverErrorWrapper.message}")
-        }
-        return emptyList()
+        return safeApiCall { apiService.getAggregatedTelemetry(requestBody) }
     }
 
     suspend fun getDeviceSummariesForUser(
-        user: ThingsBoardUser
-    ): List<DeviceSummary> {
+        user: AirPowerBoardUser
+    ): ResultWrapper<List<DeviceSummary>> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceSummariesForUser()")
-        val serverResponse = apiService.getDeviceSummariesForUser(user.id.id)
-        val responseCode = serverResponse.code()
-        if (responseCode == HttpsURLConnection.HTTP_OK) {
-            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceSummariesForUser: HTTP_OK")
-            serverResponse.body()?.let {
-                return it
-            }
-        } else {
-            val serverErrorWrapper = getServerErrorWrapper(serverResponse)
-            throw AuthenticateFailureException("[$TAG]: -> getDeviceSummariesForUser failure: message:${serverErrorWrapper.message}")
-        }
-        return emptyList()
-    }
-
-    private fun getServerErrorWrapper(serverResponse: Response<out Any>): ThingsBordErrorResponse {
-        return try {
-            val errorBody = serverResponse.errorBody()?.string()
-            if (errorBody != null) {
-                try {
-                    Gson().fromJson(errorBody, ThingsBordErrorResponse::class.java)
-                } catch (jsonException: Exception) {
-                    AirPowerLog.e(TAG, "Error parsing JSON response: ${jsonException.message}")
-                    ThingsBordErrorResponse(-1, "Invalid JSON format", -1, "-1")
-                }
-            } else {
-                if (AirPowerLog.ISLOGABLE) AirPowerLog.e(TAG, "errorBody is null")
-                ThingsBordErrorResponse(-1, "Empty error body", -1, "-1")
-            }
-        } catch (e: Exception) {
-            AirPowerLog.e(TAG, "Unexpected error while handling server response: ${e.message}")
-            ThingsBordErrorResponse(-1, "Unexpected error", -1, "-1")
-        }
+        return safeApiCall { apiService.getDeviceSummariesForUser(user.id.id) }
     }
 }

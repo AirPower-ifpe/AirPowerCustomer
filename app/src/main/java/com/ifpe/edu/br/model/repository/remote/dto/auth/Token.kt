@@ -1,4 +1,4 @@
-package com.ifpe.edu.br.model.repository.remote.dto
+package com.ifpe.edu.br.model.repository.remote.dto.auth
 
 
 // Trabalho de conclusão de curso - IFPE 2025

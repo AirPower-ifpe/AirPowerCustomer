@@ -1,4 +1,6 @@
-package com.ifpe.edu.br.model.repository.remote.dto
+package com.ifpe.edu.br.model.repository.remote.dto.user
+
+import com.ifpe.edu.br.model.repository.remote.dto.Id
 
 /*
 * Trabalho de conclusão de curso - IFPE 2025
@@ -6,7 +8,7 @@ package com.ifpe.edu.br.model.repository.remote.dto
 * Project: AirPower Costumer
 */
 
-data class ThingsBoardUser(
+data class AirPowerBoardUser(
     val id: Id,
     val createdTime: Long,
     val tenantId: Id,

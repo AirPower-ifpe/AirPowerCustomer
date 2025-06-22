@@ -1,4 +1,4 @@
-package com.ifpe.edu.br.model.repository.remote.dto
+package com.ifpe.edu.br.model.repository.remote.dto.error
 
 
 // Trabalho de conclusão de curso - IFPE 2025
@@ -8,17 +8,17 @@ package com.ifpe.edu.br.model.repository.remote.dto
 // Copyright (c) 2025 IFPE. All rights reserved.
 
 
-data class ThingsBordErrorResponse(
+data class AirPowerErrorResponse(
     val status: Int,
-    val message: String,
     val errorCode: Int,
-    val timestamp: String
+    val message: String,
+    val timestamp: Long
 ){
     override fun toString(): String {
-        return "ThingsBordErrorResponse(" +
+        return "AirPowerErrorResponse(" +
                 "status=$status, " +
-                "message='$message', " +
                 "errorCode=$errorCode, " +
+                "message='$message', " +
                 "timestamp=$timestamp)"
     }
 }

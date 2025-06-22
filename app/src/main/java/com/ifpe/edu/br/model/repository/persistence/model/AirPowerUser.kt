@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.ifpe.edu.br.model.repository.remote.dto.Id
-import com.ifpe.edu.br.model.repository.remote.dto.ThingsBoardUser
+import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
 
 /*
 * Trabalho de conclusão de curso - IFPE 2025
@@ -44,11 +44,11 @@ data class AirPowerUser(
     }
 }
 
-fun AirPowerUser.toThingsBoardUser(): ThingsBoardUser {
+fun AirPowerUser.toThingsBoardUser(): AirPowerBoardUser {
     val mockname = if (name == null) "" else name!!
     val mockfirstName = firstName ?: ""
     val mocLastName = lastName ?: ""
-    return ThingsBoardUser(
+    return AirPowerBoardUser(
         id = Id(id, "id"),
         createdTime = 0L,
         tenantId = Id("id", "tenantId"),

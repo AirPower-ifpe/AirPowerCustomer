@@ -110,7 +110,7 @@ fun FailureDialog(
                     color = textColor
                 )
 
-                Spacer(modifier = Modifier.padding(vertical = 15.dp))
+                Spacer(modifier = Modifier.padding(vertical = 40.dp))
 
                 CustomText(
                     text = stringResource(id = R.string.connection_failure_retry),

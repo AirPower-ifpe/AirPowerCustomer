@@ -9,11 +9,10 @@ package com.ifpe.edu.br.common.contracts
 
 
 data class UIState(
-    val message: String,
-    val stateCode: Int
+    val state: String,
 ) {
     override fun toString(): String {
-        return "UIState(message='$message', stateCode=$stateCode)"
+        return "UIState(message='$state')"
     }
 }
 
