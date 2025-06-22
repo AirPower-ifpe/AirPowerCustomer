@@ -93,19 +93,8 @@ class AirPowerServerManager(connection: Retrofit) {
 
     suspend fun getDeviceSummariesForUser(
         user: AirPowerBoardUser
-    ): List<DeviceSummary> {
+    ): ResultWrapper<List<DeviceSummary>> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceSummariesForUser()")
-        val serverResponse = apiService.getDeviceSummariesForUser(user.id.id)
-        val responseCode = serverResponse.code()
-        if (responseCode == HttpsURLConnection.HTTP_OK) {
-            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceSummariesForUser: HTTP_OK")
-            serverResponse.body()?.let {
-                return it
-            }
-        } else {
-            val serverErrorWrapper = ServerUtils.getServerErrorWrapper(serverResponse)
-            throw AuthenticateFailureException("[$TAG]: -> getDeviceSummariesForUser failure: message:${serverErrorWrapper.message}")
-        }
-        return emptyList()
+        return safeApiCall { apiService.getDeviceSummariesForUser(user.id.id) }
     }
 }

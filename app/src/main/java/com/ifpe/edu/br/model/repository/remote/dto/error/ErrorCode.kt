@@ -20,5 +20,5 @@ enum class ErrorCode(
     TB_REFRESH_TOKEN_EXPIRED(401, Constants.ResponseErrorCode.TB_REFRESH_TOKEN_EXPIRED, "O token de atualização é inválido ou já foi utilizado."),
     TB_GENERIC_ERROR(502, Constants.ResponseErrorCode.TB_GENERIC_ERROR,"Ocorreu um erro inesperado no serviço externo."),
 
-    UNKNOWN_INTERNAL_ERROR(500, Constants.ResponseErrorCode.UNKNOWN_INTERNAL_ERROR,"Ocorreu um erro interno inesperado no servidor."),
+    UNKNOWN_INTERNAL_ERROR(500, Constants.ResponseErrorCode.UNKNOWN_INTERNAL_ERROR,"Ocorreu um erro interno inesperado no servidor.")
 }

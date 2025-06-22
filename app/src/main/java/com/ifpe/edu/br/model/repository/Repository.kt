@@ -20,6 +20,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
+import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
 import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
@@ -80,17 +81,19 @@ class Repository private constructor(context: Context) {
         return airPowerServerMgr.getAggregatedTelemetry(query)
     }
 
-    suspend fun retrieveDeviceSummaryForCurrentUser() {
+    suspend fun retrieveDeviceSummaryForCurrentUser(): ResultWrapper<List<DeviceSummary>> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveDeviceSummaryForCurrentUser()")
-        try {
-            _devicesSummary.value =
-                getCurrentUser().let {
-                    AirPowerLog.d(TAG, "user is valid")
-                    airPowerServerMgr.getDeviceSummariesForUser(it.toThingsBoardUser())
-                }
-            AirPowerLog.e(TAG, devicesSummary.value.toString())
-        } catch (e: Exception) {
-            throw e
+        val user = getCurrentUser()
+        if (user != null) {
+            if (AirPowerLog.ISVERBOSE)
+                AirPowerLog.d(TAG, "Current user is valid")
+            val devicesSummaryResponseWrapper = airPowerServerMgr.getDeviceSummariesForUser(user.toThingsBoardUser())
+            if (devicesSummaryResponseWrapper is ResultWrapper.Success) {
+                _devicesSummary.value = devicesSummaryResponseWrapper.value
+            }
+            return devicesSummaryResponseWrapper
+        } else {
+            return ResultWrapper.ApiError(ErrorCode.AP_REFRESH_TOKEN_EXPIRED)
         }
     }
 
@@ -169,16 +172,6 @@ class Repository private constructor(context: Context) {
         }
     }
 
-    suspend fun getCurrentAirPowerUser(): AirPowerUser? {
-        return withContext(Dispatchers.IO) {
-            try {
-                userDao.findAll().firstOrNull()
-            } catch (e: Exception) {
-                throw IllegalStateException("Error getting current user from DB: ${e.message}")
-            }
-        }
-    }
-
     suspend fun save(token: AirPowerToken) {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "save() token: $token")
         require(!token.jwt.isNullOrEmpty() && !token.refreshToken.isNullOrEmpty() && token.client != null) {
@@ -251,7 +244,7 @@ class Repository private constructor(context: Context) {
         )
     }
 
-    private fun getCurrentUser(): AirPowerUser {
+    private fun getCurrentUser(): AirPowerUser? {
         return userDao.findAll()[0]
     }
 

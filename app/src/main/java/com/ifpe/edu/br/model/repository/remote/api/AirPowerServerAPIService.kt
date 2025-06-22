@@ -36,5 +36,5 @@ interface AirPowerServerAPIService {
     @GET("/test/api/v1/user/{userId}/devices-summary")
     suspend fun getDeviceSummariesForUser(
         @Path("userId") userId: String
-    ): Response<List<DeviceSummary>>
+    ): List<DeviceSummary>
 }
