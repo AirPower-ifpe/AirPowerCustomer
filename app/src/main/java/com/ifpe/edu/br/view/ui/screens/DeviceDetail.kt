@@ -28,6 +28,7 @@ import com.ifpe.edu.br.common.components.CustomBarChart
 import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomText
+import com.ifpe.edu.br.common.contracts.ChartDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.view.ui.components.AlarmCardInfo
@@ -51,10 +52,10 @@ fun DeviceDetailScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
-    val context = LocalContext.current
     val scrollState = rememberScrollState()
     val device = mainViewModel.getDeviceById(deviceId)
     val alarmInfoSet = mainViewModel.getAlarmInfo().collectAsState(initial = emptyList())
+    val chardDataWrapper = mainViewModel.getChartDataWrapper(device.id).collectAsState()
 
     CustomColumn(
         modifier = Modifier
@@ -63,7 +64,7 @@ fun DeviceDetailScreen(
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
         layouts = listOf {
             DeviceInfoCard(device)
-            DeviceConsumptionCard()
+            DeviceConsumptionCard(chardDataWrapper.value)
             AlarmsCard(alarmInfoSet.value)
         }
     )
@@ -127,7 +128,9 @@ private fun AlarmsCard(
 }
 
 @Composable
-private fun DeviceConsumptionCard() {
+private fun DeviceConsumptionCard(
+    chartDataWrapper: ChartDataWrapper
+) {
     CustomCard(
         paddingStart = 15.dp,
         paddingEnd = 15.dp,
@@ -152,7 +155,7 @@ private fun DeviceConsumptionCard() {
 
                     Spacer(modifier = Modifier.padding(vertical = 12.dp))
 
-                    CustomBarChart()
+                    CustomBarChart(dataWrapper = chartDataWrapper)
 
                     Spacer(modifier = Modifier.padding(vertical = 4.dp))
                 }

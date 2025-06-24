@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
+import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
+import java.util.UUID
 
 /*
 * Trabalho de conclusão de curso - IFPE 2025
@@ -247,7 +249,8 @@ class AirPowerViewModel(
                 if (AirPowerLog.ISVERBOSE)
                     AirPowerLog.d(TAG, "AP_JWT_EXPIRED -> STATE_UPDATE_SESSION")
                 uiStateManager.setUIState(
-                    uiStateKey, UIState(Constants.UIState.STATE_UPDATE_SESSION) // todo o srver tem q mandar esse codigo quando a sessao expira
+                    uiStateKey,
+                    UIState(Constants.UIState.STATE_UPDATE_SESSION) // todo o srver tem q mandar esse codigo quando a sessao expira
                 )
             }
 
@@ -280,6 +283,11 @@ class AirPowerViewModel(
 
     fun getAlarmInfo(): StateFlow<List<AlarmInfo>> {
         return repository.getAlarmInfo()
+    }
+
+
+    fun getChartDataWrapper(id: UUID): StateFlow<TelemetryDataWrapper> {
+        return repository.getChartDataWrapper(id)
     }
 
 }
