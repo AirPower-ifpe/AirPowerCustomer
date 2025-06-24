@@ -46,7 +46,9 @@ import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllDevicesMetricsWrapper
+import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
 import com.ifpe.edu.br.view.ui.components.AlarmCardInfo
+import com.ifpe.edu.br.view.ui.components.CardInfo
 import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_light
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
@@ -72,13 +74,66 @@ fun HomeScreen(
                 alarmInfo = alarmInfo.value
             )
             AlarmsSummaryCardCardBoard(alarmInfo.value)
-            SummaryCardCardBoard()
+            SummaryCardCardBoard(allDevicesMetricsWrapper.value)
         }
     )
 }
 
 @Composable
-fun SummaryCardCardBoard() {
+fun SummaryCardCardBoard(
+    value: AllDevicesMetricsWrapper
+) {
+    val context = LocalContext.current
+    CustomCard(
+        paddingStart = 15.dp,
+        paddingEnd = 15.dp,
+        paddingTop = 5.dp,
+        paddingBottom = 10.dp,
+        layouts = listOf {
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                CustomText(
+                    color = tb_primary_light,
+                    text = "Staus dos dispositivos",
+                    fontSize = 20.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
+
+            DevicesStatusGrid(value.statusSummaries) {
+                Toast.makeText(
+                    context,
+                    "Essa funcionalidade está em desenvolvimento",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                CustomText(
+                    modifier = Modifier.clickable {
+                        Toast.makeText(
+                            context,
+                            "Essa funcionalidade está em desenvolvimento",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
+                    color = tb_primary_light,
+                    text = "Detalhes",
+                    fontSize = 12.sp
+                )
+            }
+        }
+    )
 }
 
 @Composable
@@ -144,6 +199,7 @@ fun DevicesConsumptionSummaryCardBoard(
     alarmInfo: List<AlarmInfo>
 ) {
 
+    val context = LocalContext.current
     var totalAlarmCount = 0
     alarmInfo.forEach { info ->
         totalAlarmCount += info.occurrence
@@ -212,6 +268,26 @@ fun DevicesConsumptionSummaryCardBoard(
                     }
                 }
             )
+
+            Spacer(modifier = Modifier.padding(vertical = 4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                CustomText(
+                    modifier = Modifier.clickable {
+                        Toast.makeText(
+                            context,
+                            "Essa funcionalidade está em desenvolvimento",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
+                    color = tb_primary_light,
+                    text = "Detalhes",
+                    fontSize = 12.sp
+                )
+            }
         }
     )
 }
@@ -306,6 +382,39 @@ private fun AlarmGrid(
         items(alarmCards, key = { it.id }) { deviceItem ->
             AlarmCardInfo(
                 alarmInfo = deviceItem,
+                onClick = onClick,
+                backgroundColor = app_default_solid_background_light
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun DevicesStatusGrid(
+    statusSummaries: List<DevicesStatusSummary>,
+    onClick: () -> Unit
+) {
+
+    val gridCount = if (statusSummaries.size > 3) 2 else 3
+    var cardHeight = if (gridCount == 2) 160.dp else 140.dp
+    if (statusSummaries.size > 6) {
+        cardHeight = 260.dp
+    }
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(gridCount),
+        modifier = Modifier
+            .height(cardHeight)
+            .fillMaxWidth(),
+        contentPadding = PaddingValues(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        items(statusSummaries) { deviceItem ->
+            CardInfo(
+                label = deviceItem.label,
+                value = deviceItem.occurrence.toString(),
                 onClick = onClick,
                 backgroundColor = app_default_solid_background_light
             )

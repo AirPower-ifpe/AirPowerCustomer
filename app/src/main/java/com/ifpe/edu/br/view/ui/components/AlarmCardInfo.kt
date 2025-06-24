@@ -65,7 +65,7 @@ fun AlarmCardInfo(
                                 text = alarmInfo.type,
                                 alignment = TextAlign.Center,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
+                                fontSize = 12.sp,
                                 color = tb_primary_light,
                                 modifier = Modifier.wrapContentWidth()
                             )
@@ -83,6 +83,70 @@ fun AlarmCardInfo(
                         layouts = listOf {
                             CustomText(
                                 text = alarmInfo.occurrence.toString(),
+                                alignment = TextAlign.Center,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp,
+                                color = tb_secondary_light,
+                                modifier = Modifier.wrapContentWidth()
+                            )
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+        }
+    )
+}
+
+
+@Composable
+fun CardInfo(
+    label: String,
+    value: String,
+    onClick: () -> Unit,
+    backgroundColor: Color = Color.White
+) {
+    CustomCard(
+        modifier = Modifier
+            .clip(RoundedCornerShape(cardCornerRadius))
+            .fillMaxWidth()
+            .height(120.dp)
+            .background(backgroundColor)
+            .clickable { onClick() },
+        layouts = listOf {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CustomColumn(
+                        modifier = Modifier.wrapContentSize(),
+                        layouts = listOf {
+                            CustomText(
+                                text = label,
+                                alignment = TextAlign.Center,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = tb_primary_light,
+                                modifier = Modifier.wrapContentWidth()
+                            )
+                        }
+                    )
+                }
+
+                Spacer(Modifier.padding(vertical = 8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CustomColumn(
+                        modifier = Modifier.wrapContentSize(),
+                        layouts = listOf {
+                            CustomText(
+                                text = value,
                                 alignment = TextAlign.Center,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp,

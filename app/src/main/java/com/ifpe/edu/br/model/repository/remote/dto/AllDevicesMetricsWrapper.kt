@@ -12,12 +12,13 @@ import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 
 data class AllDevicesMetricsWrapper(
     val deviceConsumptionSet: List<DeviceConsumption>,
+    val statusSummaries: List<DevicesStatusSummary>,
     val totalConsumption: String,
     val devicesCount: Int,
     val label: String
 ) {
 
     override fun toString(): String {
-        return "AllDevicesMetricsWrapper(deviceConsumptionSet=$deviceConsumptionSet, totalConsumption='$totalConsumption', devicesCount=$devicesCount)"
+        return "AllDevicesMetricsWrapper(deviceConsumptionSet=$deviceConsumptionSet, statusSummaries=$statusSummaries, totalConsumption='$totalConsumption', devicesCount=$devicesCount, label='$label')"
     }
 }

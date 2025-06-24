@@ -22,6 +22,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllDevicesMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
+import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
@@ -371,6 +372,11 @@ class Repository private constructor(context: Context) {
             totalConsumption = "150000KW/h",
             devicesCount = 350,
             label = "consumo",
+            statusSummaries = listOf(
+                DevicesStatusSummary("Inativos", 5),
+                DevicesStatusSummary("Ativos", 6),
+                DevicesStatusSummary("Total", 11),
+            ),
             deviceConsumptionSet = listOf(
                 DeviceConsumption("1", 54.0),
                 DeviceConsumption("2", 65.0),
@@ -398,7 +404,8 @@ class Repository private constructor(context: Context) {
             totalConsumption = "",
             devicesCount = 0,
             label = "",
-            deviceConsumptionSet = emptyList()
+            deviceConsumptionSet = emptyList(),
+            statusSummaries = emptyList()
         )
     }
 }
