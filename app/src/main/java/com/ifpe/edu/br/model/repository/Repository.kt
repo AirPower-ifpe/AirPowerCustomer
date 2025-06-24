@@ -56,9 +56,8 @@ class Repository private constructor(context: Context) {
     private val chartDataWrapper: StateFlow<TelemetryDataWrapper> = _chartDataWrapper.asStateFlow()
 
     private val _allDevicesMetricsWrapper = MutableStateFlow(getEmptyAllDevicesMetricsWrapper())
-    private val allDevicesMetricsWrapper: StateFlow<AllDevicesMetricsWrapper> = _allDevicesMetricsWrapper.asStateFlow()
-
-
+    private val allDevicesMetricsWrapper: StateFlow<AllDevicesMetricsWrapper> =
+        _allDevicesMetricsWrapper.asStateFlow()
 
 
     companion object {
@@ -317,6 +316,7 @@ class Repository private constructor(context: Context) {
                 987342L,
                 1
             )
+
         )
         return alarmInfo
     }
