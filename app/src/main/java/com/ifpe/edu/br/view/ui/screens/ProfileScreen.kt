@@ -9,7 +9,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -19,15 +18,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.ifpe.edu.br.R
 import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.RectButton
-import com.ifpe.edu.br.common.components.RoundedImageIcon
 import com.ifpe.edu.br.common.components.TextTitle
-import com.ifpe.edu.br.view.AuthActivity
-import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 import com.ifpe.edu.br.model.util.AirPowerUtil
+import com.ifpe.edu.br.view.AuthActivity
+import com.ifpe.edu.br.view.ui.theme.tb_primary_light
+import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 
 @Composable
 fun ProfileScreen(
@@ -43,14 +41,11 @@ fun ProfileScreen(
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
         layouts = listOf {
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
-            TextTitle(textAlign = TextAlign.Center, message = "ProfileScreen")
-            RoundedImageIcon(
-                description = "",
-                iconResId = R.drawable.airpower_icon,
-                modifier = Modifier.size(250.dp)
+            TextTitle(
+                textColor = tb_primary_light,
+                textAlign = TextAlign.Center,
+                message = "ProfileScreen"
             )
-            Spacer(modifier = Modifier.padding(vertical = 100.dp))
-
             RectButton(
                 text = "Logout",
                 onClick = {
@@ -61,14 +56,6 @@ fun ProfileScreen(
                     )
                     navController.popBackStack()
                     (context as? ComponentActivity)?.finish()
-                },
-                fontSize = 20.sp
-            )
-
-            RectButton(
-                text = "Verbose logs: ${AirPowerUtil.isVerbose()}",
-                onClick = {
-                    AirPowerUtil.setVerbose(!AirPowerUtil.isVerbose())
                 },
                 fontSize = 20.sp
             )

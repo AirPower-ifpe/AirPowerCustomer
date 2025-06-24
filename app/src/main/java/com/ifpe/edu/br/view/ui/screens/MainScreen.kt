@@ -1,11 +1,17 @@
 package com.ifpe.edu.br.view.ui.screens
 
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -14,27 +20,36 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 import com.ifpe.edu.br.R
 import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.BottomNavItem
 import com.ifpe.edu.br.common.components.CustomColumn
+import com.ifpe.edu.br.common.components.CustomIconButton
 import com.ifpe.edu.br.common.components.CustomNavigationBar
+import com.ifpe.edu.br.common.components.CustomText
+import com.ifpe.edu.br.common.components.CustomTopBar
 import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.components.GradientBackground
-import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientDark
-import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.AuthActivity
 import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
+import com.ifpe.edu.br.view.ui.theme.appBackgroundGradientDark
+import com.ifpe.edu.br.view.ui.theme.appBackgroundGradientLight
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
-import com.ifpe.edu.br.view.ui.theme.tb_tertiary_light
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 
 /*
@@ -54,44 +69,123 @@ fun MainScreen(
     val uiState by mainViewModel.uiStateManager.observeUIState(id = Constants.UIStateKey.AUTH_KEY)
         .collectAsState()
 
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val screensWithBottomBar = listOf(
+        Screen.Home.route,
+        Screen.Devices.route,
+        Screen.Profile.route
+    )
+
+    val context = LocalContext.current
+    val shouldShowBottomBar = currentRoute in screensWithBottomBar
+
+
     LaunchedEffect(Unit) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "LaunchedEffect()")
         mainViewModel.startDataFetchers()
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(tb_tertiary_light)
-    ) {
-        CustomColumn(
-            alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
-            layouts = listOf {
-                Scaffold(
-                    bottomBar = {
+    CustomColumn(
+        alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
+        layouts = listOf {
+            Scaffold(
+                topBar = {
+                    val title = when (currentRoute) {
+                        Screen.Home.route -> "Início"
+                        Screen.Devices.route -> "Dispositivos"
+                        Screen.Profile.route -> "Perfil"
+                        Screen.DeviceDetail.route -> "Detalhes do Dispositivo"
+                        else -> "???"
+                    }
+
+                    CustomTopBar(
+                        backgroundColor = Color.Transparent,
+                        leftContent = {
+                            if (shouldShowBottomBar) {
+                                CustomIconButton(
+                                    iconResId = R.drawable.notification_icon,
+                                    iconTint = tb_primary_light,
+                                    contentDescription = "ícone de notificações",
+                                    backgroundColor = Color.Transparent,
+                                    onClick = {
+                                        Toast.makeText(
+                                            context,
+                                            "Ainda nao implementado",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                )
+                            } else {
+                                IconButton(onClick = { navController.popBackStack() }) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Voltar"
+                                    )
+                                }
+                            }
+
+                        },
+
+                        centerContent = {
+                            CustomText(
+                                text = title,
+                                fontSize = 30.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = tb_primary_light,
+                                alignment = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        },
+
+                        rightContent = {
+                            if (shouldShowBottomBar) {
+                                CustomIconButton(
+                                    iconResId = R.drawable.menu_icon,
+                                    iconTint = tb_primary_light,
+                                    backgroundColor = Color.Transparent,
+                                    contentDescription = "Ícone de menu",
+                                    onClick = {
+                                        Toast.makeText(
+                                            context,
+                                            "Ainda nao implementado",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                )
+                            }
+                        }
+                    )
+                },
+
+                bottomBar = {
+                    if (shouldShowBottomBar) {
                         CustomNavigationBar(
+                            backgroundColor = Color.Transparent,
                             navController = navController,
-                            listOf(
+                            items = listOf(
                                 BottomNavItem.Home,
                                 BottomNavItem.Devices,
                                 BottomNavItem.Profile
                             )
                         )
                     }
-                ) { innerPadding ->
-                    GradientBackground(
-                        if (isSystemInDarkTheme()) defaultBackgroundGradientDark
-                        else defaultBackgroundGradientLight
-                    )
-                    NavHostContainer(
-                        navController = navController,
-                        modifier = Modifier.padding(innerPadding),
-                        mainViewModel = mainViewModel
-                    )
                 }
+            ) { innerPadding ->
+                GradientBackground(
+                    if (isSystemInDarkTheme()) appBackgroundGradientDark
+                    else appBackgroundGradientLight
+                )
+                NavHostContainer(
+                    navController = navController,
+                    modifier = Modifier.padding(innerPadding),
+                    mainViewModel = mainViewModel
+                )
             }
-        )
-    }
+        }
+    )
 
 //    when (uiState.state) {
 //        CommonConstants.State.STATE_AUTH_FAILURE -> {
@@ -204,7 +298,7 @@ fun NavHostContainer(
         startDestination = BottomNavItem.Home.route,
         modifier = modifier
     ) {
-        composable(BottomNavItem.Home.route) {
+        composable(Screen.Home.route) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize()
@@ -212,7 +306,7 @@ fun NavHostContainer(
                 HomeScreen(navController, mainViewModel)
             }
         }
-        composable(BottomNavItem.Devices.route) {
+        composable(Screen.Devices.route) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize()
@@ -220,12 +314,30 @@ fun NavHostContainer(
                 DeviceScreen(navController, mainViewModel)
             }
         }
-        composable(BottomNavItem.Profile.route) {
+        composable(Screen.Profile.route) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize()
             ) {
                 ProfileScreen(navController, mainViewModel)
+            }
+        }
+
+        composable(
+            route = Screen.DeviceDetail.route,
+            arguments = listOf(navArgument("deviceId") {
+                type = NavType.StringType
+            })
+        ) { backStackEntry ->
+            val deviceId = backStackEntry.arguments?.getString("deviceId")
+            if (deviceId != null) {
+                DeviceDetailScreen(
+                    deviceId = deviceId,
+                    navController = navController,
+                    mainViewModel = mainViewModel
+                )
+            } else {
+                navController.popBackStack()
             }
         }
     }

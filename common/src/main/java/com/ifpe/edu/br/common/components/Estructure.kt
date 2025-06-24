@@ -112,10 +112,16 @@ fun CustomCard(
 
 @Composable
 fun CustomNavigationBar(
+    backgroundColor: Color = Color.Transparent,
+    contentColor: Color = Color.Black,
     navController: NavHostController,
+    showLabel: Boolean = true,
     items: List<BottomNavItem>
 ) {
-    NavigationBar {
+    NavigationBar(
+        containerColor = backgroundColor,
+        contentColor = contentColor
+    ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
@@ -135,7 +141,7 @@ fun CustomNavigationBar(
                 },
                 icon = item.icon,
                 label = { Text(item.label) },
-                alwaysShowLabel = true
+                alwaysShowLabel = showLabel
             )
         }
     }

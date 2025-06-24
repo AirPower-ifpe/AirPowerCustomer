@@ -17,13 +17,23 @@ import androidx.compose.ui.graphics.drawscope.scale
 val tb_primary_light = Color(0xFF305680)
 val tb_secondary_light = Color(0xFFFF5722)
 val tb_tertiary_light = Color(0xFFEEEEEE)
-val app_default_solid_background_color = Color(0xD7DAD6D6)
+val app_default_solid_background_light = Color(0xD7DAD6D6)
+val app_default_solid_background_dark = Color(0xD79A9696)
+val app_default_solid_background_dark_variant = Color(0xD7C4C0C0)
 
 val a = Color(0xE9FAF9F9)
 val b = Color(0xD7C2BEBE)
 
 private val transparentGradient = listOf(
     a, b
+)
+
+val appBackgroundGradientLight = listOf(
+    Color.White, app_default_solid_background_light
+)
+
+val appBackgroundGradientDark = listOf(
+    app_default_solid_background_dark_variant, app_default_solid_background_dark
 )
 
 @Composable

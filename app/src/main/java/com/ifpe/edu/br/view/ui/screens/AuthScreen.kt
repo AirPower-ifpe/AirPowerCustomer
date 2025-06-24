@@ -87,6 +87,8 @@ fun AuthScreen(
             alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
             layouts = listOf {
                 CustomCard(
+                    paddingStart = 20.dp,
+                    paddingEnd = 20.dp,
                     modifier = Modifier
                         .clip(RoundedCornerShape(cardCornerRadius))
                         .clip(RoundedCornerShape(cardCornerRadius))
