@@ -9,6 +9,7 @@ import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
 import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
+import com.ifpe.edu.br.model.repository.remote.dto.AllDevicesMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
@@ -290,4 +291,12 @@ class AirPowerViewModel(
         return repository.getChartDataWrapper(id)
     }
 
+
+    fun getAllDevicesChartDataWrapper(): StateFlow<TelemetryDataWrapper> {
+        return repository.getAllDevicesChartDataWrapper()
+    }
+
+    fun getAllDevicesMetricsWrapper(): StateFlow<AllDevicesMetricsWrapper> {
+        return repository.getAllDevicesMetricsWrapper()
+    }
 }
