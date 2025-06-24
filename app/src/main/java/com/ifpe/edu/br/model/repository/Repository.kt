@@ -19,8 +19,10 @@ import com.ifpe.edu.br.model.repository.persistence.model.toThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerConnectionContractImpl
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerManager
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
+import com.ifpe.edu.br.model.repository.remote.dto.AllDevicesMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
+import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
@@ -53,6 +55,10 @@ class Repository private constructor(context: Context) {
 
     private val _chartDataWrapper = MutableStateFlow(getEmptyTelemetryDataWrapper())
     private val chartDataWrapper: StateFlow<TelemetryDataWrapper> = _chartDataWrapper.asStateFlow()
+
+    private val _allDevicesMetricsWrapper = MutableStateFlow(getEmptyAllDevicesMetricsWrapper())
+    private val allDevicesMetricsWrapper: StateFlow<AllDevicesMetricsWrapper> =
+        _allDevicesMetricsWrapper.asStateFlow()
 
 
     companion object {
@@ -311,6 +317,7 @@ class Repository private constructor(context: Context) {
                 987342L,
                 1
             )
+
         )
         return alarmInfo
     }
@@ -337,7 +344,68 @@ class Repository private constructor(context: Context) {
         return chartDataWrapper
     }
 
+    fun getAllDevicesChartDataWrapper(): StateFlow<TelemetryDataWrapper> {
+        // TODO change this
+        _chartDataWrapper.value = TelemetryDataWrapper(
+            "KW/h",
+            listOf(
+                DeviceConsumption("1", 54.0),
+                DeviceConsumption("2", 65.0),
+                DeviceConsumption("3", 70.0),
+                DeviceConsumption("4", 90.0),
+                DeviceConsumption("5", 100.0),
+                DeviceConsumption("6", 160.0),
+                DeviceConsumption("7", 140.0),
+                DeviceConsumption("8", 90.0),
+                DeviceConsumption("9", 99.0),
+                DeviceConsumption("10", 180.0),
+                DeviceConsumption("11", 20.0),
+                DeviceConsumption("12", 10.0),
+            )
+        )
+        return chartDataWrapper
+    }
+
+    fun getAllDevicesMetricsWrapper(): StateFlow<AllDevicesMetricsWrapper> {
+        // TODO change this
+        _allDevicesMetricsWrapper.value = AllDevicesMetricsWrapper(
+            totalConsumption = "150000KW/h",
+            devicesCount = 350,
+            label = "consumo",
+            statusSummaries = listOf(
+                DevicesStatusSummary("Inativos", 5),
+                DevicesStatusSummary("Ativos", 6),
+                DevicesStatusSummary("Total", 11),
+            ),
+            deviceConsumptionSet = listOf(
+                DeviceConsumption("1", 54.0),
+                DeviceConsumption("2", 65.0),
+                DeviceConsumption("3", 70.0),
+                DeviceConsumption("4", 90.0),
+                DeviceConsumption("5", 100.0),
+                DeviceConsumption("6", 160.0),
+                DeviceConsumption("7", 140.0),
+                DeviceConsumption("8", 90.0),
+                DeviceConsumption("9", 99.0),
+                DeviceConsumption("10", 180.0),
+                DeviceConsumption("11", 20.0),
+                DeviceConsumption("12", 10.0),
+            )
+        )
+        return allDevicesMetricsWrapper
+    }
+
     private fun getEmptyTelemetryDataWrapper(): TelemetryDataWrapper {
         return TelemetryDataWrapper("", emptyList())
+    }
+
+    private fun getEmptyAllDevicesMetricsWrapper(): AllDevicesMetricsWrapper {
+        return AllDevicesMetricsWrapper(
+            totalConsumption = "",
+            devicesCount = 0,
+            label = "",
+            deviceConsumptionSet = emptyList(),
+            statusSummaries = emptyList()
+        )
     }
 }
