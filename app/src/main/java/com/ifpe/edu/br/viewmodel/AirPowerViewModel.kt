@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
+import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
@@ -16,6 +17,7 @@ import com.ifpe.edu.br.model.util.ResultWrapper
 import com.ifpe.edu.br.view.manager.UIStateManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
@@ -274,6 +276,10 @@ class AirPowerViewModel(
 
     fun getDeviceById(deviceId: String): DeviceSummary {
         return repository.getDeviceById(deviceId)
+    }
+
+    fun getAlarmInfo(): StateFlow<List<AlarmInfo>> {
+        return repository.getAlarmInfo()
     }
 
 }

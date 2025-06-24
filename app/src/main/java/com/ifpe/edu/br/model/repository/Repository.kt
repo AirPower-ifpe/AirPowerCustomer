@@ -17,6 +17,7 @@ import com.ifpe.edu.br.model.repository.persistence.model.AirPowerUser
 import com.ifpe.edu.br.model.repository.persistence.model.toThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerConnectionContractImpl
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerManager
+import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -27,7 +28,11 @@ import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.ResultWrapper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class Repository private constructor(context: Context) {
     private val db = AirPowerDatabase.getDataBaseInstance(context)
@@ -41,8 +46,8 @@ class Repository private constructor(context: Context) {
     private val _devicesSummary = MutableLiveData<List<DeviceSummary>>(emptyList())
     val devicesSummary: LiveData<List<DeviceSummary>> get() = _devicesSummary
 
-//    private val _deviceCardsState = MutableStateFlow<List<DeviceCardModel>>(emptyList())
-//    val deviceCards: StateFlow<List<DeviceCardModel>> = _deviceCardsState.asStateFlow()
+    private val _alarmInfo = MutableStateFlow<List<AlarmInfo>>(emptyList())
+    private val alarmInfo: StateFlow<List<AlarmInfo>> = _alarmInfo.asStateFlow()
 
     companion object {
         @Volatile
@@ -88,7 +93,8 @@ class Repository private constructor(context: Context) {
         if (user != null) {
             if (AirPowerLog.ISVERBOSE)
                 AirPowerLog.d(TAG, "Current user is valid")
-            val devicesSummaryResponseWrapper = airPowerServerMgr.getDeviceSummariesForUser(user.toThingsBoardUser())
+            val devicesSummaryResponseWrapper =
+                airPowerServerMgr.getDeviceSummariesForUser(user.toThingsBoardUser())
             if (devicesSummaryResponseWrapper is ResultWrapper.Success) {
                 _devicesSummary.value = devicesSummaryResponseWrapper.value
             }
@@ -253,11 +259,11 @@ class Repository private constructor(context: Context) {
     fun isUserLoggedIn(): Boolean {
         return userDao.findAll().size == 1
     }
-    
+
     fun getDeviceById(id: String): DeviceSummary {
         devicesSummary.value?.forEach { devicesSummary ->
             if (AirPowerLog.ISLOGABLE)
-                AirPowerLog.e(TAG, "[$TAG]: devicesSummary:$devicesSummary   id: $id" )
+                AirPowerLog.e(TAG, "[$TAG]: devicesSummary:$devicesSummary   id: $id")
             if (devicesSummary.id.toString() == id) {
                 return devicesSummary
             }
@@ -265,5 +271,41 @@ class Repository private constructor(context: Context) {
         if (AirPowerLog.ISLOGABLE)
             AirPowerLog.e(TAG, "[$TAG]: Exception: -> device not found")
         throw NotFoundException("[$TAG]: Exception: -> device not found")
+    }
+
+    fun getAlarmInfo(): StateFlow<List<AlarmInfo>> {
+        // TODO change this
+        _alarmInfo.value = listOf(
+            AlarmInfo(
+                UUID.randomUUID(),
+                "Crítico",
+                "",
+                987342L,
+                10
+            ),
+            AlarmInfo(
+                UUID.randomUUID(),
+                "Meus Alarmes",
+                "",
+                987342L,
+                3
+            ),
+
+            AlarmInfo(
+                UUID.randomUUID(),
+                "Grupo",
+                "",
+                987342L,
+                1
+            ),
+            AlarmInfo(
+                UUID.randomUUID(),
+                "Grupo",
+                "",
+                987342L,
+                1
+            )
+        )
+        return alarmInfo
     }
 }
