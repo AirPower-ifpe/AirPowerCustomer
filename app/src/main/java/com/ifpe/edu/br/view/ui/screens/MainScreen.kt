@@ -96,7 +96,7 @@ fun MainScreen(
                     val title = when (currentRoute) {
                         Screen.Home.route -> "Início"
                         Screen.Devices.route -> "Dispositivos"
-                        Screen.Profile.route -> "Perfil"
+                        Screen.Profile.route -> "Dashboards"
                         Screen.DeviceDetail.route -> "Detalhes do Dispositivo"
                         else -> "???"
                     }
@@ -319,7 +319,7 @@ fun NavHostContainer(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize()
             ) {
-                ProfileScreen(navController, mainViewModel)
+                DashBoardsScreen(navController, mainViewModel)
             }
         }
 

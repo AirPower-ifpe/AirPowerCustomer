@@ -19,7 +19,7 @@ class TelemetryDataWrapper(
 ) : ChartDataWrapper {
 
     override fun getName(): String {
-        return "that's my name"
+        return label
     }
 
     override fun getDataSet(): DataSet {
