@@ -1,7 +1,5 @@
 package com.ifpe.edu.br.model.repository.remote.dto
 
-import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
-
 
 // Trabalho de conclusão de curso - IFPE 2025
 // Author: Willian Santos
@@ -10,7 +8,7 @@ import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 // Copyright (c) 2025 IFPE. All rights reserved.
 
 
-data class AllDevicesMetricsWrapper(
+data class AllMetricsWrapper(
     val deviceConsumptionSet: List<DeviceConsumption>,
     val statusSummaries: List<DevicesStatusSummary>,
     val totalConsumption: String,

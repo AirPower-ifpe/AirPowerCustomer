@@ -19,7 +19,8 @@ import com.ifpe.edu.br.model.repository.persistence.model.toThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerConnectionContractImpl
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerManager
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
-import com.ifpe.edu.br.model.repository.remote.dto.AllDevicesMetricsWrapper
+import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
+import com.ifpe.edu.br.model.repository.remote.dto.DashBoardDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
@@ -57,8 +58,12 @@ class Repository private constructor(context: Context) {
     private val chartDataWrapper: StateFlow<TelemetryDataWrapper> = _chartDataWrapper.asStateFlow()
 
     private val _allDevicesMetricsWrapper = MutableStateFlow(getEmptyAllDevicesMetricsWrapper())
-    private val allDevicesMetricsWrapper: StateFlow<AllDevicesMetricsWrapper> =
+    private val allDevicesMetricsWrapper: StateFlow<AllMetricsWrapper> =
         _allDevicesMetricsWrapper.asStateFlow()
+
+    private val _dashBoardsMetricsWrapper = MutableStateFlow(getEmptyUserDashBoardsDataWrapper())
+    private val dashBoardsMetricsWrapper: StateFlow<List<DashBoardDataWrapper>> =
+        _dashBoardsMetricsWrapper.asStateFlow()
 
 
     companion object {
@@ -366,9 +371,9 @@ class Repository private constructor(context: Context) {
         return chartDataWrapper
     }
 
-    fun getAllDevicesMetricsWrapper(): StateFlow<AllDevicesMetricsWrapper> {
+    fun getAllDevicesMetricsWrapper(): StateFlow<AllMetricsWrapper> {
         // TODO change this
-        _allDevicesMetricsWrapper.value = AllDevicesMetricsWrapper(
+        _allDevicesMetricsWrapper.value = AllMetricsWrapper(
             totalConsumption = "150000KW/h",
             devicesCount = 350,
             label = "consumo",
@@ -395,12 +400,227 @@ class Repository private constructor(context: Context) {
         return allDevicesMetricsWrapper
     }
 
+    fun getUserDashBoardsDataWrapper(): StateFlow<List<DashBoardDataWrapper>> {
+        // TODO change this
+        val dashboards = listOf(
+            DashBoardDataWrapper(
+                label = "Biblioteca",
+                alarmInfo = listOf(
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Crítico",
+                        "o Equipamento parou",
+                        System.currentTimeMillis(),
+                        10
+                    ),
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Médio",
+                        "o Equipamento ligou",
+                        System.currentTimeMillis(),
+                        1
+                    ),
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Info",
+                        "o Equipamento foi desligado",
+                        System.currentTimeMillis(),
+                        4
+                    )
+                ),
+                allMetricsWrapper = AllMetricsWrapper(
+                    totalConsumption = "150000KW/h",
+                    devicesCount = 34,
+                    label = "consumo",
+                    statusSummaries = listOf(
+                        DevicesStatusSummary("Inativos", 5),
+                        DevicesStatusSummary("Ativos", 6),
+                        DevicesStatusSummary("Total", 11),
+                    ),
+                    deviceConsumptionSet = listOf(
+                        DeviceConsumption("1", 54.0),
+                        DeviceConsumption("2", 65.0),
+                        DeviceConsumption("3", 70.0),
+                        DeviceConsumption("4", 90.0),
+                        DeviceConsumption("5", 100.0),
+                        DeviceConsumption("6", 160.0),
+                        DeviceConsumption("7", 140.0),
+                        DeviceConsumption("8", 90.0),
+                        DeviceConsumption("9", 99.0),
+                        DeviceConsumption("10", 180.0),
+                        DeviceConsumption("11", 20.0),
+                        DeviceConsumption("12", 10.0),
+                    )
+                )
+            ),
+
+            DashBoardDataWrapper(
+                label = "Lab DEXTER",
+                alarmInfo = listOf(
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Crítico",
+                        "o Equipamento parou",
+                        System.currentTimeMillis(),
+                        10
+                    ),
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Médio",
+                        "o Equipamento ligou",
+                        System.currentTimeMillis(),
+                        1
+                    ),
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Info",
+                        "o Equipamento foi desligado",
+                        System.currentTimeMillis(),
+                        4
+                    )
+                ),
+                allMetricsWrapper = AllMetricsWrapper(
+                    totalConsumption = "150000KW/h",
+                    devicesCount = 34,
+                    label = "consumo",
+                    statusSummaries = listOf(
+                        DevicesStatusSummary("Inativos", 5),
+                        DevicesStatusSummary("Ativos", 6),
+                        DevicesStatusSummary("Total", 11),
+                    ),
+                    deviceConsumptionSet = listOf(
+                        DeviceConsumption("1", 54.0),
+                        DeviceConsumption("2", 65.0),
+                        DeviceConsumption("3", 70.0),
+                        DeviceConsumption("4", 90.0),
+                        DeviceConsumption("5", 100.0),
+                        DeviceConsumption("6", 160.0),
+                        DeviceConsumption("7", 140.0),
+                        DeviceConsumption("8", 90.0),
+                        DeviceConsumption("9", 99.0),
+                        DeviceConsumption("10", 180.0),
+                        DeviceConsumption("11", 20.0),
+                        DeviceConsumption("12", 10.0),
+                    )
+                )
+            ),
+
+            DashBoardDataWrapper(
+                label = "Lab TADS",
+                alarmInfo = listOf(
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Crítico",
+                        "o Equipamento parou",
+                        System.currentTimeMillis(),
+                        10
+                    ),
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Médio",
+                        "o Equipamento ligou",
+                        System.currentTimeMillis(),
+                        1
+                    ),
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Info",
+                        "o Equipamento foi desligado",
+                        System.currentTimeMillis(),
+                        4
+                    )
+                ),
+                allMetricsWrapper = AllMetricsWrapper(
+                    totalConsumption = "150000KW/h",
+                    devicesCount = 34,
+                    label = "consumo",
+                    statusSummaries = listOf(
+                        DevicesStatusSummary("Inativos", 5),
+                        DevicesStatusSummary("Ativos", 6),
+                        DevicesStatusSummary("Total", 11),
+                    ),
+                    deviceConsumptionSet = listOf(
+                        DeviceConsumption("1", 54.0),
+                        DeviceConsumption("2", 65.0),
+                        DeviceConsumption("3", 70.0),
+                        DeviceConsumption("4", 90.0),
+                        DeviceConsumption("5", 100.0),
+                        DeviceConsumption("6", 160.0),
+                        DeviceConsumption("7", 140.0),
+                        DeviceConsumption("8", 90.0),
+                        DeviceConsumption("9", 99.0),
+                        DeviceConsumption("10", 180.0),
+                        DeviceConsumption("11", 20.0),
+                        DeviceConsumption("12", 10.0),
+                    )
+                )
+            ),
+
+            DashBoardDataWrapper(
+                label = "Reitoria",
+                alarmInfo = listOf(
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Crítico",
+                        "o Equipamento parou",
+                        System.currentTimeMillis(),
+                        10
+                    ),
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Médio",
+                        "o Equipamento ligou",
+                        System.currentTimeMillis(),
+                        1
+                    ),
+                    AlarmInfo(
+                        UUID.randomUUID(),
+                        "Info",
+                        "o Equipamento foi desligado",
+                        System.currentTimeMillis(),
+                        4
+                    )
+                ),
+                allMetricsWrapper = AllMetricsWrapper(
+                    totalConsumption = "150000KW/h",
+                    devicesCount = 34,
+                    label = "consumo",
+                    statusSummaries = listOf(
+                        DevicesStatusSummary("Inativos", 5),
+                        DevicesStatusSummary("Ativos", 6),
+                        DevicesStatusSummary("Total", 11),
+                    ),
+                    deviceConsumptionSet = listOf(
+                        DeviceConsumption("1", 54.0),
+                        DeviceConsumption("2", 65.0),
+                        DeviceConsumption("3", 70.0),
+                        DeviceConsumption("4", 90.0),
+                        DeviceConsumption("5", 100.0),
+                        DeviceConsumption("6", 160.0),
+                        DeviceConsumption("7", 140.0),
+                        DeviceConsumption("8", 90.0),
+                        DeviceConsumption("9", 99.0),
+                        DeviceConsumption("10", 180.0),
+                        DeviceConsumption("11", 20.0),
+                        DeviceConsumption("12", 10.0),
+                    )
+                )
+            ),
+        )
+        _dashBoardsMetricsWrapper.value = dashboards
+        return dashBoardsMetricsWrapper
+    }
+
     private fun getEmptyTelemetryDataWrapper(): TelemetryDataWrapper {
         return TelemetryDataWrapper("", emptyList())
     }
 
-    private fun getEmptyAllDevicesMetricsWrapper(): AllDevicesMetricsWrapper {
-        return AllDevicesMetricsWrapper(
+    private fun getEmptyUserDashBoardsDataWrapper(): List<DashBoardDataWrapper> {
+        return emptyList()
+    }
+
+    private fun getEmptyAllDevicesMetricsWrapper(): AllMetricsWrapper {
+        return AllMetricsWrapper(
             totalConsumption = "",
             devicesCount = 0,
             label = "",
