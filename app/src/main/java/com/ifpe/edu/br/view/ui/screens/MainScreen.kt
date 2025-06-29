@@ -42,7 +42,7 @@ import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.components.CustomTopBar
 import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.components.GradientBackground
-import com.ifpe.edu.br.model.Constants
+import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.AuthActivity
@@ -50,6 +50,7 @@ import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
 import com.ifpe.edu.br.view.ui.theme.appBackgroundGradientDark
 import com.ifpe.edu.br.view.ui.theme.appBackgroundGradientLight
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
+import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 
 /*
@@ -66,9 +67,7 @@ fun MainScreen(
 ) {
     val TAG = "MainScreen"
 
-    val uiState by mainViewModel.uiStateManager.observeUIState(id = Constants.UIStateKey.AUTH_KEY)
-        .collectAsState()
-
+    val notification = mainViewModel.getNotifications().collectAsState()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -98,7 +97,8 @@ fun MainScreen(
                         Screen.Devices.route -> "Dispositivos"
                         Screen.Profile.route -> "Dashboards"
                         Screen.DeviceDetail.route -> "Detalhes do Dispositivo"
-                        else -> "???"
+                        Screen.NotificationCenter.route -> "Centro de Notificações"
+                        else -> ""
                     }
 
                     CustomTopBar(
@@ -107,15 +107,11 @@ fun MainScreen(
                             if (shouldShowBottomBar) {
                                 CustomIconButton(
                                     iconResId = R.drawable.notification_icon,
-                                    iconTint = tb_primary_light,
+                                    iconTint = if (hasNotification(notification.value)) tb_secondary_light else tb_primary_light,
                                     contentDescription = "ícone de notificações",
                                     backgroundColor = Color.Transparent,
                                     onClick = {
-                                        Toast.makeText(
-                                            context,
-                                            "Ainda nao implementado",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        navController.navigate(Screen.NotificationCenter.route)
                                     }
                                 )
                             } else {
@@ -186,29 +182,6 @@ fun MainScreen(
             }
         }
     )
-
-//    when (uiState.state) {
-//        CommonConstants.State.STATE_AUTH_FAILURE -> {
-//           // AuthFailure(navController, componentActivity)
-//        }
-//
-//        CommonConstants.State.STATE_SERVER_INTERNAL_ISSUE -> {
-//            //NetworkIssue(navController, componentActivity)
-//        }
-//
-//        Constants.DeprecatedValues.THINGS_BOARD_ERROR_CODE_AUTHENTICATION_FAILED -> {
-//            //UpdateSessionFailure(navController, componentActivity)
-//        }
-//
-//        Constants.ResponseErrorCode.AP_GENERIC_ERROR -> {
-//            mainViewModel.updateSession(
-//                onSuccessCallback = {
-//                    mainViewModel.startDataFetchers()
-//                },
-//                onFailureCallback = {}
-//            )
-//        }
-//    }
 }
 
 @Composable
@@ -340,6 +313,15 @@ fun NavHostContainer(
                 navController.popBackStack()
             }
         }
+
+        composable(
+            route = Screen.NotificationCenter.route
+        ) {
+            NotificationCenterScreen(
+                navController = navController,
+                mainViewModel = mainViewModel
+            )
+        }
     }
 }
 
@@ -353,4 +335,15 @@ private fun navigateAuthScreen(
         AuthActivity::class.java
     )
     componentActivity.finish()
+}
+
+private fun hasNotification(
+    notificationSet: List<NotificationItem>
+): Boolean {
+    notificationSet.forEach { item ->
+        if (item.isNew) {
+            return true
+        }
+    }
+    return false
 }
