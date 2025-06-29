@@ -24,6 +24,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.DashBoardDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
+import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
@@ -64,6 +65,9 @@ class Repository private constructor(context: Context) {
     private val _dashBoardsMetricsWrapper = MutableStateFlow(getEmptyUserDashBoardsDataWrapper())
     private val dashBoardsMetricsWrapper: StateFlow<List<DashBoardDataWrapper>> =
         _dashBoardsMetricsWrapper.asStateFlow()
+
+    private val _notification = MutableStateFlow(getEmptyNotification())
+    private val notification: StateFlow<List<NotificationItem>> = _notification.asStateFlow()
 
 
     companion object {
@@ -627,5 +631,57 @@ class Repository private constructor(context: Context) {
             deviceConsumptionSet = emptyList(),
             statusSummaries = emptyList()
         )
+    }
+
+    fun getNotifications(): StateFlow<List<NotificationItem>> {
+        _notification.value = listOf(
+            NotificationItem(
+                "Lebal1",
+                "messagem1 gh fdiohga iasd asdahdfa sdfa sdlfahsdf asdfiausdhfa dsfaisdufhadsfahsdf adlfhasdf ahsdfjasdfajsdhf asdaksdjfhd fskdjfsh",
+                System.currentTimeMillis(),
+                true
+            ),
+            NotificationItem(
+                "Lebal2",
+                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhasdf adsjfhasd fhasd fashd fasdhfasdhfasdhf jasdhf çasjdfh sadjfha sdkjfhasdkf",
+                System.currentTimeMillis(),
+                false
+            ),
+            NotificationItem(
+                "Lebal dfsd 12",
+                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
+                System.currentTimeMillis(),
+                false
+            ),
+            NotificationItem(
+                "Lebal dfs d13",
+                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
+                System.currentTimeMillis(),
+                false
+            ),
+            NotificationItem(
+                "Lebal df sd1",
+                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
+                System.currentTimeMillis(),
+                false
+            ),
+            NotificationItem(
+                "Lebal df sd1",
+                "j sdf asdfhas dfhadfha sdfahsd fasçdfhasdfhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
+                System.currentTimeMillis(),
+                false
+            ),
+            NotificationItem(
+                "Lebal df sd1",
+                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
+                System.currentTimeMillis(),
+                false
+            ),
+        )
+        return notification
+    }
+
+    private fun getEmptyNotification(): List<NotificationItem> {
+        return emptyList()
     }
 }

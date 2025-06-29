@@ -12,6 +12,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DashBoardDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
+import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
@@ -303,5 +304,9 @@ class AirPowerViewModel(
 
     fun getUserDashBoardsDataWrapper(): StateFlow<List<DashBoardDataWrapper>> {
         return repository.getUserDashBoardsDataWrapper()
+    }
+
+    fun getNotifications(): StateFlow<List<NotificationItem>> {
+        return repository.getNotifications()
     }
 }

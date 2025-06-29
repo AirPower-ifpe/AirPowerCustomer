@@ -7,9 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -31,36 +30,14 @@ fun NotificationCenterScreen(
     mainViewModel: AirPowerViewModel
 ) {
     val context = LocalContext.current
-    val notificationSet: List<NotificationItem> = listOf(
-        NotificationItem(
-            "messagem1",
-            System.currentTimeMillis()
-        ),
-        NotificationItem(
-            "messagem12",
-            System.currentTimeMillis()
-        ),
-        NotificationItem(
-            "messagem13",
-            System.currentTimeMillis()
-        ),
-        NotificationItem(
-            "messagem14",
-            System.currentTimeMillis()
-        ),
-        NotificationItem(
-            "messagem15",
-            System.currentTimeMillis()
-        )
-    )
+    val notification = mainViewModel.getNotifications().collectAsState()
 
     CustomColumn(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
         layouts = listOf {
             NotificationGrid(
-                notificationSet = notificationSet,
+                notificationSet = notification.value,
                 onClick = {
                     Toast.makeText(
                         context,

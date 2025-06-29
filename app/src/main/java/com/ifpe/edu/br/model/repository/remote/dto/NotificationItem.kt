@@ -6,7 +6,8 @@ package com.ifpe.edu.br.model.repository.remote.dto
 * Project: AirPower Costumer
 */
 data class NotificationItem(
+    val label: String,
     val message: String,
     val timestamp: Long,
-    var wasOped: Boolean = false
+    var isNew: Boolean = true
 )
