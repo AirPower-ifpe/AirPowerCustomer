@@ -14,6 +14,10 @@ sealed class Screen(val route: String) {
         fun createRoute(deviceId: String) = "device_detail_screen/$deviceId"
     }
 
+    object NotificationCenter : Screen("notification_center") {
+
+    }
+
     object Home : Screen("home") {
     }
 

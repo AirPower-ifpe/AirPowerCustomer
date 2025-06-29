@@ -98,7 +98,8 @@ fun MainScreen(
                         Screen.Devices.route -> "Dispositivos"
                         Screen.Profile.route -> "Dashboards"
                         Screen.DeviceDetail.route -> "Detalhes do Dispositivo"
-                        else -> "???"
+                        Screen.NotificationCenter.route -> "Centro de Notificações"
+                        else -> ""
                     }
 
                     CustomTopBar(
@@ -111,11 +112,7 @@ fun MainScreen(
                                     contentDescription = "ícone de notificações",
                                     backgroundColor = Color.Transparent,
                                     onClick = {
-                                        Toast.makeText(
-                                            context,
-                                            "Ainda nao implementado",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        navController.navigate(Screen.NotificationCenter.route)
                                     }
                                 )
                             } else {
@@ -339,6 +336,15 @@ fun NavHostContainer(
             } else {
                 navController.popBackStack()
             }
+        }
+
+        composable(
+            route = Screen.NotificationCenter.route
+        ) {
+            NotificationCenterScreen(
+                navController = navController,
+                mainViewModel = mainViewModel
+            )
         }
     }
 }
