@@ -1,9 +1,8 @@
 package com.ifpe.edu.br.model.repository.remote.api
 
 import com.google.gson.Gson
-import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
-import com.ifpe.edu.br.model.repository.remote.dto.DeviceAggregatedTelemetry
+import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -13,14 +12,10 @@ import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.repository.remote.query.RefreshTokenQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
-import com.ifpe.edu.br.model.util.AuthenticateFailureException
-import com.ifpe.edu.br.model.util.InvalidStateException
 import com.ifpe.edu.br.model.util.ResultWrapper
-import com.ifpe.edu.br.model.util.ServerUtils
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import retrofit2.Retrofit
-import javax.net.ssl.HttpsURLConnection
 
 
 // Trabalho de conclusão de curso - IFPE 2025
@@ -96,5 +91,10 @@ class AirPowerServerManager(connection: Retrofit) {
     ): ResultWrapper<List<DeviceSummary>> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceSummariesForUser()")
         return safeApiCall { apiService.getDeviceSummariesForUser(user.id.id) }
+    }
+
+    suspend fun getAlarmsForCurrentUser(): ResultWrapper<List<AlarmInfo>> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getAlarmsForCurrentUser()")
+        return safeApiCall { apiService.getAlarmsForCurrentUser() }
     }
 }

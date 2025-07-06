@@ -61,7 +61,7 @@ fun HomeScreen(
     mainViewModel: AirPowerViewModel
 ) {
     val allDevicesMetricsWrapper = mainViewModel.getAllDevicesMetricsWrapper().collectAsState()
-    val alarmInfo = mainViewModel.getAlarmInfo().collectAsState()
+    val alarmInfo = mainViewModel.getAlarmInfoSet().collectAsState()
     val scrollState = rememberScrollState()
     CustomColumn(
         modifier = Modifier

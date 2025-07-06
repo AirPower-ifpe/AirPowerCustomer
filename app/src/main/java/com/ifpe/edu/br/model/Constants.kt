@@ -46,6 +46,7 @@ class Constants {
         const val REFRESH_TOKEN_KEY = "REFRESH_TOKEN_KEY"
         const val AGG_TELEMETRY_STATE = "AGG_TELEMETRY_STATE"
         const val DEVICE_SUMMARY_KEY = "DEVICE_SUMMARY_KEY"
+        const val ALARMS_KEY = "ALARMS_KEY"
     }
 
     @Deprecated("Replace with navigation approach")

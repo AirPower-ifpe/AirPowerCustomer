@@ -53,7 +53,7 @@ class Repository private constructor(context: Context) {
     val devicesSummary: LiveData<List<DeviceSummary>> get() = _devicesSummary
 
     private val _alarmInfo = MutableStateFlow<List<AlarmInfo>>(emptyList())
-    private val alarmInfo: StateFlow<List<AlarmInfo>> = _alarmInfo.asStateFlow()
+    val alarmInfo: StateFlow<List<AlarmInfo>> = _alarmInfo.asStateFlow()
 
     private val _chartDataWrapper = MutableStateFlow(getEmptyTelemetryDataWrapper())
     private val chartDataWrapper: StateFlow<TelemetryDataWrapper> = _chartDataWrapper.asStateFlow()
@@ -123,6 +123,16 @@ class Repository private constructor(context: Context) {
         } else {
             return ResultWrapper.ApiError(ErrorCode.AP_REFRESH_TOKEN_EXPIRED)
         }
+    }
+
+    suspend fun retrieveAlarmInfo(): ResultWrapper<List<AlarmInfo>> {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveDeviceSummaryForCurrentUser()")
+        val resultWrapper = airPowerServerMgr.getAlarmsForCurrentUser()
+        if (resultWrapper is ResultWrapper.Success) {
+            if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "updating alarms data")
+            _alarmInfo.value = resultWrapper.value
+        }
+        return resultWrapper
     }
 
     suspend fun updateSession(): ResultWrapper<Token> {
@@ -272,10 +282,10 @@ class Repository private constructor(context: Context) {
         )
     }
 
+
     private fun getCurrentUser(): AirPowerUser? {
         return userDao.findAll()[0]
     }
-
 
     fun isUserLoggedIn(): Boolean {
         return userDao.findAll().size == 1
@@ -292,43 +302,6 @@ class Repository private constructor(context: Context) {
         if (AirPowerLog.ISLOGABLE)
             AirPowerLog.e(TAG, "[$TAG]: Exception: -> device not found")
         throw NotFoundException("[$TAG]: Exception: -> device not found")
-    }
-
-    fun getAlarmInfo(): StateFlow<List<AlarmInfo>> {
-        // TODO change this
-        _alarmInfo.value = listOf(
-            AlarmInfo(
-                UUID.randomUUID(),
-                "Crítico",
-                "",
-                987342L,
-                10
-            ),
-            AlarmInfo(
-                UUID.randomUUID(),
-                "Meus Alarmes",
-                "",
-                987342L,
-                3
-            ),
-
-            AlarmInfo(
-                UUID.randomUUID(),
-                "Grupo",
-                "",
-                987342L,
-                1
-            ),
-            AlarmInfo(
-                UUID.randomUUID(),
-                "Grupo",
-                "",
-                987342L,
-                1
-            )
-
-        )
-        return alarmInfo
     }
 
     fun getChartDataWrapper(id: UUID): StateFlow<TelemetryDataWrapper> {
