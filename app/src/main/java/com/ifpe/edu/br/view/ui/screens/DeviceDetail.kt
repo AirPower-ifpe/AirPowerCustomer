@@ -54,7 +54,7 @@ fun DeviceDetailScreen(
 ) {
     val scrollState = rememberScrollState()
     val device = mainViewModel.getDeviceById(deviceId)
-    val alarmInfoSet = mainViewModel.getAlarmInfo().collectAsState(initial = emptyList())
+    val alarmInfoSet = mainViewModel.getAlarmInfoSet().collectAsState(initial = emptyList())
     val chardDataWrapper = mainViewModel.getChartDataWrapper(device.id).collectAsState()
 
     CustomColumn(

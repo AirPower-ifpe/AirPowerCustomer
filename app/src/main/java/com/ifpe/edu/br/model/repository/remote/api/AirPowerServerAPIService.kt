@@ -1,5 +1,6 @@
 package com.ifpe.edu.br.model.repository.remote.api
 
+import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
@@ -37,4 +38,7 @@ interface AirPowerServerAPIService {
     suspend fun getDeviceSummariesForUser(
         @Path("userId") userId: String
     ): List<DeviceSummary>
+
+    @GET("api/v1/alarms/me")
+    suspend fun getAlarmsForCurrentUser(): List<AlarmInfo>
 }

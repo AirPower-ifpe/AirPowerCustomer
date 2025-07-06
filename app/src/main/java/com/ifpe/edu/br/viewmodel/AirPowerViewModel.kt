@@ -43,6 +43,7 @@ class AirPowerViewModel(
     private var repository = Repository.getInstance()
     private var currentUserJob: Job? = null
     private var devicesJob: Job? = null
+    private var alarmsJob: Job? = null
     private var telemetryJob: Job? = null
     private val devicesFetchInterval = 5_000L
     private val minDelay = 1500L
@@ -188,6 +189,9 @@ class AirPowerViewModel(
         if (devicesJob?.isActive != true) {
             devicesJob = startDevicesFetcher()
         }
+        if (alarmsJob?.isActive != true) {
+            alarmsJob = fetchAlarmData()
+        }
     }
 
     private fun startDevicesFetcher(): Job {
@@ -205,6 +209,28 @@ class AirPowerViewModel(
 
                     ResultWrapper.NetworkError -> {
                         handleNetworkError(deviceSummarySummaryKey)
+                    }
+                }
+                delay(devicesFetchInterval)
+            }
+        }
+    }
+
+    private fun fetchAlarmData(): Job {
+        return viewModelScope.launch {
+            val alarmsKey = Constants.UIStateKey.ALARMS_KEY
+            while (isActive) {
+                when (val resultWrapper = repository.retrieveAlarmInfo()) {
+                    is ResultWrapper.Success -> {
+                        handleSuccess(alarmsKey)
+                    }
+
+                    is ResultWrapper.ApiError -> {
+                        handleApiError(resultWrapper.errorCode, alarmsKey)
+                    }
+
+                    ResultWrapper.NetworkError -> {
+                        handleNetworkError(alarmsKey)
                     }
                 }
                 delay(devicesFetchInterval)
@@ -284,8 +310,8 @@ class AirPowerViewModel(
         return repository.getDeviceById(deviceId)
     }
 
-    fun getAlarmInfo(): StateFlow<List<AlarmInfo>> {
-        return repository.getAlarmInfo()
+    fun getAlarmInfoSet(): StateFlow<List<AlarmInfo>> {
+        return repository.alarmInfo
     }
 
 
