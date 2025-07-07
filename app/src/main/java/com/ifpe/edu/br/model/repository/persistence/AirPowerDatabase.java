@@ -19,7 +19,7 @@ import com.ifpe.edu.br.model.repository.persistence.model.AirPowerUser;
 import com.ifpe.edu.br.model.util.AirPowerLog;
 
 @Database(entities = {
-        AirPowerToken.class, AirPowerUser.class}, version = 2, exportSchema = false)
+        AirPowerToken.class, AirPowerUser.class}, version = 3, exportSchema = false)
 public abstract class AirPowerDatabase extends RoomDatabase {
 
     public static final String TAG = AirPowerDatabase.class.getSimpleName();

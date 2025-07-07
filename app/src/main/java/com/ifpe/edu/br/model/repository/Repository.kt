@@ -24,12 +24,13 @@ import com.ifpe.edu.br.model.repository.remote.dto.DashBoardDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
+import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
-import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
+import com.ifpe.edu.br.model.repository.remote.dto.user.ThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.ResultWrapper
@@ -140,7 +141,7 @@ class Repository private constructor(context: Context) {
         return airPowerServerMgr.refreshToken()
     }
 
-    suspend fun retrieveCurrentUser(): ResultWrapper<AirPowerBoardUser> {
+    suspend fun retrieveCurrentUser(): ResultWrapper<ThingsBoardUser> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveCurrentUser()")
         val currentUserResult = airPowerServerMgr.getCurrentUser()
         if (currentUserResult is ResultWrapper.Success) {
@@ -152,12 +153,14 @@ class Repository private constructor(context: Context) {
             val incomingUser = currentUserResult.value.toAirPowerUser()
             if (storedUser == null) {
                 userDao.insert(incomingUser)
+                if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "save user:${incomingUser}")
             } else {
                 if (storedUser.id == incomingUser.id) {
                     userDao.update(incomingUser)
                 } else {
                     userDao.deleteAll()
                     userDao.insert(incomingUser)
+                    if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "save user:${incomingUser}")
                 }
             }
         }
@@ -185,7 +188,7 @@ class Repository private constructor(context: Context) {
         }
     }
 
-    private suspend fun save(user: AirPowerBoardUser) {
+    private suspend fun save(user: ThingsBoardUser) {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "save: $user")
         require(isUserValid(user)) { "ThingsBoardUser is invalid" }
 
@@ -193,6 +196,7 @@ class Repository private constructor(context: Context) {
             try {
                 val airPowerUser = user.toAirPowerUser()
                 userDao.insert(airPowerUser)
+                if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "save user:${airPowerUser}")
             } catch (e: Exception) {
                 throw IllegalStateException("Error persisting user in DB: ${e.message}")
             }
@@ -253,14 +257,14 @@ class Repository private constructor(context: Context) {
         return spManager.readString(key)
     }
 
-    private fun isUserValid(user: AirPowerBoardUser): Boolean {
+    private fun isUserValid(user: ThingsBoardUser): Boolean {
         return when {
             user.authority.isEmpty() -> {
                 AirPowerLog.d(TAG, "User authority is null or empty")
                 false
             }
 
-            user.customerId.id.isNullOrEmpty() -> {
+            user.customerId.id == null -> {
                 AirPowerLog.d(TAG, "Customer ID is null or empty")
                 false
             }
@@ -269,12 +273,13 @@ class Repository private constructor(context: Context) {
         }
     }
 
-    private fun AirPowerBoardUser.toAirPowerUser(): AirPowerUser {
+    private fun ThingsBoardUser.toAirPowerUser(): AirPowerUser {
         return AirPowerUser(
-            id = id.id,
+            id = id.id.toString(),
             authority = authority,
             email = email,
-            customerId = customerId.id,
+            customerId = customerId.id.toString(),
+            tenantId = tenantId.id.toString(),
             firstName = firstName,
             lastName = lastName,
             name = name,
@@ -384,26 +389,22 @@ class Repository private constructor(context: Context) {
                 label = "Biblioteca",
                 alarmInfo = listOf(
                     AlarmInfo(
-                        UUID.randomUUID(),
-                        "Crítico",
-                        "o Equipamento parou",
+                        Id(UUID.randomUUID(), ""),
                         System.currentTimeMillis(),
-                        10
+                        Id(UUID.randomUUID(), ""),
+                        Id(UUID.randomUUID(), ""),
+                        "",
+                        Id(UUID.randomUUID(), ""),
+                        "",
+                        false,
+                        false,
+                        null,
+                        "",
+                        "",
+                        null,
+                        "name",
+                        "status"
                     ),
-                    AlarmInfo(
-                        UUID.randomUUID(),
-                        "Médio",
-                        "o Equipamento ligou",
-                        System.currentTimeMillis(),
-                        1
-                    ),
-                    AlarmInfo(
-                        UUID.randomUUID(),
-                        "Info",
-                        "o Equipamento foi desligado",
-                        System.currentTimeMillis(),
-                        4
-                    )
                 ),
                 allMetricsWrapper = AllMetricsWrapper(
                     totalConsumption = "150000KW/h",
@@ -432,29 +433,25 @@ class Repository private constructor(context: Context) {
             ),
 
             DashBoardDataWrapper(
-                label = "Lab DEXTER",
+                label = "Biblioteca",
                 alarmInfo = listOf(
                     AlarmInfo(
-                        UUID.randomUUID(),
-                        "Crítico",
-                        "o Equipamento parou",
+                        Id(UUID.randomUUID(), ""),
                         System.currentTimeMillis(),
-                        10
+                        Id(UUID.randomUUID(), ""),
+                        Id(UUID.randomUUID(), ""),
+                        "",
+                        Id(UUID.randomUUID(), ""),
+                        "",
+                        false,
+                        false,
+                        null,
+                        "",
+                        "",
+                        null,
+                        "name",
+                        "status"
                     ),
-                    AlarmInfo(
-                        UUID.randomUUID(),
-                        "Médio",
-                        "o Equipamento ligou",
-                        System.currentTimeMillis(),
-                        1
-                    ),
-                    AlarmInfo(
-                        UUID.randomUUID(),
-                        "Info",
-                        "o Equipamento foi desligado",
-                        System.currentTimeMillis(),
-                        4
-                    )
                 ),
                 allMetricsWrapper = AllMetricsWrapper(
                     totalConsumption = "150000KW/h",
@@ -481,82 +478,26 @@ class Repository private constructor(context: Context) {
                     )
                 )
             ),
-
             DashBoardDataWrapper(
-                label = "Lab TADS",
+                label = "Biblioteca",
                 alarmInfo = listOf(
                     AlarmInfo(
-                        UUID.randomUUID(),
-                        "Crítico",
-                        "o Equipamento parou",
+                        Id(UUID.randomUUID(), ""),
                         System.currentTimeMillis(),
-                        10
+                        Id(UUID.randomUUID(), ""),
+                        Id(UUID.randomUUID(), ""),
+                        "",
+                        Id(UUID.randomUUID(), ""),
+                        "",
+                        false,
+                        false,
+                        null,
+                        "",
+                        "",
+                        null,
+                        "name",
+                        "status"
                     ),
-                    AlarmInfo(
-                        UUID.randomUUID(),
-                        "Médio",
-                        "o Equipamento ligou",
-                        System.currentTimeMillis(),
-                        1
-                    ),
-                    AlarmInfo(
-                        UUID.randomUUID(),
-                        "Info",
-                        "o Equipamento foi desligado",
-                        System.currentTimeMillis(),
-                        4
-                    )
-                ),
-                allMetricsWrapper = AllMetricsWrapper(
-                    totalConsumption = "150000KW/h",
-                    devicesCount = 34,
-                    label = "consumo",
-                    statusSummaries = listOf(
-                        DevicesStatusSummary("Inativos", 5),
-                        DevicesStatusSummary("Ativos", 6),
-                        DevicesStatusSummary("Total", 11),
-                    ),
-                    deviceConsumptionSet = listOf(
-                        DeviceConsumption("1", 54.0),
-                        DeviceConsumption("2", 65.0),
-                        DeviceConsumption("3", 70.0),
-                        DeviceConsumption("4", 90.0),
-                        DeviceConsumption("5", 100.0),
-                        DeviceConsumption("6", 160.0),
-                        DeviceConsumption("7", 140.0),
-                        DeviceConsumption("8", 90.0),
-                        DeviceConsumption("9", 99.0),
-                        DeviceConsumption("10", 180.0),
-                        DeviceConsumption("11", 20.0),
-                        DeviceConsumption("12", 10.0),
-                    )
-                )
-            ),
-
-            DashBoardDataWrapper(
-                label = "Reitoria",
-                alarmInfo = listOf(
-                    AlarmInfo(
-                        UUID.randomUUID(),
-                        "Crítico",
-                        "o Equipamento parou",
-                        System.currentTimeMillis(),
-                        10
-                    ),
-                    AlarmInfo(
-                        UUID.randomUUID(),
-                        "Médio",
-                        "o Equipamento ligou",
-                        System.currentTimeMillis(),
-                        1
-                    ),
-                    AlarmInfo(
-                        UUID.randomUUID(),
-                        "Info",
-                        "o Equipamento foi desligado",
-                        System.currentTimeMillis(),
-                        4
-                    )
                 ),
                 allMetricsWrapper = AllMetricsWrapper(
                     totalConsumption = "150000KW/h",

@@ -1,23 +1,42 @@
 package com.ifpe.edu.br.model.repository.remote.dto
 
-import java.util.UUID
-
-
-// Trabalho de conclusão de curso - IFPE 2025
-// Author: Willian Santos
-// Project: AirPower Costumer
-
-// Copyright (c) 2025 IFPE. All rights reserved.
-
-
+/*
+* Trabalho de conclusão de curso - IFPE 2025
+* Author: Willian Santos
+* Project: AirPower Costumer
+*/
 data class AlarmInfo(
-    val id: UUID,
+    val id: Id,
+    val createdTime: Long,
+    val tenantId: Id,
+    val customerId: Id,
     val type: String,
-    val message: String,
-    val timestamp: Long,
-    val occurrence: Int
+    val originator: Id,
+    val severity: String,
+    val acknowledged: Boolean,
+    val cleared: Boolean,
+    val assigneeId: Id?,
+    val originatorName: String?,
+    val originatorLabel: String?,
+    val assignee: TBAssignee?,
+    val name: String,
+    val status: String
 ) {
     override fun toString(): String {
-        return "AlarmInfo(type='$type', message='$message', timestamp='$timestamp', occurrence=$occurrence)"
+        return "AlarmInfo(id=$id, " +
+                "createdTime=$createdTime, " +
+                "tenantId=$tenantId, " +
+                "customerId=$customerId, " +
+                "type='$type'," +
+                " originator=$originator, " +
+                "severity='$severity'," +
+                " acknowledged=$acknowledged, " +
+                "cleared=$cleared, " +
+                "assigneeId=$assigneeId, " +
+                "originatorName=$originatorName," +
+                " originatorLabel=$originatorLabel," +
+                " assignee=$assignee, " +
+                "name='$name', " +
+                "status='$status')"
     }
 }
