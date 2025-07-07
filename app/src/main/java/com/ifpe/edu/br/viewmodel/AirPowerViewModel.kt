@@ -41,12 +41,11 @@ class AirPowerViewModel(
     private val TAG: String = AirPowerViewModel::class.java.simpleName
     val uiStateManager = UIStateManager.getInstance()
     private var repository = Repository.getInstance()
-    private var currentUserJob: Job? = null
-    private var devicesJob: Job? = null
-    private var alarmsJob: Job? = null
-    private var telemetryJob: Job? = null
+    private val jobs: MutableMap<String, Job>  = mutableMapOf()
     private val devicesFetchInterval = 5_000L
     private val minDelay = 1500L
+    private val DEVICE_JOB = "DEVICE_JOB"
+    private val ALARMS_JOB = "ALARMS_JOB"
 
     fun initSession(
         user: AuthUser,
@@ -175,8 +174,7 @@ class AirPowerViewModel(
     fun logout() {
         viewModelScope.launch {
             repository.logout()
-            currentUserJob?.cancel()
-            devicesJob?.cancel()
+            stopAllFetchers()
         }
     }
 
@@ -186,15 +184,15 @@ class AirPowerViewModel(
 
     fun startDataFetchers() {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "startDataFetchers()")
-        if (devicesJob?.isActive != true) {
-            devicesJob = startDevicesFetcher()
+        if (jobs[DEVICE_JOB]?.isActive != true) {
+            jobs[DEVICE_JOB] = fetchDevicesData()
         }
-        if (alarmsJob?.isActive != true) {
-            alarmsJob = fetchAlarmData()
+        if (jobs[ALARMS_JOB]?.isActive != true) {
+            jobs[ALARMS_JOB] = fetchAlarmData()
         }
     }
 
-    private fun startDevicesFetcher(): Job {
+    private fun fetchDevicesData(): Job {
         return viewModelScope.launch {
             val deviceSummarySummaryKey = Constants.UIStateKey.DEVICE_SUMMARY_KEY
             val uiStateKey = Constants.UIStateKey.SESSION
@@ -341,5 +339,12 @@ class AirPowerViewModel(
 
     fun getNotifications(): StateFlow<List<NotificationItem>> {
         return repository.getNotifications()
+    }
+
+    fun stopAllFetchers() {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "stopAllFetchers()")
+        jobs.values.forEach { job ->
+            job.cancel()
+        }
     }
 }
