@@ -99,7 +99,7 @@ fun SplashScreen(
 }
 
 @Composable
-private fun ExpiredSessionWarningScreen(
+fun ExpiredSessionWarningScreen(
     viewModel: AirPowerViewModel,
     sessionStateKey: String,
     navController: NavHostController
@@ -174,7 +174,7 @@ private fun navigateMainActivity(
     componentActivity.finish()
 }
 
-private fun navigateAuthScreen(navController: NavController) {
+fun navigateAuthScreen(navController: NavController) {
     navController.navigate(Constants.Navigation.NAVIGATION_AUTH) {
         popUpTo(Constants.Navigation.NAVIGATION_INITIAL) { inclusive = true }
     }

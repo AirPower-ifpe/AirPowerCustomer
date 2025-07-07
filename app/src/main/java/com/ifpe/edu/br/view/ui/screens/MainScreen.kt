@@ -81,12 +81,6 @@ fun MainScreen(
     val context = LocalContext.current
     val shouldShowBottomBar = currentRoute in screensWithBottomBar
 
-
-    LaunchedEffect(Unit) {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "LaunchedEffect()")
-        mainViewModel.startDataFetchers()
-    }
-
     CustomColumn(
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
         layouts = listOf {

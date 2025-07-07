@@ -41,12 +41,11 @@ class AirPowerViewModel(
     private val TAG: String = AirPowerViewModel::class.java.simpleName
     val uiStateManager = UIStateManager.getInstance()
     private var repository = Repository.getInstance()
-    private var currentUserJob: Job? = null
-    private var devicesJob: Job? = null
-    private var alarmsJob: Job? = null
-    private var telemetryJob: Job? = null
+    private val jobs: MutableMap<String, Job>  = mutableMapOf()
     private val devicesFetchInterval = 5_000L
     private val minDelay = 1500L
+    private val DEVICE_JOB = "DEVICE_JOB"
+    private val ALARMS_JOB = "ALARMS_JOB"
 
     fun initSession(
         user: AuthUser,
@@ -175,8 +174,7 @@ class AirPowerViewModel(
     fun logout() {
         viewModelScope.launch {
             repository.logout()
-            currentUserJob?.cancel()
-            devicesJob?.cancel()
+            stopAllFetchers()
         }
     }
 
@@ -186,17 +184,18 @@ class AirPowerViewModel(
 
     fun startDataFetchers() {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "startDataFetchers()")
-        if (devicesJob?.isActive != true) {
-            devicesJob = startDevicesFetcher()
+        if (jobs[DEVICE_JOB]?.isActive != true) {
+            jobs[DEVICE_JOB] = fetchDevicesData()
         }
-        if (alarmsJob?.isActive != true) {
-            alarmsJob = fetchAlarmData()
+        if (jobs[ALARMS_JOB]?.isActive != true) {
+            jobs[ALARMS_JOB] = fetchAlarmData()
         }
     }
 
-    private fun startDevicesFetcher(): Job {
+    private fun fetchDevicesData(): Job {
         return viewModelScope.launch {
             val deviceSummarySummaryKey = Constants.UIStateKey.DEVICE_SUMMARY_KEY
+            val uiStateKey = Constants.UIStateKey.SESSION
             while (isActive) {
                 when (val resultWrapper = repository.retrieveDeviceSummaryForCurrentUser()) {
                     is ResultWrapper.Success -> {
@@ -205,10 +204,12 @@ class AirPowerViewModel(
 
                     is ResultWrapper.ApiError -> {
                         handleApiError(resultWrapper.errorCode, deviceSummarySummaryKey)
+                        handleApiError(resultWrapper.errorCode, uiStateKey)
                     }
 
                     ResultWrapper.NetworkError -> {
                         handleNetworkError(deviceSummarySummaryKey)
+                        handleNetworkError(uiStateKey)
                     }
                 }
                 delay(devicesFetchInterval)
@@ -219,6 +220,7 @@ class AirPowerViewModel(
     private fun fetchAlarmData(): Job {
         return viewModelScope.launch {
             val alarmsKey = Constants.UIStateKey.ALARMS_KEY
+            val uiStateKey = Constants.UIStateKey.SESSION
             while (isActive) {
                 when (val resultWrapper = repository.retrieveAlarmInfo()) {
                     is ResultWrapper.Success -> {
@@ -227,10 +229,12 @@ class AirPowerViewModel(
 
                     is ResultWrapper.ApiError -> {
                         handleApiError(resultWrapper.errorCode, alarmsKey)
+                        handleApiError(resultWrapper.errorCode, uiStateKey)
                     }
 
                     ResultWrapper.NetworkError -> {
                         handleNetworkError(alarmsKey)
+                        handleNetworkError(uiStateKey)
                     }
                 }
                 delay(devicesFetchInterval)
@@ -246,7 +250,8 @@ class AirPowerViewModel(
         code: ErrorCode,
         uiStateKey: String
     ) {
-
+        if (AirPowerLog.ISVERBOSE)
+            AirPowerLog.d(TAG, "handleApiError: code:$code stateKey:$uiStateKey")
         when (code) {
             ErrorCode.TB_INVALID_CREDENTIALS -> {
                 if (AirPowerLog.ISVERBOSE)
@@ -279,7 +284,7 @@ class AirPowerViewModel(
                     AirPowerLog.d(TAG, "AP_JWT_EXPIRED -> STATE_UPDATE_SESSION")
                 uiStateManager.setUIState(
                     uiStateKey,
-                    UIState(Constants.UIState.STATE_UPDATE_SESSION) // todo o srver tem q mandar esse codigo quando a sessao expira
+                    UIState(Constants.UIState.STATE_UPDATE_SESSION)
                 )
             }
 
@@ -334,5 +339,12 @@ class AirPowerViewModel(
 
     fun getNotifications(): StateFlow<List<NotificationItem>> {
         return repository.getNotifications()
+    }
+
+    fun stopAllFetchers() {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "stopAllFetchers()")
+        jobs.values.forEach { job ->
+            job.cancel()
+        }
     }
 }
