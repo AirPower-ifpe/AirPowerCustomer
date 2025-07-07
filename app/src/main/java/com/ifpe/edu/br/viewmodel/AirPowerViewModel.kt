@@ -197,6 +197,7 @@ class AirPowerViewModel(
     private fun startDevicesFetcher(): Job {
         return viewModelScope.launch {
             val deviceSummarySummaryKey = Constants.UIStateKey.DEVICE_SUMMARY_KEY
+            val uiStateKey = Constants.UIStateKey.SESSION
             while (isActive) {
                 when (val resultWrapper = repository.retrieveDeviceSummaryForCurrentUser()) {
                     is ResultWrapper.Success -> {
@@ -205,10 +206,12 @@ class AirPowerViewModel(
 
                     is ResultWrapper.ApiError -> {
                         handleApiError(resultWrapper.errorCode, deviceSummarySummaryKey)
+                        handleApiError(resultWrapper.errorCode, uiStateKey)
                     }
 
                     ResultWrapper.NetworkError -> {
                         handleNetworkError(deviceSummarySummaryKey)
+                        handleNetworkError(uiStateKey)
                     }
                 }
                 delay(devicesFetchInterval)
@@ -219,6 +222,7 @@ class AirPowerViewModel(
     private fun fetchAlarmData(): Job {
         return viewModelScope.launch {
             val alarmsKey = Constants.UIStateKey.ALARMS_KEY
+            val uiStateKey = Constants.UIStateKey.SESSION
             while (isActive) {
                 when (val resultWrapper = repository.retrieveAlarmInfo()) {
                     is ResultWrapper.Success -> {
@@ -227,10 +231,12 @@ class AirPowerViewModel(
 
                     is ResultWrapper.ApiError -> {
                         handleApiError(resultWrapper.errorCode, alarmsKey)
+                        handleApiError(resultWrapper.errorCode, uiStateKey)
                     }
 
                     ResultWrapper.NetworkError -> {
                         handleNetworkError(alarmsKey)
+                        handleNetworkError(uiStateKey)
                     }
                 }
                 delay(devicesFetchInterval)
@@ -246,7 +252,8 @@ class AirPowerViewModel(
         code: ErrorCode,
         uiStateKey: String
     ) {
-
+        if (AirPowerLog.ISVERBOSE)
+            AirPowerLog.d(TAG, "handleApiError: code:$code stateKey:$uiStateKey")
         when (code) {
             ErrorCode.TB_INVALID_CREDENTIALS -> {
                 if (AirPowerLog.ISVERBOSE)
@@ -279,7 +286,7 @@ class AirPowerViewModel(
                     AirPowerLog.d(TAG, "AP_JWT_EXPIRED -> STATE_UPDATE_SESSION")
                 uiStateManager.setUIState(
                     uiStateKey,
-                    UIState(Constants.UIState.STATE_UPDATE_SESSION) // todo o srver tem q mandar esse codigo quando a sessao expira
+                    UIState(Constants.UIState.STATE_UPDATE_SESSION)
                 )
             }
 
