@@ -8,7 +8,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
-import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
+import com.ifpe.edu.br.model.repository.remote.dto.user.ThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.repository.remote.query.RefreshTokenQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
@@ -71,7 +71,7 @@ class AirPowerServerManager(connection: Retrofit) {
         return tokenResultWrapper
     }
 
-    suspend fun getCurrentUser(): ResultWrapper<AirPowerBoardUser> {
+    suspend fun getCurrentUser(): ResultWrapper<ThingsBoardUser> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getCurrentUser()")
         return safeApiCall { apiService.getCurrentUser() }
     }
@@ -87,10 +87,10 @@ class AirPowerServerManager(connection: Retrofit) {
     }
 
     suspend fun getDeviceSummariesForUser(
-        user: AirPowerBoardUser
+        user: ThingsBoardUser
     ): ResultWrapper<List<DeviceSummary>> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceSummariesForUser()")
-        return safeApiCall { apiService.getDeviceSummariesForUser(user.id.id) }
+        return safeApiCall { apiService.getDeviceSummariesForUser(user.id.id.toString()) }
     }
 
     suspend fun getAlarmsForCurrentUser(): ResultWrapper<List<AlarmInfo>> {

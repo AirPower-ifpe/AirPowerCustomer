@@ -25,7 +25,7 @@ import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
-import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
+import com.ifpe.edu.br.model.repository.model.HomeScreenAlarmSummaryCard
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
 import java.util.UUID
@@ -39,8 +39,8 @@ import java.util.UUID
 
 @Composable
 fun AlarmCardInfo(
-    alarmInfo: AlarmInfo,
-    onClick: (alarmId: UUID) -> Unit,
+    alarmCardInfo: HomeScreenAlarmSummaryCard,
+    onClick: (severity: String) -> Unit,
     backgroundColor: Color = Color.White
 ) {
     CustomCard(
@@ -49,7 +49,7 @@ fun AlarmCardInfo(
             .fillMaxWidth()
             .height(120.dp)
             .background(backgroundColor)
-            .clickable { onClick(alarmInfo.id) },
+            .clickable { onClick(alarmCardInfo.severity) },
         layouts = listOf {
             Column(
                 modifier = Modifier.fillMaxSize()
@@ -62,7 +62,7 @@ fun AlarmCardInfo(
                         modifier = Modifier.wrapContentSize(),
                         layouts = listOf {
                             CustomText(
-                                text = alarmInfo.type,
+                                text = alarmCardInfo.severity,
                                 alignment = TextAlign.Center,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
@@ -82,7 +82,7 @@ fun AlarmCardInfo(
                         modifier = Modifier.wrapContentSize(),
                         layouts = listOf {
                             CustomText(
-                                text = alarmInfo.occurrence.toString(),
+                                text = alarmCardInfo.occurrence.toString(),
                                 alignment = TextAlign.Center,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp,

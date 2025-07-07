@@ -43,6 +43,7 @@ import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
+import com.ifpe.edu.br.model.repository.model.HomeScreenAlarmSummaryCard
 import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
@@ -162,7 +163,7 @@ private fun AlarmsSummaryCardCardBoard(
 
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
 
-            AlarmGrid(alarmInfo) {
+            HomeScreenAlarmGrid(alarmInfo) {
                 Toast.makeText(
                     context,
                     "Essa funcionalidade está em desenvolvimento",
@@ -198,12 +199,8 @@ fun DevicesConsumptionSummaryCardBoard(
     allDevicesMetricsWrapper: AllMetricsWrapper,
     alarmInfo: List<AlarmInfo>
 ) {
-
     val context = LocalContext.current
-    var totalAlarmCount = 0
-    alarmInfo.forEach { info ->
-        totalAlarmCount += info.occurrence
-    }
+    val totalAlarmCount = alarmInfo.size
 
     CustomCard(
         paddingStart = 15.dp,
@@ -359,14 +356,25 @@ private fun SummaryCard(
 }
 
 @Composable
-private fun AlarmGrid(
-    alarmCards: List<AlarmInfo>,
-    onClick: (UUID) -> Unit
+private fun HomeScreenAlarmGrid(
+    alarmInfoSet: List<AlarmInfo>,
+    onClick: (String) -> Unit
 ) {
+    val severityAggregationMap: MutableMap<String, Int> = mutableMapOf()
+    alarmInfoSet.forEach { item ->
+        val severity = item.severity
+        val occurrence = severityAggregationMap[severity] ?: 0
+        severityAggregationMap[severity] = occurrence + 1
+    }
 
-    val gridCount = if (alarmCards.size > 3) 2 else 3
+    val cards: List<HomeScreenAlarmSummaryCard> =
+        severityAggregationMap.map { (severity, count) ->
+            HomeScreenAlarmSummaryCard(severity, count)
+        }
+
+    val gridCount = if (cards.size > 3) 2 else 3
     var cardHeight = if (gridCount == 2) 160.dp else 140.dp
-    if (alarmCards.size > 6) {
+    if (cards.size > 6) {
         cardHeight = 260.dp
     }
 
@@ -379,16 +387,15 @@ private fun AlarmGrid(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        items(alarmCards, key = { it.id }) { deviceItem ->
+        items(cards, key = { it.severity }) { deviceItem ->
             AlarmCardInfo(
-                alarmInfo = deviceItem,
+                alarmCardInfo = deviceItem,
                 onClick = onClick,
                 backgroundColor = app_default_solid_background_light
             )
         }
     }
 }
-
 
 @Composable
 private fun DevicesStatusGrid(

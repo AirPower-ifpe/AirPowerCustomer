@@ -4,7 +4,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.ifpe.edu.br.model.repository.remote.dto.Id
-import com.ifpe.edu.br.model.repository.remote.dto.user.AirPowerBoardUser
+import com.ifpe.edu.br.model.repository.remote.dto.user.ThingsBoardUser
+import java.util.UUID
 
 /*
 * Trabalho de conclusão de curso - IFPE 2025
@@ -20,6 +21,8 @@ data class AirPowerUser(
     val authority: String = "",
     @ColumnInfo(name = "USER_COSTUMER_ID")
     val customerId: String = "",
+    @ColumnInfo(name = "TENANT_ID")
+    val tenantId: String = "",
     @ColumnInfo(name = "USER_FIRST_NAME")
     val firstName: String? = "",
     @ColumnInfo(name = "USER_LAST_NAME")
@@ -32,33 +35,22 @@ data class AirPowerUser(
     val email: String = ""
 ) {
     override fun toString(): String {
-        return "User(" +
-                "id='$id', " +
-                "authority=$authority, " +
-                "customerId=$customerId, " +
-                "firstName=$firstName, " +
-                "lastName=$lastName, " +
-                "name=$name, " +
-                "phone=$phone, " +
-                "email=$email)"
+        return "AirPowerUser(id='$id', authority='$authority', customerId='$customerId', tenantId='$tenantId', firstName=$firstName, lastName=$lastName, name=$name, phone=$phone, email='$email')"
     }
 }
 
-fun AirPowerUser.toThingsBoardUser(): AirPowerBoardUser {
-    val mockname = if (name == null) "" else name!!
-    val mockfirstName = firstName ?: ""
-    val mocLastName = lastName ?: ""
-    return AirPowerBoardUser(
-        id = Id(id, "id"),
-        createdTime = 0L,
-        tenantId = Id("id", "tenantId"),
-        customerId = Id(customerId, "customerId"),
+fun AirPowerUser.toThingsBoardUser(): ThingsBoardUser {
+    return ThingsBoardUser(
+        id = Id(UUID.fromString(id), "id"),
+        createdTime = System.currentTimeMillis(),
+        tenantId = Id(UUID.fromString(tenantId), "tenantId"),
+        customerId = Id(UUID.fromString(customerId), "customerId"),
         email = email,
-        name = mockname,
+        name = name ?: "",
         authority = authority,
-        firstName = mockfirstName,
-        lastName = mocLastName,
-        phone = email,
+        firstName = firstName ?: "",
+        lastName = lastName ?: "",
+        phone = phone ?: "",
         additionalInfo = mapOf()
     )
 }

@@ -8,7 +8,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.Id
 * Project: AirPower Costumer
 */
 
-data class AirPowerBoardUser(
+data class ThingsBoardUser(
     val id: Id,
     val createdTime: Long,
     val tenantId: Id,

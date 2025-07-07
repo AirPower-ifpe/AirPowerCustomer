@@ -97,10 +97,6 @@ private fun DashboardsCardBoard(
 ) {
 
     val context = LocalContext.current
-    var totalAlarmCount = 0
-    alarmInfo.forEach { info ->
-        totalAlarmCount += info.occurrence
-    }
 
     CustomCard(
         paddingStart = 15.dp,
@@ -135,7 +131,7 @@ private fun DashboardsCardBoard(
                             modifier = Modifier.width(110.dp),
                             layouts = listOf {
                                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
-                                SummaryCard("alarmes", "$totalAlarmCount", onClick = {})
+                                SummaryCard("alarmes", "$10", onClick = {})
                                 Spacer(modifier = Modifier.padding(vertical = 4.dp))
                                 SummaryCard(
                                     "Consumo Anual",
