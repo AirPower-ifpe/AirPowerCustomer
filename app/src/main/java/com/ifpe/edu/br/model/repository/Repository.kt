@@ -9,6 +9,7 @@ import android.content.res.Resources.NotFoundException
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.ifpe.edu.br.core.api.ConnectionManager
+import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.persistence.AirPowerDatabase
 import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
@@ -60,7 +61,7 @@ class Repository private constructor(context: Context) {
     private val chartDataWrapper: StateFlow<TelemetryDataWrapper> = _chartDataWrapper.asStateFlow()
 
     private val _allDevicesMetricsWrapper = MutableStateFlow(getEmptyAllDevicesMetricsWrapper())
-    private val allDevicesMetricsWrapper: StateFlow<AllMetricsWrapper> =
+    val allDevicesMetricsWrapper: StateFlow<AllMetricsWrapper> =
         _allDevicesMetricsWrapper.asStateFlow()
 
     private val _dashBoardsMetricsWrapper = MutableStateFlow(getEmptyUserDashBoardsDataWrapper())
@@ -353,33 +354,53 @@ class Repository private constructor(context: Context) {
         return chartDataWrapper
     }
 
-    fun getAllDevicesMetricsWrapper(): StateFlow<AllMetricsWrapper> {
-        // TODO change this
-        _allDevicesMetricsWrapper.value = AllMetricsWrapper(
-            totalConsumption = "150000KW/h",
-            devicesCount = 350,
-            label = "consumo",
-            statusSummaries = listOf(
-                DevicesStatusSummary("Inativos", 5),
-                DevicesStatusSummary("Ativos", 6),
-                DevicesStatusSummary("Total", 11),
-            ),
-            deviceConsumptionSet = listOf(
-                DeviceConsumption("1", 54.0),
-                DeviceConsumption("2", 65.0),
-                DeviceConsumption("3", 70.0),
-                DeviceConsumption("4", 90.0),
-                DeviceConsumption("5", 100.0),
-                DeviceConsumption("6", 160.0),
-                DeviceConsumption("7", 140.0),
-                DeviceConsumption("8", 90.0),
-                DeviceConsumption("9", 99.0),
-                DeviceConsumption("10", 180.0),
-                DeviceConsumption("11", 20.0),
-                DeviceConsumption("12", 10.0),
-            )
+    suspend fun fetchAllDevicesMetricsWrapper(): ResultWrapper<List<AllMetricsWrapper>> {
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.d(TAG, "fetchAllDevicesMetricsWrapper()")
+        val resultWrapper = airPowerServerMgr.getDevicesMetricsWrapper(Constants.MetricsGroup.ALL)
+        _allDevicesMetricsWrapper.value = getMockValues() // todo remove it
+        if (resultWrapper is ResultWrapper.Success) {
+            if (resultWrapper.value.size == 1) {
+                _allDevicesMetricsWrapper.value = resultWrapper.value[0]
+            } else {
+                if (AirPowerLog.ISLOGABLE) AirPowerLog.e(
+                    TAG,
+                    "More then 1 result for metrics wrapper"
+                )
+                throw IllegalStateException("More then 1 result for metrics wrapper")
+            }
+        }
+        return resultWrapper
+    }
+
+    private fun getMockValues(): AllMetricsWrapper {
+        val deviceConsumptionSet = listOf(
+            DeviceConsumption("jan", 200.0),
+            DeviceConsumption("fev", 180.0),
+            DeviceConsumption("mar", 350.0),
+            DeviceConsumption("abr", 99.0),
+            DeviceConsumption("mai", 300.0),
+            DeviceConsumption("jun", 250.0),
+            DeviceConsumption("jul", 50.0),
+            DeviceConsumption("ago", 0.0),
+            DeviceConsumption("sey", 0.0),
+            DeviceConsumption("out", 0.0),
+            DeviceConsumption("nov", 0.0),
+            DeviceConsumption("dez", 0.0),
         )
-        return allDevicesMetricsWrapper
+
+        val statusSummary = listOf(
+            DevicesStatusSummary("Online", 10),
+            DevicesStatusSummary("Offline", 1)
+        )
+
+        return AllMetricsWrapper(
+            deviceConsumptionSet = deviceConsumptionSet,
+            statusSummaries = statusSummary,
+            totalConsumption = "300KW",
+            devicesCount = 11,
+            "todos os devices"
+        )
     }
 
     fun getUserDashBoardsDataWrapper(): StateFlow<List<DashBoardDataWrapper>> {
@@ -542,8 +563,12 @@ class Repository private constructor(context: Context) {
             totalConsumption = "",
             devicesCount = 0,
             label = "",
-            deviceConsumptionSet = emptyList(),
-            statusSummaries = emptyList()
+            deviceConsumptionSet = listOf(
+                DeviceConsumption("", 0.0)
+            ),
+            statusSummaries = listOf(
+                DevicesStatusSummary("", 0)
+            )
         )
     }
 

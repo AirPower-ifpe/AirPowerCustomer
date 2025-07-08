@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +28,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -41,8 +44,11 @@ import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.CustomBarChart
 import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
+import com.ifpe.edu.br.common.components.CustomProgressDialog
 import com.ifpe.edu.br.common.components.CustomText
+import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
+import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.model.HomeScreenAlarmSummaryCard
 import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
@@ -50,17 +56,21 @@ import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
 import com.ifpe.edu.br.view.ui.components.AlarmCardInfo
 import com.ifpe.edu.br.view.ui.components.CardInfo
+import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
 import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_light
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
-import java.util.UUID
 
 @Composable
 fun HomeScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
+    LaunchedEffect(Unit) {
+        mainViewModel.fetchAllDevicesMetricsWrapper()
+    }
+
     val allDevicesMetricsWrapper = mainViewModel.getAllDevicesMetricsWrapper().collectAsState()
     val alarmInfo = mainViewModel.getAlarmInfoSet().collectAsState()
     val scrollState = rememberScrollState()
@@ -72,19 +82,24 @@ fun HomeScreen(
         layouts = listOf {
             DevicesConsumptionSummaryCardBoard(
                 allDevicesMetricsWrapper = allDevicesMetricsWrapper.value,
-                alarmInfo = alarmInfo.value
+                alarmInfo = alarmInfo.value,
+                viewModel = mainViewModel
             )
             AlarmsSummaryCardCardBoard(alarmInfo.value)
-            SummaryCardCardBoard(allDevicesMetricsWrapper.value)
+            SummaryCardCardBoard(allDevicesMetricsWrapper.value, viewModel = mainViewModel)
         }
     )
 }
 
 @Composable
 fun SummaryCardCardBoard(
-    value: AllMetricsWrapper
+    value: AllMetricsWrapper,
+    viewModel: AirPowerViewModel
 ) {
     val context = LocalContext.current
+    val fetchMetricsKey = Constants.UIStateKey.METRICS_KEY
+    val fetchMetricsState = viewModel.uiStateManager.observeUIState(fetchMetricsKey)
+        .collectAsState(initial = UIState(Constants.UIState.STATE_LOADING))
     CustomCard(
         paddingStart = 15.dp,
         paddingEnd = 15.dp,
@@ -106,12 +121,16 @@ fun SummaryCardCardBoard(
 
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
 
-            DevicesStatusGrid(value.statusSummaries) {
-                Toast.makeText(
-                    context,
-                    "Essa funcionalidade está em desenvolvimento",
-                    Toast.LENGTH_SHORT
-                ).show()
+            if (fetchMetricsState.value.state == Constants.UIState.STATE_LOADING) {
+                loadingCard()
+            } else {
+                DevicesStatusGrid(value.statusSummaries) {
+                    Toast.makeText(
+                        context,
+                        "Essa funcionalidade está em desenvolvimento",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
 
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
@@ -197,10 +216,15 @@ private fun AlarmsSummaryCardCardBoard(
 @Composable
 fun DevicesConsumptionSummaryCardBoard(
     allDevicesMetricsWrapper: AllMetricsWrapper,
-    alarmInfo: List<AlarmInfo>
+    alarmInfo: List<AlarmInfo>,
+    viewModel: AirPowerViewModel
 ) {
     val context = LocalContext.current
     val totalAlarmCount = alarmInfo.size
+
+    val fetchMetricsKey = Constants.UIStateKey.METRICS_KEY
+    val fetchMetricsState = viewModel.uiStateManager.observeUIState(fetchMetricsKey)
+        .collectAsState(initial = UIState(Constants.UIState.STATE_LOADING))
 
     CustomCard(
         paddingStart = 15.dp,
@@ -211,57 +235,26 @@ fun DevicesConsumptionSummaryCardBoard(
             CustomColumn(
                 modifier = Modifier.fillMaxSize(),
                 layouts = listOf {
+                    if (fetchMetricsState.value.state == Constants.UIState.STATE_LOADING) {
+                        loadingCard()
+                    } else {
 
-                    Spacer(modifier = Modifier.padding(vertical = 4.dp))
+                        Spacer(modifier = Modifier.padding(vertical = 4.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        CustomText(
-                            color = tb_primary_light,
-                            text = "Consumo de todos os dispositivos",
-                            fontSize = 20.sp
-                        )
-                    }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            CustomText(
+                                color = tb_primary_light,
+                                text = "Consumo de todos os dispositivos",
+                                fontSize = 20.sp
+                            )
+                        }
 
-                    Spacer(modifier = Modifier.padding(vertical = 6.dp))
+                        Spacer(modifier = Modifier.padding(vertical = 6.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CustomColumn(
-                            modifier = Modifier.width(110.dp),
-                            layouts = listOf {
-                                Spacer(modifier = Modifier.padding(vertical = 10.dp))
-                                SummaryCard("alarmes", "$totalAlarmCount", onClick = {})
-                                Spacer(modifier = Modifier.padding(vertical = 4.dp))
-                                SummaryCard(
-                                    "Consumo Anual",
-                                    allDevicesMetricsWrapper.totalConsumption,
-                                    onClick = {})
-                                Spacer(modifier = Modifier.padding(vertical = 4.dp))
-                                SummaryCard(
-                                    "Dispositivos",
-                                    allDevicesMetricsWrapper.devicesCount.toString(),
-                                    onClick = {})
-                            })
-
-                        Spacer(modifier = Modifier.padding(horizontal = 10.dp))
-                        CustomColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            layouts = listOf {
-                                Spacer(modifier = Modifier.padding(vertical = 12.dp))
-                                CustomBarChart(
-                                    height = 300.dp,
-                                    dataWrapper = TelemetryDataWrapper(
-                                        allDevicesMetricsWrapper.label,
-                                        allDevicesMetricsWrapper.deviceConsumptionSet
-                                    )
-                                )
-                                Spacer(modifier = Modifier.padding(vertical = 4.dp))
-                            })
+                        ConsumptionSummaryCard(totalAlarmCount, allDevicesMetricsWrapper)
                     }
                 }
             )
@@ -287,6 +280,68 @@ fun DevicesConsumptionSummaryCardBoard(
             }
         }
     )
+}
+
+@Composable
+private fun loadingCard() {
+    Box(
+        modifier = Modifier
+            .background(Color.Transparent)
+    ) {
+        Spacer(modifier = Modifier.padding(vertical = 150.dp))
+        CustomProgressDialog(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxSize(),
+            indicatorColor = tb_secondary_light,
+            textColor = tb_primary_light
+        ) { modifier ->
+            DefaultTransparentGradient(modifier)
+        }
+    }
+}
+
+@Composable
+private fun ConsumptionSummaryCard(
+    totalAlarmCount: Int,
+    allDevicesMetricsWrapper: AllMetricsWrapper
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        CustomColumn(
+            modifier = Modifier.width(110.dp),
+            layouts = listOf {
+                Spacer(modifier = Modifier.padding(vertical = 10.dp))
+                SummaryCard("alarmes", "$totalAlarmCount", onClick = {})
+                Spacer(modifier = Modifier.padding(vertical = 4.dp))
+                SummaryCard(
+                    "Consumo Anual",
+                    allDevicesMetricsWrapper.totalConsumption,
+                    onClick = {})
+                Spacer(modifier = Modifier.padding(vertical = 4.dp))
+                SummaryCard(
+                    "Dispositivos",
+                    allDevicesMetricsWrapper.devicesCount.toString(),
+                    onClick = {})
+            })
+
+        Spacer(modifier = Modifier.padding(horizontal = 10.dp))
+        CustomColumn(
+            modifier = Modifier.fillMaxSize(),
+            layouts = listOf {
+                Spacer(modifier = Modifier.padding(vertical = 12.dp))
+                CustomBarChart(
+                    height = 300.dp,
+                    dataWrapper = TelemetryDataWrapper(
+                        allDevicesMetricsWrapper.label,
+                        allDevicesMetricsWrapper.deviceConsumptionSet
+                    )
+                )
+                Spacer(modifier = Modifier.padding(vertical = 4.dp))
+            })
+    }
 }
 
 

@@ -1,6 +1,7 @@
 package com.ifpe.edu.br.model.repository.remote.api
 
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
+import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.user.ThingsBoardUser
@@ -40,4 +41,9 @@ interface AirPowerServerAPIService {
 
     @GET("api/v1/alarms/me")
     suspend fun getAlarmsForCurrentUser(): List<AlarmInfo>
+
+    @GET("/api/v1/user/{groupID}/devices-metrics")
+    suspend fun getDevicesMetricsWrapper(
+        @Path("groupID") groupID: String
+    ): List<AllMetricsWrapper>
 }

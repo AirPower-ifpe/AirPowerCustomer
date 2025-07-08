@@ -3,6 +3,7 @@ package com.ifpe.edu.br.model.repository.remote.api
 import com.google.gson.Gson
 import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
+import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -97,4 +98,10 @@ class AirPowerServerManager(connection: Retrofit) {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getAlarmsForCurrentUser()")
         return safeApiCall { apiService.getAlarmsForCurrentUser() }
     }
+
+    suspend fun getDevicesMetricsWrapper(groupID: String): ResultWrapper<List<AllMetricsWrapper>> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDevicesMetricsWrapper()")
+        return safeApiCall { apiService.getDevicesMetricsWrapper(groupID) }
+    }
+
 }

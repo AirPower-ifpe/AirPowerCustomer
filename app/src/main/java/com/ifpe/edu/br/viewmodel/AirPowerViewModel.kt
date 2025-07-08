@@ -41,9 +41,10 @@ class AirPowerViewModel(
     private val TAG: String = AirPowerViewModel::class.java.simpleName
     val uiStateManager = UIStateManager.getInstance()
     private var repository = Repository.getInstance()
-    private val jobs: MutableMap<String, Job>  = mutableMapOf()
+    private val jobs: MutableMap<String, Job> = mutableMapOf()
     private val devicesFetchInterval = 5_000L
     private val minDelay = 1500L
+    private val minDelayCard = 800L
     private val DEVICE_JOB = "DEVICE_JOB"
     private val ALARMS_JOB = "ALARMS_JOB"
 
@@ -104,6 +105,11 @@ class AirPowerViewModel(
     private fun getTimeLeftDelay(startTime: Long): Long {
         val timeDelayed = System.currentTimeMillis() - startTime
         return (minDelay - timeDelayed).coerceAtLeast(0L)
+    }
+
+    private fun getTimeLeftDelayCard(startTime: Long): Long {
+        val timeDelayed = System.currentTimeMillis() - startTime
+        return (minDelayCard - timeDelayed).coerceAtLeast(0L)
     }
 
     fun getDevicesSummary(): LiveData<List<DeviceSummary>> {
@@ -217,6 +223,30 @@ class AirPowerViewModel(
         }
     }
 
+    fun fetchAllDevicesMetricsWrapper(): Job {
+        return viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+            val sessionStateKey = Constants.UIStateKey.SESSION
+            val fetchMetricsKey = Constants.UIStateKey.METRICS_KEY
+            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_LOADING))
+            when (val resultWrapper = repository.fetchAllDevicesMetricsWrapper()) {
+                is ResultWrapper.Success -> {
+                    handleSuccess(sessionStateKey)
+                }
+
+                is ResultWrapper.ApiError -> {
+                    handleApiError(resultWrapper.errorCode, sessionStateKey)
+                }
+
+                ResultWrapper.NetworkError -> {
+                    handleNetworkError(sessionStateKey)
+                }
+            }
+            delay(getTimeLeftDelayCard(startTime))
+            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_SUCCESS))
+        }
+    }
+
     private fun fetchAlarmData(): Job {
         return viewModelScope.launch {
             val alarmsKey = Constants.UIStateKey.ALARMS_KEY
@@ -298,6 +328,7 @@ class AirPowerViewModel(
         }
     }
 
+
     private fun handleNetworkError(uiStateKey: String) {
         uiStateManager.setUIState(
             uiStateKey, UIState(
@@ -306,7 +337,6 @@ class AirPowerViewModel(
         )
     }
 
-
     fun isUserLoggedIn(): Boolean {
         return repository.isUserLoggedIn()
     }
@@ -314,6 +344,7 @@ class AirPowerViewModel(
     fun getDeviceById(deviceId: String): DeviceSummary {
         return repository.getDeviceById(deviceId)
     }
+
 
     fun getAlarmInfoSet(): StateFlow<List<AlarmInfo>> {
         return repository.alarmInfo
@@ -324,13 +355,12 @@ class AirPowerViewModel(
         return repository.getChartDataWrapper(id)
     }
 
-
     fun getAllDevicesChartDataWrapper(): StateFlow<TelemetryDataWrapper> {
         return repository.getAllDevicesChartDataWrapper()
     }
 
     fun getAllDevicesMetricsWrapper(): StateFlow<AllMetricsWrapper> {
-        return repository.getAllDevicesMetricsWrapper()
+        return repository.allDevicesMetricsWrapper
     }
 
     fun getUserDashBoardsDataWrapper(): StateFlow<List<DashBoardDataWrapper>> {
