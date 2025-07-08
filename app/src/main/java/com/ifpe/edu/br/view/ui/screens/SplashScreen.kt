@@ -174,7 +174,7 @@ private fun navigateMainActivity(
     componentActivity.finish()
 }
 
-fun navigateAuthScreen(navController: NavController) {
+private fun navigateAuthScreen(navController: NavController) {
     navController.navigate(Constants.Navigation.NAVIGATION_AUTH) {
         popUpTo(Constants.Navigation.NAVIGATION_INITIAL) { inclusive = true }
     }

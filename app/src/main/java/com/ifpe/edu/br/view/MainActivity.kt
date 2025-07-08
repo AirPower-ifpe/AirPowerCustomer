@@ -12,12 +12,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.ifpe.edu.br.R
 import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.util.AirPowerLog
+import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.ui.screens.ExpiredSessionWarningScreen
 import com.ifpe.edu.br.view.ui.screens.MainScreen
 import com.ifpe.edu.br.view.ui.theme.AirPowerCostumerTheme
@@ -71,10 +73,11 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxSize(),
                             drawableResId = R.drawable.auth_issue,
                             iconSize = 150.dp,
-                            text = sessionState.value.state,
+                            text = "A sessão expirou, faça login novamente",
                             textColor = tb_primary_light,
                             retryCallback = {
                                 viewModel.resetUIState(stateKey)
+                                navigateAuthScreen(navController, this@MainActivity)
                             }
                         ) { DefaultTransparentGradient() }
                     }
@@ -98,4 +101,16 @@ class MainActivity : ComponentActivity() {
         viewModel.stopAllFetchers()
         super.onStop()
     }
+}
+
+private fun navigateAuthScreen(
+    navController: NavController,
+    componentActivity: ComponentActivity
+) {
+    navController.popBackStack()
+    AirPowerUtil.launchActivity(
+        navController.context,
+        AuthActivity::class.java
+    )
+    componentActivity.finish()
 }
