@@ -21,11 +21,9 @@ import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerConnectionContr
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerManager
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
-import com.ifpe.edu.br.model.repository.remote.dto.DashBoardDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
-import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -64,8 +62,9 @@ class Repository private constructor(context: Context) {
     val allDevicesMetricsWrapper: StateFlow<AllMetricsWrapper> =
         _allDevicesMetricsWrapper.asStateFlow()
 
-    private val _dashBoardsMetricsWrapper = MutableStateFlow(getEmptyUserDashBoardsDataWrapper())
-    private val dashBoardsMetricsWrapper: StateFlow<List<DashBoardDataWrapper>> =
+    private val _dashBoardsMetricsWrapper =
+        MutableStateFlow(listOf(getEmptyAllDevicesMetricsWrapper()))
+    val dashBoardsMetricsWrapper: StateFlow<List<AllMetricsWrapper>> =
         _dashBoardsMetricsWrapper.asStateFlow()
 
     private val _notification = MutableStateFlow(getEmptyNotification())
@@ -332,28 +331,6 @@ class Repository private constructor(context: Context) {
         return chartDataWrapper
     }
 
-    fun getAllDevicesChartDataWrapper(): StateFlow<TelemetryDataWrapper> {
-        // TODO change this
-        _chartDataWrapper.value = TelemetryDataWrapper(
-            "KW/h",
-            listOf(
-                DeviceConsumption("1", 54.0),
-                DeviceConsumption("2", 65.0),
-                DeviceConsumption("3", 70.0),
-                DeviceConsumption("4", 90.0),
-                DeviceConsumption("5", 100.0),
-                DeviceConsumption("6", 160.0),
-                DeviceConsumption("7", 140.0),
-                DeviceConsumption("8", 90.0),
-                DeviceConsumption("9", 99.0),
-                DeviceConsumption("10", 180.0),
-                DeviceConsumption("11", 20.0),
-                DeviceConsumption("12", 10.0),
-            )
-        )
-        return chartDataWrapper
-    }
-
     suspend fun fetchAllDevicesMetricsWrapper(): ResultWrapper<List<AllMetricsWrapper>> {
         if (AirPowerLog.ISLOGABLE)
             AirPowerLog.d(TAG, "fetchAllDevicesMetricsWrapper()")
@@ -371,6 +348,66 @@ class Repository private constructor(context: Context) {
             }
         }
         return resultWrapper
+    }
+
+    suspend fun fetchAllDashboardsMetricsWrapper(): ResultWrapper<List<AllMetricsWrapper>> {
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.d(TAG, "fetchAllDashboardsMetricsWrapper()")
+        val resultWrapper =
+            airPowerServerMgr.getDevicesMetricsWrapper(Constants.MetricsGroup.DASHBOARDS)
+        _dashBoardsMetricsWrapper.value = getMockDashboardsValues() // todo remove it
+        if (resultWrapper is ResultWrapper.Success) {
+            _dashBoardsMetricsWrapper.value = resultWrapper.value
+        }
+        return resultWrapper
+    }
+
+    private fun getMockDashboardsValues(): List<AllMetricsWrapper> {
+        val deviceConsumptionSet = listOf(
+            DeviceConsumption("jan", 200.0),
+            DeviceConsumption("fev", 180.0),
+            DeviceConsumption("mar", 350.0),
+            DeviceConsumption("abr", 99.0),
+            DeviceConsumption("mai", 300.0),
+            DeviceConsumption("jun", 250.0),
+            DeviceConsumption("jul", 50.0),
+            DeviceConsumption("ago", 0.0),
+            DeviceConsumption("sey", 0.0),
+            DeviceConsumption("out", 0.0),
+            DeviceConsumption("nov", 0.0),
+            DeviceConsumption("dez", 0.0),
+        )
+
+        val statusSummary = listOf(
+            DevicesStatusSummary("Online", 10),
+            DevicesStatusSummary("Offline", 1)
+        )
+
+        val result = listOf(
+            AllMetricsWrapper(
+                deviceConsumptionSet = deviceConsumptionSet,
+                statusSummaries = statusSummary,
+                totalConsumption = "820W",
+                devicesCount = 82,
+                "todos os devices"
+            ),
+            AllMetricsWrapper(
+                deviceConsumptionSet = deviceConsumptionSet,
+                statusSummaries = statusSummary,
+                totalConsumption = "2KW",
+                devicesCount = 2,
+                "Lab Dexter"
+            ),
+            AllMetricsWrapper(
+                deviceConsumptionSet = deviceConsumptionSet,
+                statusSummaries = statusSummary,
+                totalConsumption = "80KW",
+                devicesCount = 80,
+                "Reitoria"
+            )
+        )
+
+        return result
     }
 
     private fun getMockValues(): AllMetricsWrapper {
@@ -403,159 +440,8 @@ class Repository private constructor(context: Context) {
         )
     }
 
-    fun getUserDashBoardsDataWrapper(): StateFlow<List<DashBoardDataWrapper>> {
-        // TODO change this
-        val dashboards = listOf(
-            DashBoardDataWrapper(
-                label = "Biblioteca",
-                alarmInfo = listOf(
-                    AlarmInfo(
-                        Id(UUID.randomUUID(), ""),
-                        System.currentTimeMillis(),
-                        Id(UUID.randomUUID(), ""),
-                        Id(UUID.randomUUID(), ""),
-                        "",
-                        Id(UUID.randomUUID(), ""),
-                        "",
-                        false,
-                        false,
-                        null,
-                        "",
-                        "",
-                        null,
-                        "name",
-                        "status"
-                    ),
-                ),
-                allMetricsWrapper = AllMetricsWrapper(
-                    totalConsumption = "150000KW/h",
-                    devicesCount = 34,
-                    label = "consumo",
-                    statusSummaries = listOf(
-                        DevicesStatusSummary("Inativos", 5),
-                        DevicesStatusSummary("Ativos", 6),
-                        DevicesStatusSummary("Total", 11),
-                    ),
-                    deviceConsumptionSet = listOf(
-                        DeviceConsumption("1", 54.0),
-                        DeviceConsumption("2", 65.0),
-                        DeviceConsumption("3", 70.0),
-                        DeviceConsumption("4", 90.0),
-                        DeviceConsumption("5", 100.0),
-                        DeviceConsumption("6", 160.0),
-                        DeviceConsumption("7", 140.0),
-                        DeviceConsumption("8", 90.0),
-                        DeviceConsumption("9", 99.0),
-                        DeviceConsumption("10", 180.0),
-                        DeviceConsumption("11", 20.0),
-                        DeviceConsumption("12", 10.0),
-                    )
-                )
-            ),
-
-            DashBoardDataWrapper(
-                label = "Biblioteca",
-                alarmInfo = listOf(
-                    AlarmInfo(
-                        Id(UUID.randomUUID(), ""),
-                        System.currentTimeMillis(),
-                        Id(UUID.randomUUID(), ""),
-                        Id(UUID.randomUUID(), ""),
-                        "",
-                        Id(UUID.randomUUID(), ""),
-                        "",
-                        false,
-                        false,
-                        null,
-                        "",
-                        "",
-                        null,
-                        "name",
-                        "status"
-                    ),
-                ),
-                allMetricsWrapper = AllMetricsWrapper(
-                    totalConsumption = "150000KW/h",
-                    devicesCount = 34,
-                    label = "consumo",
-                    statusSummaries = listOf(
-                        DevicesStatusSummary("Inativos", 5),
-                        DevicesStatusSummary("Ativos", 6),
-                        DevicesStatusSummary("Total", 11),
-                    ),
-                    deviceConsumptionSet = listOf(
-                        DeviceConsumption("1", 54.0),
-                        DeviceConsumption("2", 65.0),
-                        DeviceConsumption("3", 70.0),
-                        DeviceConsumption("4", 90.0),
-                        DeviceConsumption("5", 100.0),
-                        DeviceConsumption("6", 160.0),
-                        DeviceConsumption("7", 140.0),
-                        DeviceConsumption("8", 90.0),
-                        DeviceConsumption("9", 99.0),
-                        DeviceConsumption("10", 180.0),
-                        DeviceConsumption("11", 20.0),
-                        DeviceConsumption("12", 10.0),
-                    )
-                )
-            ),
-            DashBoardDataWrapper(
-                label = "Biblioteca",
-                alarmInfo = listOf(
-                    AlarmInfo(
-                        Id(UUID.randomUUID(), ""),
-                        System.currentTimeMillis(),
-                        Id(UUID.randomUUID(), ""),
-                        Id(UUID.randomUUID(), ""),
-                        "",
-                        Id(UUID.randomUUID(), ""),
-                        "",
-                        false,
-                        false,
-                        null,
-                        "",
-                        "",
-                        null,
-                        "name",
-                        "status"
-                    ),
-                ),
-                allMetricsWrapper = AllMetricsWrapper(
-                    totalConsumption = "150000KW/h",
-                    devicesCount = 34,
-                    label = "consumo",
-                    statusSummaries = listOf(
-                        DevicesStatusSummary("Inativos", 5),
-                        DevicesStatusSummary("Ativos", 6),
-                        DevicesStatusSummary("Total", 11),
-                    ),
-                    deviceConsumptionSet = listOf(
-                        DeviceConsumption("1", 54.0),
-                        DeviceConsumption("2", 65.0),
-                        DeviceConsumption("3", 70.0),
-                        DeviceConsumption("4", 90.0),
-                        DeviceConsumption("5", 100.0),
-                        DeviceConsumption("6", 160.0),
-                        DeviceConsumption("7", 140.0),
-                        DeviceConsumption("8", 90.0),
-                        DeviceConsumption("9", 99.0),
-                        DeviceConsumption("10", 180.0),
-                        DeviceConsumption("11", 20.0),
-                        DeviceConsumption("12", 10.0),
-                    )
-                )
-            ),
-        )
-        _dashBoardsMetricsWrapper.value = dashboards
-        return dashBoardsMetricsWrapper
-    }
-
     private fun getEmptyTelemetryDataWrapper(): TelemetryDataWrapper {
         return TelemetryDataWrapper("", emptyList())
-    }
-
-    private fun getEmptyUserDashBoardsDataWrapper(): List<DashBoardDataWrapper> {
-        return emptyList()
     }
 
     private fun getEmptyAllDevicesMetricsWrapper(): AllMetricsWrapper {

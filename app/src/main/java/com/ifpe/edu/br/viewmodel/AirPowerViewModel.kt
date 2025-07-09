@@ -247,6 +247,30 @@ class AirPowerViewModel(
         }
     }
 
+    fun fetchAllDashboardsMetricsWrapper(): Job {
+        return viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+            val sessionStateKey = Constants.UIStateKey.SESSION
+            val fetchMetricsKey = Constants.UIStateKey.METRICS_KEY
+            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_LOADING))
+            when (val resultWrapper = repository.fetchAllDashboardsMetricsWrapper()) {
+                is ResultWrapper.Success -> {
+                    handleSuccess(sessionStateKey)
+                }
+
+                is ResultWrapper.ApiError -> {
+                    handleApiError(resultWrapper.errorCode, sessionStateKey)
+                }
+
+                ResultWrapper.NetworkError -> {
+                    handleNetworkError(sessionStateKey)
+                }
+            }
+            delay(getTimeLeftDelayCard(startTime))
+            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_SUCCESS))
+        }
+    }
+
     private fun fetchAlarmData(): Job {
         return viewModelScope.launch {
             val alarmsKey = Constants.UIStateKey.ALARMS_KEY
@@ -355,16 +379,12 @@ class AirPowerViewModel(
         return repository.getChartDataWrapper(id)
     }
 
-    fun getAllDevicesChartDataWrapper(): StateFlow<TelemetryDataWrapper> {
-        return repository.getAllDevicesChartDataWrapper()
-    }
-
     fun getAllDevicesMetricsWrapper(): StateFlow<AllMetricsWrapper> {
         return repository.allDevicesMetricsWrapper
     }
 
-    fun getUserDashBoardsDataWrapper(): StateFlow<List<DashBoardDataWrapper>> {
-        return repository.getUserDashBoardsDataWrapper()
+    fun getUserDashBoardsDataWrapper(): StateFlow<List<AllMetricsWrapper>> {
+        return repository.dashBoardsMetricsWrapper
     }
 
     fun getNotifications(): StateFlow<List<NotificationItem>> {

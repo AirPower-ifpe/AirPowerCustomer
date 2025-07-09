@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,7 +29,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -44,7 +42,6 @@ import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.CustomBarChart
 import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
-import com.ifpe.edu.br.common.components.CustomProgressDialog
 import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
@@ -56,7 +53,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
 import com.ifpe.edu.br.view.ui.components.AlarmCardInfo
 import com.ifpe.edu.br.view.ui.components.CardInfo
-import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
+import com.ifpe.edu.br.view.ui.components.LoadingCard
 import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_light
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
@@ -122,7 +119,7 @@ fun SummaryCardCardBoard(
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
 
             if (fetchMetricsState.value.state == Constants.UIState.STATE_LOADING) {
-                loadingCard()
+                LoadingCard()
             } else {
                 DevicesStatusGrid(value.statusSummaries) {
                     Toast.makeText(
@@ -236,7 +233,7 @@ fun DevicesConsumptionSummaryCardBoard(
                 modifier = Modifier.fillMaxSize(),
                 layouts = listOf {
                     if (fetchMetricsState.value.state == Constants.UIState.STATE_LOADING) {
-                        loadingCard()
+                        LoadingCard()
                     } else {
 
                         Spacer(modifier = Modifier.padding(vertical = 4.dp))
@@ -280,25 +277,6 @@ fun DevicesConsumptionSummaryCardBoard(
             }
         }
     )
-}
-
-@Composable
-private fun loadingCard() {
-    Box(
-        modifier = Modifier
-            .background(Color.Transparent)
-    ) {
-        Spacer(modifier = Modifier.padding(vertical = 150.dp))
-        CustomProgressDialog(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxSize(),
-            indicatorColor = tb_secondary_light,
-            textColor = tb_primary_light
-        ) { modifier ->
-            DefaultTransparentGradient(modifier)
-        }
-    }
 }
 
 @Composable
