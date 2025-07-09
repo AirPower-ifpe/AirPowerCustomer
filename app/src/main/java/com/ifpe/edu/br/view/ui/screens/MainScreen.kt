@@ -14,7 +14,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -43,7 +42,6 @@ import com.ifpe.edu.br.common.components.CustomTopBar
 import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.components.GradientBackground
 import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
-import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.AuthActivity
 import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
@@ -75,7 +73,7 @@ fun MainScreen(
     val screensWithBottomBar = listOf(
         Screen.Home.route,
         Screen.Devices.route,
-        Screen.Profile.route
+        Screen.Dashboards.route
     )
 
     val context = LocalContext.current
@@ -89,7 +87,7 @@ fun MainScreen(
                     val title = when (currentRoute) {
                         Screen.Home.route -> "Início"
                         Screen.Devices.route -> "Dispositivos"
-                        Screen.Profile.route -> "Dashboards"
+                        Screen.Dashboards.route -> "Dashboards"
                         Screen.DeviceDetail.route -> "Detalhes do Dispositivo"
                         Screen.NotificationCenter.route -> "Centro de Notificações"
                         else -> ""
@@ -158,7 +156,7 @@ fun MainScreen(
                             items = listOf(
                                 BottomNavItem.Home,
                                 BottomNavItem.Devices,
-                                BottomNavItem.Profile
+                                BottomNavItem.DashBoards
                             )
                         )
                     }
@@ -281,7 +279,7 @@ fun NavHostContainer(
                 DeviceScreen(navController, mainViewModel)
             }
         }
-        composable(Screen.Profile.route) {
+        composable(Screen.Dashboards.route) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize()
