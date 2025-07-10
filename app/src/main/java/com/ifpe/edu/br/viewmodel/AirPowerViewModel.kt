@@ -10,7 +10,6 @@ import com.ifpe.edu.br.model.repository.Repository
 import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
-import com.ifpe.edu.br.model.repository.remote.dto.DashBoardDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -19,6 +18,7 @@ import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.ResultWrapper
 import com.ifpe.edu.br.view.manager.UIStateManager
+import kotlinx.coroutines.Delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
@@ -41,9 +41,10 @@ class AirPowerViewModel(
     private val TAG: String = AirPowerViewModel::class.java.simpleName
     val uiStateManager = UIStateManager.getInstance()
     private var repository = Repository.getInstance()
-    private val jobs: MutableMap<String, Job>  = mutableMapOf()
+    private val jobs: MutableMap<String, Job> = mutableMapOf()
     private val devicesFetchInterval = 5_000L
     private val minDelay = 1500L
+    private val minDelayCard = 800L
     private val DEVICE_JOB = "DEVICE_JOB"
     private val ALARMS_JOB = "ALARMS_JOB"
 
@@ -106,6 +107,11 @@ class AirPowerViewModel(
         return (minDelay - timeDelayed).coerceAtLeast(0L)
     }
 
+    private fun getTimeLeftDelayCard(startTime: Long): Long {
+        val timeDelayed = System.currentTimeMillis() - startTime
+        return (minDelayCard - timeDelayed).coerceAtLeast(0L)
+    }
+
     fun getDevicesSummary(): LiveData<List<DeviceSummary>> {
         return repository.devicesSummary
     }
@@ -164,13 +170,6 @@ class AirPowerViewModel(
         }
     }
 
-    private fun handleSuccess(aggStateKey: String) {
-        uiStateManager.setUIState(
-            aggStateKey,
-            UIState(Constants.UIState.STATE_SUCCESS)
-        )
-    }
-
     fun logout() {
         viewModelScope.launch {
             repository.logout()
@@ -217,6 +216,83 @@ class AirPowerViewModel(
         }
     }
 
+    fun fetchAllDevicesMetricsWrapper(): Job {
+        return viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+            val sessionStateKey = Constants.UIStateKey.SESSION
+            val fetchMetricsKey = Constants.UIStateKey.METRICS_KEY
+            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_LOADING))
+            when (val resultWrapper = repository.fetchAllDevicesMetricsWrapper()) {
+                is ResultWrapper.Success -> {
+                    handleSuccess(sessionStateKey)
+                }
+
+                is ResultWrapper.ApiError -> {
+                    handleApiError(resultWrapper.errorCode, sessionStateKey)
+                }
+
+                ResultWrapper.NetworkError -> {
+                    handleNetworkError(sessionStateKey)
+                }
+            }
+            delay(getTimeLeftDelayCard(startTime))
+            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_SUCCESS))
+        }
+    }
+
+    fun getChartDataWrapper(): StateFlow<TelemetryDataWrapper> {
+        return repository.chartDataWrapper
+    }
+
+    fun fetchChartDataWrapper(id: UUID): Job {
+        return viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+            val sessionStateKey = Constants.UIStateKey.SESSION
+            val deviceMetricKeys = Constants.UIStateKey.DEVICE_METRICS_KEY
+            uiStateManager.setUIState(deviceMetricKeys, UIState(Constants.UIState.STATE_LOADING))
+            when (val resultWrapper = repository.retrieveChartDataWrapper(id)) {
+                is ResultWrapper.ApiError -> {
+                    handleApiError(resultWrapper.errorCode, sessionStateKey)
+                    handleApiError(resultWrapper.errorCode, deviceMetricKeys, getTimeLeftDelayCard(startTime))
+                }
+
+                is ResultWrapper.NetworkError -> {
+                    handleNetworkError(sessionStateKey)
+                    handleNetworkError(deviceMetricKeys, getTimeLeftDelayCard(startTime))
+                }
+
+                is ResultWrapper.Success<*> -> {
+                    handleSuccess(sessionStateKey)
+                    handleSuccess(deviceMetricKeys, getTimeLeftDelayCard(startTime))
+                }
+            }
+        }
+    }
+
+    fun fetchAllDashboardsMetricsWrapper(): Job {
+        return viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+            val sessionStateKey = Constants.UIStateKey.SESSION
+            val fetchMetricsKey = Constants.UIStateKey.METRICS_KEY
+            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_LOADING))
+            when (val resultWrapper = repository.fetchAllDashboardsMetricsWrapper()) {
+                is ResultWrapper.Success -> {
+                    handleSuccess(sessionStateKey)
+                }
+
+                is ResultWrapper.ApiError -> {
+                    handleApiError(resultWrapper.errorCode, sessionStateKey)
+                }
+
+                ResultWrapper.NetworkError -> {
+                    handleNetworkError(sessionStateKey)
+                }
+            }
+            delay(getTimeLeftDelayCard(startTime))
+            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_SUCCESS))
+        }
+    }
+
     private fun fetchAlarmData(): Job {
         return viewModelScope.launch {
             val alarmsKey = Constants.UIStateKey.ALARMS_KEY
@@ -246,16 +322,19 @@ class AirPowerViewModel(
         return UIState(Constants.UIState.EMPTY_STATE)
     }
 
-    private fun handleApiError(
+    private suspend fun handleApiError(
         code: ErrorCode,
-        uiStateKey: String
+        uiStateKey: String,
+        delay: Long = 0
     ) {
-        if (AirPowerLog.ISVERBOSE)
-            AirPowerLog.d(TAG, "handleApiError: code:$code stateKey:$uiStateKey")
+        val subTag = "handleApiError()"
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.d(TAG, "[$subTag]: code:$code stateKey:$uiStateKey delayed:${delay > 0}")
+
         when (code) {
             ErrorCode.TB_INVALID_CREDENTIALS -> {
-                if (AirPowerLog.ISVERBOSE)
-                    AirPowerLog.d(TAG, "TB_INVALID_CREDENTIALS -> STATE_AUTHENTICATION_FAILURE")
+                if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "[$subTag]: TB_INVALID_CREDENTIALS")
+                delay(delay)
                 uiStateManager.setUIState(
                     uiStateKey, UIState(Constants.UIState.STATE_AUTHENTICATION_FAILURE)
                 )
@@ -263,7 +342,8 @@ class AirPowerViewModel(
 
             ErrorCode.TB_REFRESH_TOKEN_EXPIRED -> {
                 if (AirPowerLog.ISVERBOSE)
-                    AirPowerLog.d(TAG, "TB_REFRESH_TOKEN_EXPIRED -> STATE_REQUEST_LOGIN")
+                    AirPowerLog.d(TAG, "[$subTag]: TB_REFRESH_TOKEN_EXPIRED")
+                delay(delay)
                 uiStateManager.setUIState(
                     uiStateKey,
                     UIState(Constants.UIState.STATE_REQUEST_LOGIN)
@@ -272,7 +352,8 @@ class AirPowerViewModel(
 
             ErrorCode.AP_REFRESH_TOKEN_EXPIRED -> {
                 if (AirPowerLog.ISVERBOSE)
-                    AirPowerLog.d(TAG, "AP_REFRESH_TOKEN_EXPIRED -> STATE_REQUEST_LOGIN")
+                    AirPowerLog.d(TAG, "[$subTag]: AP_REFRESH_TOKEN_EXPIRED")
+                delay(delay)
                 uiStateManager.setUIState(
                     uiStateKey,
                     UIState(Constants.UIState.STATE_REQUEST_LOGIN)
@@ -281,7 +362,8 @@ class AirPowerViewModel(
 
             ErrorCode.AP_JWT_EXPIRED -> {
                 if (AirPowerLog.ISVERBOSE)
-                    AirPowerLog.d(TAG, "AP_JWT_EXPIRED -> STATE_UPDATE_SESSION")
+                    AirPowerLog.d(TAG, "[$subTag]: AP_JWT_EXPIRED")
+                delay(delay)
                 uiStateManager.setUIState(
                     uiStateKey,
                     UIState(Constants.UIState.STATE_UPDATE_SESSION)
@@ -291,6 +373,7 @@ class AirPowerViewModel(
             else -> {
                 if (AirPowerLog.ISVERBOSE)
                     AirPowerLog.d(TAG, "else -> GENERIC_ERROR")
+                delay(delay)
                 uiStateManager.setUIState(
                     uiStateKey, UIState(Constants.UIState.GENERIC_ERROR)
                 )
@@ -298,7 +381,14 @@ class AirPowerViewModel(
         }
     }
 
-    private fun handleNetworkError(uiStateKey: String) {
+    private suspend fun handleNetworkError(
+        uiStateKey: String,
+        delay: Long = 0
+    ) {
+        val subTag = "handleNetworkError()"
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.d(TAG, "[$subTag]: stateKey:$uiStateKey delayed:${delay > 0}")
+        delay(delay)
         uiStateManager.setUIState(
             uiStateKey, UIState(
                 Constants.UIState.STATE_NETWORK_ISSUE
@@ -306,6 +396,19 @@ class AirPowerViewModel(
         )
     }
 
+    private suspend fun handleSuccess(
+        uiStateKey: String,
+        delay: Long = 0
+    ) {
+        val subTag = "handleSuccess()"
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.d(TAG, "[$subTag]: stateKey:$uiStateKey delayed:${delay > 0}")
+        delay(delay)
+        uiStateManager.setUIState(
+            uiStateKey,
+            UIState(Constants.UIState.STATE_SUCCESS)
+        )
+    }
 
     fun isUserLoggedIn(): Boolean {
         return repository.isUserLoggedIn()
@@ -319,22 +422,12 @@ class AirPowerViewModel(
         return repository.alarmInfo
     }
 
-
-    fun getChartDataWrapper(id: UUID): StateFlow<TelemetryDataWrapper> {
-        return repository.getChartDataWrapper(id)
-    }
-
-
-    fun getAllDevicesChartDataWrapper(): StateFlow<TelemetryDataWrapper> {
-        return repository.getAllDevicesChartDataWrapper()
-    }
-
     fun getAllDevicesMetricsWrapper(): StateFlow<AllMetricsWrapper> {
-        return repository.getAllDevicesMetricsWrapper()
+        return repository.allDevicesMetricsWrapper
     }
 
-    fun getUserDashBoardsDataWrapper(): StateFlow<List<DashBoardDataWrapper>> {
-        return repository.getUserDashBoardsDataWrapper()
+    fun getUserDashBoardsDataWrapper(): StateFlow<List<AllMetricsWrapper>> {
+        return repository.dashBoardsMetricsWrapper
     }
 
     fun getNotifications(): StateFlow<List<NotificationItem>> {

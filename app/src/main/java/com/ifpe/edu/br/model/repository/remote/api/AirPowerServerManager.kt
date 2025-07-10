@@ -1,8 +1,10 @@
 package com.ifpe.edu.br.model.repository.remote.api
 
 import com.google.gson.Gson
+import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
+import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -16,6 +18,7 @@ import com.ifpe.edu.br.model.util.ResultWrapper
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import retrofit2.Retrofit
+import java.util.UUID
 
 
 // Trabalho de conclusão de curso - IFPE 2025
@@ -96,5 +99,35 @@ class AirPowerServerManager(connection: Retrofit) {
     suspend fun getAlarmsForCurrentUser(): ResultWrapper<List<AlarmInfo>> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getAlarmsForCurrentUser()")
         return safeApiCall { apiService.getAlarmsForCurrentUser() }
+    }
+
+    suspend fun getDevicesMetricsWrapper(groupID: String): ResultWrapper<List<AllMetricsWrapper>> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDevicesMetricsWrapper()")
+        return safeApiCall { apiService.getDevicesMetricsWrapper(groupID) }
+    }
+
+    suspend fun getDeviceMetricsWrapperById(id: UUID): ResultWrapper<TelemetryDataWrapper> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDevicesMetricsWrapper()")
+        val result = safeApiCall { apiService.getDevicesMetricsWrapper(id.toString()) }
+        return when (result) {
+            is ResultWrapper.Success -> {
+                if (result.value.isEmpty()) {
+                    return ResultWrapper.ApiError(ErrorCode.TB_GENERIC_ERROR)
+                }
+                val allMetricsWrapper = result.value[0]
+                val deviceConsumptionSet = allMetricsWrapper.deviceConsumptionSet
+                val label = allMetricsWrapper.label
+                val telemetryDataWrapper = TelemetryDataWrapper(label, deviceConsumptionSet)
+                return ResultWrapper.Success(telemetryDataWrapper)
+            }
+
+            is ResultWrapper.ApiError -> {
+                ResultWrapper.ApiError(result.errorCode)
+            }
+
+            ResultWrapper.NetworkError -> {
+                ResultWrapper.NetworkError
+            }
+        }
     }
 }

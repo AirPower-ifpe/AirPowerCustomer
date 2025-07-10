@@ -76,6 +76,7 @@ class MainActivity : ComponentActivity() {
                             text = "A sessão expirou, faça login novamente",
                             textColor = tb_primary_light,
                             retryCallback = {
+                                viewModel.logout()
                                 viewModel.resetUIState(stateKey)
                                 navigateAuthScreen(navController, this@MainActivity)
                             }

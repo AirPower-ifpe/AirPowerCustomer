@@ -38,6 +38,11 @@ class Constants {
         const val STATE_AUTHENTICATION_FAILURE = "AUTHENTICATION_FAILURE"
     }
 
+    object MetricsGroup {
+        const val ALL = "ALL"
+        const val DASHBOARDS = "DASHBOARDS"
+    }
+
     object UIStateKey {
         const val STATE_ERROR = "STATE_ERROR"
         const val SESSION = "SESSION"
@@ -47,6 +52,8 @@ class Constants {
         const val AGG_TELEMETRY_STATE = "AGG_TELEMETRY_STATE"
         const val DEVICE_SUMMARY_KEY = "DEVICE_SUMMARY_KEY"
         const val ALARMS_KEY = "ALARMS_KEY"
+        const val METRICS_KEY = "METRICS_KEY"
+        const val DEVICE_METRICS_KEY = "DEVICE_METRICS_KEY"
     }
 
     @Deprecated("Replace with navigation approach")

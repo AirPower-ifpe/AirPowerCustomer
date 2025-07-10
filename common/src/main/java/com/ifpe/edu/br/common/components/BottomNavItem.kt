@@ -1,6 +1,7 @@
 package com.ifpe.edu.br.common.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -31,9 +32,9 @@ sealed class BottomNavItem(
             "Devices",
             { Icon(Icons.Filled.Devices, contentDescription = "Device", tint = Color.Black) })
 
-    data object Profile :
+    data object DashBoards :
         BottomNavItem(
-            "profile",
-            "Profile",
-            { Icon(Icons.Filled.Person, contentDescription = "Profile", tint = Color.Black) })
+            "dashboards",
+            "DashBoards",
+            { Icon(Icons.Filled.Assessment, contentDescription = "DashBoards", tint = Color.Black) })
 }

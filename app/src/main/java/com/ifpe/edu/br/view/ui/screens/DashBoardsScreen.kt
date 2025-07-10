@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,12 +40,15 @@ import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.components.RectButton
+import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
+import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.AuthActivity
+import com.ifpe.edu.br.view.ui.components.LoadingCard
 import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_light
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
@@ -55,21 +59,34 @@ fun DashBoardsScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
+    val fetchMetricsKey = Constants.UIStateKey.METRICS_KEY
+    val fetchMetricsState = mainViewModel.uiStateManager.observeUIState(fetchMetricsKey)
+        .collectAsState(initial = UIState(Constants.UIState.STATE_LOADING))
+
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val dashBoardsDataWrapper = mainViewModel.getUserDashBoardsDataWrapper().collectAsState()
+    val alarmInfo = mainViewModel.getAlarmInfoSet().collectAsState()
+
+    LaunchedEffect(Unit) {
+        mainViewModel.fetchAllDashboardsMetricsWrapper()
+    }
+
     CustomColumn(
         modifier = Modifier
             .verticalScroll(scrollState)
             .fillMaxSize(),
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
         layouts = listOf {
-            dashBoardsDataWrapper.value.forEach { dashBoardsDataWrapper ->
-                DashboardsCardBoard(
-                    label = dashBoardsDataWrapper.label,
-                    allMetricsWrapper = dashBoardsDataWrapper.allMetricsWrapper,
-                    alarmInfo = dashBoardsDataWrapper.alarmInfo
-                )
+            if (fetchMetricsState.value.state == Constants.UIState.STATE_LOADING) {
+                LoadingCard()
+            } else {
+                dashBoardsDataWrapper.value.forEach { dashBoardsDataWrapper ->
+                    DashboardsCardBoard(
+                        allMetricsWrapper = dashBoardsDataWrapper,
+                        alarmInfo = alarmInfo.value
+                    )
+                }
             }
 
             RectButton(
@@ -91,7 +108,6 @@ fun DashBoardsScreen(
 
 @Composable
 private fun DashboardsCardBoard(
-    label: String,
     allMetricsWrapper: AllMetricsWrapper,
     alarmInfo: List<AlarmInfo>
 ) {
@@ -116,7 +132,7 @@ private fun DashboardsCardBoard(
                     ) {
                         CustomText(
                             color = tb_primary_light,
-                            text = label,
+                            text = allMetricsWrapper.label,
                             fontSize = 20.sp
                         )
                     }
@@ -131,7 +147,7 @@ private fun DashboardsCardBoard(
                             modifier = Modifier.width(110.dp),
                             layouts = listOf {
                                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
-                                SummaryCard("alarmes", "$10", onClick = {})
+                                SummaryCard("alarmes", alarmInfo.size.toString(), onClick = {})
                                 Spacer(modifier = Modifier.padding(vertical = 4.dp))
                                 SummaryCard(
                                     "Consumo Anual",
