@@ -53,6 +53,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
 import com.ifpe.edu.br.view.ui.components.AlarmCardInfo
 import com.ifpe.edu.br.view.ui.components.CardInfo
+import com.ifpe.edu.br.view.ui.components.EmptyStateCard
 import com.ifpe.edu.br.view.ui.components.LoadingCard
 import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_light
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
@@ -232,49 +233,50 @@ fun DevicesConsumptionSummaryCardBoard(
             CustomColumn(
                 modifier = Modifier.fillMaxSize(),
                 layouts = listOf {
-                    if (fetchMetricsState.value.state == Constants.UIState.STATE_LOADING) {
-                        LoadingCard()
-                    } else {
-
-                        Spacer(modifier = Modifier.padding(vertical = 4.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start
-                        ) {
-                            CustomText(
-                                color = tb_primary_light,
-                                text = "Consumo de todos os dispositivos",
-                                fontSize = 20.sp
-                            )
+                    Spacer(modifier = Modifier.padding(vertical = 4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        CustomText(
+                            color = tb_primary_light,
+                            text = "Consumo de todos os dispositivos",
+                            fontSize = 20.sp
+                        )
+                    }
+                    when (fetchMetricsState.value.state) {
+                        Constants.UIState.STATE_LOADING -> {
+                            LoadingCard()
                         }
 
-                        Spacer(modifier = Modifier.padding(vertical = 6.dp))
+                        Constants.UIState.STATE_SUCCESS -> {
+                            ConsumptionSummaryCard(totalAlarmCount, allDevicesMetricsWrapper)
+                            Spacer(modifier = Modifier.padding(vertical = 4.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                CustomText(
+                                    modifier = Modifier.clickable {
+                                        Toast.makeText(
+                                            context,
+                                            "Essa funcionalidade está em desenvolvimento",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    },
+                                    color = tb_primary_light,
+                                    text = "Detalhes",
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
 
-                        ConsumptionSummaryCard(totalAlarmCount, allDevicesMetricsWrapper)
+                        else -> {
+                            EmptyStateCard()
+                        }
                     }
                 }
             )
-
-            Spacer(modifier = Modifier.padding(vertical = 4.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                CustomText(
-                    modifier = Modifier.clickable {
-                        Toast.makeText(
-                            context,
-                            "Essa funcionalidade está em desenvolvimento",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    },
-                    color = tb_primary_light,
-                    text = "Detalhes",
-                    fontSize = 12.sp
-                )
-            }
         }
     )
 }
