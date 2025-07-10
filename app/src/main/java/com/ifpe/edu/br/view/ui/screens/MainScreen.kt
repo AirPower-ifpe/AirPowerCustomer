@@ -50,6 +50,7 @@ import com.ifpe.edu.br.view.ui.theme.appBackgroundGradientLight
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
+import java.util.UUID
 
 /*
 * Trabalho de conclusão de curso - IFPE 2025
@@ -294,10 +295,11 @@ fun NavHostContainer(
                 type = NavType.StringType
             })
         ) { backStackEntry ->
-            val deviceId = backStackEntry.arguments?.getString("deviceId")
-            if (deviceId != null) {
+            val deviceIdString = backStackEntry.arguments?.getString("deviceId")
+            val deviceUuid = UUID.fromString(deviceIdString)
+            if (deviceUuid != null) {
                 DeviceDetailScreen(
-                    deviceId = deviceId,
+                    deviceId = deviceUuid,
                     navController = navController,
                     mainViewModel = mainViewModel
                 )

@@ -56,7 +56,7 @@ class Repository private constructor(context: Context) {
     val alarmInfo: StateFlow<List<AlarmInfo>> = _alarmInfo.asStateFlow()
 
     private val _chartDataWrapper = MutableStateFlow(getEmptyTelemetryDataWrapper())
-    private val chartDataWrapper: StateFlow<TelemetryDataWrapper> = _chartDataWrapper.asStateFlow()
+    val chartDataWrapper: StateFlow<TelemetryDataWrapper> = _chartDataWrapper.asStateFlow()
 
     private val _allDevicesMetricsWrapper = MutableStateFlow(getEmptyAllDevicesMetricsWrapper())
     val allDevicesMetricsWrapper: StateFlow<AllMetricsWrapper> =
@@ -139,6 +139,15 @@ class Repository private constructor(context: Context) {
     suspend fun updateSession(): ResultWrapper<Token> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "updateSession()")
         return airPowerServerMgr.refreshToken()
+    }
+
+    suspend fun retrieveChartDataWrapper(id: UUID): ResultWrapper<TelemetryDataWrapper> {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveChartDataWrapper()")
+        val deviceMetricsResult = airPowerServerMgr.getDeviceMetricsWrapperById(id)
+        if (deviceMetricsResult is ResultWrapper.Success) {
+            _chartDataWrapper.value = deviceMetricsResult.value
+        }
+        return deviceMetricsResult
     }
 
     suspend fun retrieveCurrentUser(): ResultWrapper<ThingsBoardUser> {
@@ -273,6 +282,7 @@ class Repository private constructor(context: Context) {
         }
     }
 
+
     private fun ThingsBoardUser.toAirPowerUser(): AirPowerUser {
         return AirPowerUser(
             id = id.id.toString(),
@@ -286,7 +296,6 @@ class Repository private constructor(context: Context) {
             phone = phone
         )
     }
-
 
     private fun getCurrentUser(): AirPowerUser? {
         return userDao.findAll()[0]
@@ -307,28 +316,6 @@ class Repository private constructor(context: Context) {
         if (AirPowerLog.ISLOGABLE)
             AirPowerLog.e(TAG, "[$TAG]: Exception: -> device not found")
         throw NotFoundException("[$TAG]: Exception: -> device not found")
-    }
-
-    fun getChartDataWrapper(id: UUID): StateFlow<TelemetryDataWrapper> {
-        // TODO change this
-        _chartDataWrapper.value = TelemetryDataWrapper(
-            "KW/h",
-            listOf(
-                DeviceConsumption("1", 60.0),
-                DeviceConsumption("2", 5.0),
-                DeviceConsumption("3", 70.0),
-                DeviceConsumption("4", 90.0),
-                DeviceConsumption("5", 100.0),
-                DeviceConsumption("6", 160.0),
-                DeviceConsumption("7", 140.0),
-                DeviceConsumption("8", 90.0),
-                DeviceConsumption("9", 99.0),
-                DeviceConsumption("10", 350.0),
-                DeviceConsumption("11", 20.0),
-                DeviceConsumption("12", 10.0),
-            )
-        )
-        return chartDataWrapper
     }
 
     suspend fun fetchAllDevicesMetricsWrapper(): ResultWrapper<List<AllMetricsWrapper>> {

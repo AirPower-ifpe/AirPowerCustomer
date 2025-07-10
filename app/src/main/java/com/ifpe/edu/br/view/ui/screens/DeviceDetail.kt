@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,15 +29,18 @@ import com.ifpe.edu.br.common.components.CustomBarChart
 import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomText
-import com.ifpe.edu.br.common.contracts.ChartDataWrapper
+import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.model.HomeScreenAlarmSummaryCard
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.view.ui.components.AlarmCardInfo
+import com.ifpe.edu.br.view.ui.components.EmptyStateCard
+import com.ifpe.edu.br.view.ui.components.LoadingCard
 import com.ifpe.edu.br.view.ui.components.getStatusColor
 import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_light
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
+import java.util.UUID
 
 
 // Trabalho de conclusão de curso - IFPE 2025
@@ -48,14 +52,18 @@ import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 
 @Composable
 fun DeviceDetailScreen(
-    deviceId: String,
+    deviceId: UUID,
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
+
+    LaunchedEffect(Unit) {
+        mainViewModel.fetchChartDataWrapper(deviceId)
+    }
+
     val scrollState = rememberScrollState()
-    val device = mainViewModel.getDeviceById(deviceId)
+    val device = mainViewModel.getDeviceById(deviceId.toString())
     val alarmInfoSet = mainViewModel.getAlarmInfoSet().collectAsState(initial = emptyList())
-    val chardDataWrapper = mainViewModel.getChartDataWrapper(device.id).collectAsState()
 
     CustomColumn(
         modifier = Modifier
@@ -64,7 +72,7 @@ fun DeviceDetailScreen(
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
         layouts = listOf {
             DeviceInfoCard(device)
-            DeviceConsumptionCard(chardDataWrapper.value)
+            DeviceConsumptionCard(mainViewModel)
             AlarmsCard(alarmInfoSet.value)
         }
     )
@@ -129,8 +137,12 @@ private fun AlarmsCard(
 
 @Composable
 private fun DeviceConsumptionCard(
-    chartDataWrapper: ChartDataWrapper
+    viewModel: AirPowerViewModel
 ) {
+    val chardDataWrapper = viewModel.getChartDataWrapper().collectAsState()
+    val deviceMetricState =
+        viewModel.uiStateManager.observeUIState(Constants.UIStateKey.DEVICE_METRICS_KEY)
+
     CustomCard(
         paddingStart = 15.dp,
         paddingEnd = 15.dp,
@@ -139,9 +151,7 @@ private fun DeviceConsumptionCard(
         layouts = listOf {
             CustomColumn(
                 layouts = listOf {
-
                     Spacer(modifier = Modifier.padding(vertical = 4.dp))
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Start
@@ -152,11 +162,20 @@ private fun DeviceConsumptionCard(
                             fontSize = 20.sp
                         )
                     }
-
                     Spacer(modifier = Modifier.padding(vertical = 12.dp))
+                    when (deviceMetricState.value.state) {
+                        Constants.UIState.STATE_LOADING -> {
+                            LoadingCard()
+                        }
 
-                    CustomBarChart(dataWrapper = chartDataWrapper)
+                        Constants.UIState.STATE_SUCCESS -> {
+                            CustomBarChart(dataWrapper = chardDataWrapper.value)
+                        }
 
+                        else -> {
+                            EmptyStateCard()
+                        }
+                    }
                     Spacer(modifier = Modifier.padding(vertical = 4.dp))
                 }
             )
@@ -262,7 +281,7 @@ private fun DeviceDetailAlarmGrid(
         }
     val gridCount = if (cards.size > 3) 2 else 3
     val cardHeight = if (gridCount == 2) 200.dp else 140.dp
-    
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(gridCount),
         modifier = Modifier
