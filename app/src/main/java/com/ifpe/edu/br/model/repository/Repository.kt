@@ -322,16 +322,20 @@ class Repository private constructor(context: Context) {
         if (AirPowerLog.ISLOGABLE)
             AirPowerLog.d(TAG, "fetchAllDevicesMetricsWrapper()")
         val resultWrapper = airPowerServerMgr.getDevicesMetricsWrapper(Constants.MetricsGroup.ALL)
-        _allDevicesMetricsWrapper.value = getMockValues() // todo remove it
         if (resultWrapper is ResultWrapper.Success) {
-            if (resultWrapper.value.size == 1) {
+            if (resultWrapper.value.isNotEmpty()) {
                 _allDevicesMetricsWrapper.value = resultWrapper.value[0]
+                if (resultWrapper.value.size > 1) {
+                    if (AirPowerLog.ISLOGABLE) AirPowerLog.w(
+                        TAG,
+                        "More than 1 result for metrics wrapper, taking the first one."
+                    )
+                }
             } else {
-                if (AirPowerLog.ISLOGABLE) AirPowerLog.e(
+                if (AirPowerLog.ISLOGABLE) AirPowerLog.w(
                     TAG,
-                    "More then 1 result for metrics wrapper"
+                    "Metrics wrapper result is empty."
                 )
-                throw IllegalStateException("More then 1 result for metrics wrapper")
             }
         }
         return resultWrapper
@@ -342,7 +346,6 @@ class Repository private constructor(context: Context) {
             AirPowerLog.d(TAG, "fetchAllDashboardsMetricsWrapper()")
         val resultWrapper =
             airPowerServerMgr.getDevicesMetricsWrapper(Constants.MetricsGroup.DASHBOARDS)
-        _dashBoardsMetricsWrapper.value = getMockDashboardsValues() // todo remove it
         if (resultWrapper is ResultWrapper.Success) {
             _dashBoardsMetricsWrapper.value = resultWrapper.value
         }

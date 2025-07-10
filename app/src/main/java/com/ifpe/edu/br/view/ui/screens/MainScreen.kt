@@ -295,15 +295,16 @@ fun NavHostContainer(
                 type = NavType.StringType
             })
         ) { backStackEntry ->
-            val deviceIdString = backStackEntry.arguments?.getString("deviceId")
-            val deviceUuid = UUID.fromString(deviceIdString)
-            if (deviceUuid != null) {
+            val result = runCatching {
+                val deviceIdString = backStackEntry.arguments?.getString("deviceId")
+                val deviceUuid = UUID.fromString(deviceIdString)
                 DeviceDetailScreen(
                     deviceId = deviceUuid,
                     navController = navController,
                     mainViewModel = mainViewModel
                 )
-            } else {
+            }
+            if (!result.isSuccess) {
                 navController.popBackStack()
             }
         }

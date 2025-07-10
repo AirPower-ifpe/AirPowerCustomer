@@ -139,7 +139,7 @@ private fun AlarmsCard(
 private fun DeviceConsumptionCard(
     viewModel: AirPowerViewModel
 ) {
-    val chardDataWrapper = viewModel.getChartDataWrapper().collectAsState()
+    val chartDataWrapper = viewModel.getChartDataWrapper().collectAsState()
     val deviceMetricState =
         viewModel.uiStateManager.observeUIState(Constants.UIStateKey.DEVICE_METRICS_KEY)
 
@@ -169,7 +169,7 @@ private fun DeviceConsumptionCard(
                         }
 
                         Constants.UIState.STATE_SUCCESS -> {
-                            CustomBarChart(dataWrapper = chardDataWrapper.value)
+                            CustomBarChart(dataWrapper = chartDataWrapper.value)
                         }
 
                         else -> {

@@ -111,6 +111,9 @@ class AirPowerServerManager(connection: Retrofit) {
         val result = safeApiCall { apiService.getDevicesMetricsWrapper(id.toString()) }
         return when (result) {
             is ResultWrapper.Success -> {
+                if (result.value.isEmpty()) {
+                    return ResultWrapper.ApiError(ErrorCode.TB_GENERIC_ERROR)
+                }
                 val allMetricsWrapper = result.value[0]
                 val deviceConsumptionSet = allMetricsWrapper.deviceConsumptionSet
                 val label = allMetricsWrapper.label

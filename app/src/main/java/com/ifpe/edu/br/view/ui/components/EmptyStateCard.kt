@@ -30,7 +30,7 @@ fun EmptyStateCard() {
                 Spacer(modifier = Modifier.padding(vertical = 65.dp))
                 CustomText(
                     color = tb_primary_light,
-                    text = "Não há dados a axibir",
+                    text = "Não há dados a exibir",
                     fontSize = 20.sp
                 )
                 Spacer(modifier = Modifier.padding(vertical = 65.dp))
