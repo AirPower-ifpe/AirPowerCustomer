@@ -253,17 +253,17 @@ class AirPowerViewModel(
             when (val resultWrapper = repository.retrieveChartDataWrapper(id)) {
                 is ResultWrapper.ApiError -> {
                     handleApiError(resultWrapper.errorCode, sessionStateKey)
-                    handleApiError(resultWrapper.errorCode, deviceMetricKeys, getTimeLeftDelayCard(startTime))
+                    handleApiError(resultWrapper.errorCode, deviceMetricKeys)
                 }
 
                 is ResultWrapper.NetworkError -> {
                     handleNetworkError(sessionStateKey)
-                    handleNetworkError(deviceMetricKeys, getTimeLeftDelayCard(startTime))
+                    handleNetworkError(deviceMetricKeys)
                 }
 
                 is ResultWrapper.Success<*> -> {
                     handleSuccess(sessionStateKey)
-                    handleSuccess(deviceMetricKeys, getTimeLeftDelayCard(startTime))
+                    handleSuccess(deviceMetricKeys)
                 }
             }
         }
