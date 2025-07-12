@@ -12,13 +12,14 @@ import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
 import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.ResultWrapper
 import com.ifpe.edu.br.view.manager.UIStateManager
-import kotlinx.coroutines.Delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
@@ -112,7 +113,7 @@ class AirPowerViewModel(
         return (minDelayCard - timeDelayed).coerceAtLeast(0L)
     }
 
-    fun getDevicesSummary(): LiveData<List<DeviceSummary>> {
+    fun getDevicesSummary(): StateFlow<List<DeviceSummary>> {
         return repository.devicesSummary
     }
 
@@ -214,6 +215,36 @@ class AirPowerViewModel(
                 delay(devicesFetchInterval)
             }
         }
+    }
+
+    fun retrieveDeviceAggregatedDataWrapper(
+        request: AggregationRequest
+    ): Job {
+        val startTime = System.currentTimeMillis()
+        val aggregatedDataWrapper = Constants.UIStateKey.METRICS_KEY
+        return viewModelScope.launch {
+            when (val resultWrapper = repository.retrieveDeviceAggregatedDataWrapper(request)) {
+                is ResultWrapper.ApiError -> {
+                    handleApiError(
+                        resultWrapper.errorCode,
+                        aggregatedDataWrapper,
+                        getTimeLeftDelayCard(startTime)
+                    )
+                }
+
+                ResultWrapper.NetworkError -> {
+                    handleNetworkError(aggregatedDataWrapper, getTimeLeftDelayCard(startTime))
+                }
+
+                is ResultWrapper.Success<*> -> {
+                    handleSuccess(aggregatedDataWrapper, getTimeLeftDelayCard(startTime))
+                }
+            }
+        }
+    }
+
+    fun getDeviceAggregatedDataWrapper(): StateFlow<AggDataWrapperResponse> {
+        return repository.aggregatedDataWrapper
     }
 
     fun fetchAllDevicesMetricsWrapper(): Job {

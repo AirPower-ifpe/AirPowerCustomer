@@ -29,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -47,10 +48,16 @@ import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.model.HomeScreenAlarmSummaryCard
-import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggStrategy
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
+import com.ifpe.edu.br.model.repository.remote.dto.agg.ChartDataWrapper
+import com.ifpe.edu.br.model.repository.remote.dto.agg.TelemetryKey
+import com.ifpe.edu.br.model.repository.remote.dto.agg.TimeInterval
+import com.ifpe.edu.br.model.repository.remote.dto.agg.TimeIntervalWrapper
 import com.ifpe.edu.br.view.ui.components.AlarmCardInfo
 import com.ifpe.edu.br.view.ui.components.CardInfo
 import com.ifpe.edu.br.view.ui.components.EmptyStateCard
@@ -59,19 +66,39 @@ import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_light
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
+import java.util.UUID
 
 @Composable
 fun HomeScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
+    val allDevicesMetricsWrapper = mainViewModel.getAllDevicesMetricsWrapper().collectAsState()
+    val dataWrapper = mainViewModel.getDeviceAggregatedDataWrapper().collectAsState()
+    val alarmInfo = mainViewModel.getAlarmInfoSet().collectAsState()
+    val devicesSummary by mainViewModel.getDevicesSummary().collectAsState()
+    val scrollState = rememberScrollState()
+
     LaunchedEffect(Unit) {
-        mainViewModel.fetchAllDevicesMetricsWrapper()
+        // mainViewModel.fetchAllDevicesMetricsWrapper()
+        val devices = devicesSummary.map { summary ->
+            summary.id.toString()
+        }
+        if (devices.isNotEmpty()) {
+            mainViewModel.retrieveDeviceAggregatedDataWrapper(
+                request = AggregationRequest(
+                    devicesIds = devices,
+                    aggStrategy = AggStrategy.AVG,
+                    aggKey = TelemetryKey.POWER,
+                    timeIntervalWrapper = TimeIntervalWrapper(
+                        periodStartTs = System.currentTimeMillis(),
+                        timeInterval = TimeInterval.MONTH
+                    )
+                )
+            )
+        }
     }
 
-    val allDevicesMetricsWrapper = mainViewModel.getAllDevicesMetricsWrapper().collectAsState()
-    val alarmInfo = mainViewModel.getAlarmInfoSet().collectAsState()
-    val scrollState = rememberScrollState()
     CustomColumn(
         modifier = Modifier
             .verticalScroll(scrollState)
@@ -79,7 +106,7 @@ fun HomeScreen(
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
         layouts = listOf {
             DevicesConsumptionSummaryCardBoard(
-                allDevicesMetricsWrapper = allDevicesMetricsWrapper.value,
+                aggDataWrapperResponse = dataWrapper.value,
                 alarmInfo = alarmInfo.value,
                 viewModel = mainViewModel
             )
@@ -213,7 +240,7 @@ private fun AlarmsSummaryCardCardBoard(
 
 @Composable
 fun DevicesConsumptionSummaryCardBoard(
-    allDevicesMetricsWrapper: AllMetricsWrapper,
+    aggDataWrapperResponse: AggDataWrapperResponse,
     alarmInfo: List<AlarmInfo>,
     viewModel: AirPowerViewModel
 ) {
@@ -250,7 +277,7 @@ fun DevicesConsumptionSummaryCardBoard(
                         }
 
                         Constants.UIState.STATE_SUCCESS -> {
-                            ConsumptionSummaryCard(totalAlarmCount, allDevicesMetricsWrapper)
+                            ConsumptionSummaryCard(totalAlarmCount, aggDataWrapperResponse)
                             Spacer(modifier = Modifier.padding(vertical = 4.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -284,7 +311,7 @@ fun DevicesConsumptionSummaryCardBoard(
 @Composable
 private fun ConsumptionSummaryCard(
     totalAlarmCount: Int,
-    allDevicesMetricsWrapper: AllMetricsWrapper
+    aggDataWrapperResponse: AggDataWrapperResponse
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -297,13 +324,13 @@ private fun ConsumptionSummaryCard(
                 SummaryCard("alarmes", "$totalAlarmCount", onClick = {})
                 Spacer(modifier = Modifier.padding(vertical = 4.dp))
                 SummaryCard(
-                    "Consumo Anual",
-                    allDevicesMetricsWrapper.totalConsumption,
+                    aggDataWrapperResponse.aggregation.label,
+                    aggDataWrapperResponse.aggregation.value,
                     onClick = {})
                 Spacer(modifier = Modifier.padding(vertical = 4.dp))
                 SummaryCard(
                     "Dispositivos",
-                    allDevicesMetricsWrapper.devicesCount.toString(),
+                    aggDataWrapperResponse.size.toString(),
                     onClick = {})
             })
 
@@ -314,9 +341,9 @@ private fun ConsumptionSummaryCard(
                 Spacer(modifier = Modifier.padding(vertical = 12.dp))
                 CustomBarChart(
                     height = 300.dp,
-                    dataWrapper = TelemetryDataWrapper(
-                        allDevicesMetricsWrapper.label,
-                        allDevicesMetricsWrapper.deviceConsumptionSet
+                    dataWrapper = ChartDataWrapper(
+                        aggDataWrapperResponse.chartDataWrapper.label,
+                        aggDataWrapperResponse.chartDataWrapper.entries
                     )
                 )
                 Spacer(modifier = Modifier.padding(vertical = 4.dp))

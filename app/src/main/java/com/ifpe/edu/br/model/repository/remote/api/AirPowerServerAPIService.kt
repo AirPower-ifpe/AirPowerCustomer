@@ -4,8 +4,9 @@ import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
-import com.ifpe.edu.br.model.repository.remote.dto.user.ThingsBoardUser
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
+import com.ifpe.edu.br.model.repository.remote.dto.user.ThingsBoardUser
 import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -46,4 +47,7 @@ interface AirPowerServerAPIService {
     suspend fun getDevicesMetricsWrapper(
         @Path("groupID") groupID: String
     ): List<AllMetricsWrapper>
+
+    @POST("/api/v1/agg-data/telemetry")
+    suspend fun getDeviceAggregatedDataWrapper(@Body requestBody: RequestBody): AggDataWrapperResponse
 }
