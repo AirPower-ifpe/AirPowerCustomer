@@ -7,6 +7,8 @@ import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
@@ -128,6 +130,21 @@ class AirPowerServerManager(connection: Retrofit) {
             ResultWrapper.NetworkError -> {
                 ResultWrapper.NetworkError
             }
+
+            ResultWrapper.Empty -> {
+                ResultWrapper.Empty
+            }
         }
+    }
+
+    suspend fun getDeviceAggregatedDataWrapper(
+        request: AggregationRequest
+    ): ResultWrapper<AggDataWrapperResponse> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceAggregatedDataWrapper(): " +
+                "request: $request")
+        val queryJson = Gson().toJson(request)
+        val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+        val requestBody = RequestBody.create(mediaType, queryJson)
+        return safeApiCall { apiService.getDeviceAggregatedDataWrapper(requestBody) }
     }
 }

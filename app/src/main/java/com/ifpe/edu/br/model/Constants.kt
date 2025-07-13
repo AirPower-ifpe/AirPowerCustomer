@@ -49,11 +49,11 @@ class Constants {
         const val AUTH_KEY = "AUTH_STATE"
         const val LOGIN_KEY = "STATE_LOGIN"
         const val REFRESH_TOKEN_KEY = "REFRESH_TOKEN_KEY"
-        const val AGG_TELEMETRY_STATE = "AGG_TELEMETRY_STATE"
         const val DEVICE_SUMMARY_KEY = "DEVICE_SUMMARY_KEY"
         const val ALARMS_KEY = "ALARMS_KEY"
         const val METRICS_KEY = "METRICS_KEY"
         const val DEVICE_METRICS_KEY = "DEVICE_METRICS_KEY"
+        const val AGG_DATA_KEY = "AGG_DATA_KEY"
     }
 
     @Deprecated("Replace with navigation approach")

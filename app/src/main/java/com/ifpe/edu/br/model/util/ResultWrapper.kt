@@ -10,6 +10,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
 */
 sealed class ResultWrapper<out T> {
     data class Success<out T>(val value: T) : ResultWrapper<T>()
+    data object Empty: ResultWrapper<Nothing>()
     data class ApiError(val errorCode: ErrorCode) : ResultWrapper<Nothing>()
     data object NetworkError : ResultWrapper<Nothing>()
 }
