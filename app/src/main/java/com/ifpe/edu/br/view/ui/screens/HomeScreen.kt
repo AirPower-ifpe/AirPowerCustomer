@@ -531,7 +531,7 @@ fun getTimeWrapper(
 
     val rawStart = ZonedDateTime.ofInstant(
         Instant.ofEpochMilli(refEpochMillis),
-        ZoneId.of("UTC")
+        ZoneId.systemDefault()
     ).withNano(0)
 
     val startTs = when (timeInterval) {
