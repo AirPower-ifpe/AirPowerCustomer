@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
@@ -29,7 +30,7 @@ fun DeviceScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
-    val devicesSummary by mainViewModel.getDevicesSummary().observeAsState(initial = emptyList())
+    val devicesSummary by mainViewModel.getDevicesSummary().collectAsState()
 
     val context = LocalContext.current
 

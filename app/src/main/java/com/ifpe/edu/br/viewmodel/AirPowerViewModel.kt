@@ -2,7 +2,6 @@ package com.ifpe.edu.br.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.model.Constants
@@ -12,20 +11,23 @@ import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
+import com.ifpe.edu.br.model.repository.remote.dto.agg.generateCacheKey
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
-import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.ResultWrapper
 import com.ifpe.edu.br.view.manager.UIStateManager
-import kotlinx.coroutines.Delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /*
 * Trabalho de conclusão de curso - IFPE 2025
@@ -42,11 +44,45 @@ class AirPowerViewModel(
     val uiStateManager = UIStateManager.getInstance()
     private var repository = Repository.getInstance()
     private val jobs: MutableMap<String, Job> = mutableMapOf()
-    private val devicesFetchInterval = 5_000L
+    private val CACHE_CLEANUP_INTERVAL_MS = 60_000L
+    private val devicesFetchInterval = 15_000L
     private val minDelay = 1500L
     private val minDelayCard = 800L
     private val DEVICE_JOB = "DEVICE_JOB"
     private val ALARMS_JOB = "ALARMS_JOB"
+    private val aggregationDataCache =
+        ConcurrentHashMap<String, MutableStateFlow<ResultWrapper<AggDataWrapperResponse>>>()
+
+    init {
+        startCacheCleanupJob()
+    }
+
+    private fun startCacheCleanupJob(): Job {
+        return viewModelScope.launch {
+            while (isActive) {
+                delay(CACHE_CLEANUP_INTERVAL_MS)
+                val initialSize = aggregationDataCache.size
+                if (initialSize > 0) {
+                    aggregationDataCache.entries.removeAll { (_, flow) ->
+                        val hasNoSubscribers = flow.subscriptionCount.value == 0
+                        val isTerminalState =
+                            flow.value is ResultWrapper.Success ||
+                                    flow.value is ResultWrapper.ApiError ||
+                                    flow.value is ResultWrapper.NetworkError
+                        hasNoSubscribers && isTerminalState
+                    }
+                    val finalSize = aggregationDataCache.size
+                    if (initialSize != finalSize) {
+                        if (AirPowerLog.ISVERBOSE)
+                            AirPowerLog.d(
+                                TAG,
+                                "Cache cleanup ran. Removed ${initialSize - finalSize} entries."
+                            )
+                    }
+                }
+            }
+        }
+    }
 
     fun initSession(
         user: AuthUser,
@@ -73,6 +109,8 @@ class AirPowerViewModel(
                 is ResultWrapper.Success<*> -> {
                     isAuthSuccess = true
                 }
+
+                ResultWrapper.Empty -> {}
             }
 
             var isGetUserSuccess = false
@@ -93,12 +131,70 @@ class AirPowerViewModel(
                 is ResultWrapper.Success<*> -> {
                     isGetUserSuccess = true
                 }
+
+                ResultWrapper.Empty -> {}
             }
 
             if (isAuthSuccess && isGetUserSuccess) {
                 delay(getTimeLeftDelay(startTime))
                 handleSuccess(uiStateKey)
             }
+        }
+    }
+
+    /**
+     * Ponto de entrada principal para a UI obter um fluxo de dados agregados.
+     *
+     * A UI chama este método com a requisição específica que deseja observar.
+     * O método retorna um StateFlow existente do cache ou cria um novo se for a primeira vez.
+     * A busca de dados em si é iniciada por um método 'fetch' separado.
+     *
+     * @param request A requisição de agregação que define os dados desejados.
+     * @return Um StateFlow que emitirá os estados (Loading, Success, Error) para essa requisição específica.
+     */
+    fun getAggregatedDataState(request: AggregationRequest): StateFlow<ResultWrapper<AggDataWrapperResponse>> {
+        val cacheKey = request.generateCacheKey()
+        return aggregationDataCache.getOrPut(cacheKey) {
+            MutableStateFlow(ResultWrapper.Empty)
+        }
+    }
+
+    /**
+     * Inicia ou atualiza a busca de dados para uma requisição de agregação específica.
+     *
+     * @param request A requisição de agregação a ser executada.
+     */
+    fun fetchAggregatedData(request: AggregationRequest) {
+        AirPowerLog.e("TAG", "fetchAggregatedData: request: $request")
+        val flow = getAggregatedDataState(request) as MutableStateFlow
+        viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+            val aggKey = Constants.UIStateKey.AGG_DATA_KEY
+            uiStateManager.setUIState(aggKey, UIState(Constants.UIState.STATE_LOADING))
+            val sessionKey = Constants.UIStateKey.SESSION
+            uiStateManager.setUIState(sessionKey, UIState(Constants.UIState.EMPTY_STATE))
+            val result = repository.retrieveAllDeviceAggregatedDataWrapper(request)
+            when (result) {
+                is ResultWrapper.ApiError -> {
+                    handleApiError(result.errorCode, sessionKey)
+                    handleApiError(result.errorCode, aggKey, getTimeLeftDelayCard(startTime))
+                }
+
+                ResultWrapper.Empty -> {
+
+                }
+
+                ResultWrapper.NetworkError -> {
+                    handleNetworkError(sessionKey)
+                    handleNetworkError(aggKey, getTimeLeftDelayCard(startTime))
+                }
+
+                is ResultWrapper.Success<AggDataWrapperResponse> -> {
+                    handleSuccess(sessionKey)
+                    handleSuccess(aggKey, getTimeLeftDelayCard(startTime))
+                }
+            }
+            flow.value = result
         }
     }
 
@@ -112,29 +208,8 @@ class AirPowerViewModel(
         return (minDelayCard - timeDelayed).coerceAtLeast(0L)
     }
 
-    fun getDevicesSummary(): LiveData<List<DeviceSummary>> {
+    fun getDevicesSummary(): StateFlow<List<DeviceSummary>> {
         return repository.devicesSummary
-    }
-
-    fun getAggregatedTelemetry(
-        query: AggregatedTelemetryQuery
-    ) {
-        viewModelScope.launch {
-            val aggStateKey = Constants.UIStateKey.AGG_TELEMETRY_STATE
-            when (val aggResultWrapper = repository.getAggregatedTelemetry(query)) {
-                is ResultWrapper.Success -> {
-                    handleSuccess(aggStateKey)
-                }
-
-                is ResultWrapper.ApiError -> {
-                    handleApiError(aggResultWrapper.errorCode, aggStateKey)
-                }
-
-                ResultWrapper.NetworkError -> {
-                    handleNetworkError(aggStateKey)
-                }
-            }
-        }
     }
 
     fun updateSession() {
@@ -152,6 +227,8 @@ class AirPowerViewModel(
                 is ResultWrapper.Success<*> -> {
                     handleSuccess(uiStateKey)
                 }
+
+                ResultWrapper.Empty -> {}
             }
         }
     }
@@ -210,33 +287,11 @@ class AirPowerViewModel(
                         handleNetworkError(deviceSummarySummaryKey)
                         handleNetworkError(uiStateKey)
                     }
+
+                    ResultWrapper.Empty -> {}
                 }
                 delay(devicesFetchInterval)
             }
-        }
-    }
-
-    fun fetchAllDevicesMetricsWrapper(): Job {
-        return viewModelScope.launch {
-            val startTime = System.currentTimeMillis()
-            val sessionStateKey = Constants.UIStateKey.SESSION
-            val fetchMetricsKey = Constants.UIStateKey.METRICS_KEY
-            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_LOADING))
-            when (val resultWrapper = repository.fetchAllDevicesMetricsWrapper()) {
-                is ResultWrapper.Success -> {
-                    handleSuccess(sessionStateKey)
-                }
-
-                is ResultWrapper.ApiError -> {
-                    handleApiError(resultWrapper.errorCode, sessionStateKey)
-                }
-
-                ResultWrapper.NetworkError -> {
-                    handleNetworkError(sessionStateKey)
-                }
-            }
-            delay(getTimeLeftDelayCard(startTime))
-            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_SUCCESS))
         }
     }
 
@@ -265,6 +320,8 @@ class AirPowerViewModel(
                     handleSuccess(sessionStateKey)
                     handleSuccess(deviceMetricKeys)
                 }
+
+                ResultWrapper.Empty -> {}
             }
         }
     }
@@ -287,6 +344,8 @@ class AirPowerViewModel(
                 ResultWrapper.NetworkError -> {
                     handleNetworkError(sessionStateKey)
                 }
+
+                ResultWrapper.Empty -> {}
             }
             delay(getTimeLeftDelayCard(startTime))
             uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_SUCCESS))
@@ -312,6 +371,8 @@ class AirPowerViewModel(
                         handleNetworkError(alarmsKey)
                         handleNetworkError(uiStateKey)
                     }
+
+                    ResultWrapper.Empty -> {}
                 }
                 delay(devicesFetchInterval)
             }

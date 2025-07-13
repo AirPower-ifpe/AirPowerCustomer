@@ -6,8 +6,6 @@ package com.ifpe.edu.br.model.repository
 */
 import android.content.Context
 import android.content.res.Resources.NotFoundException
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.ifpe.edu.br.core.api.ConnectionManager
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
@@ -26,6 +24,10 @@ import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
 import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
+import com.ifpe.edu.br.model.repository.remote.dto.agg.Agg
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
+import com.ifpe.edu.br.model.repository.remote.dto.agg.ChartDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
@@ -48,33 +50,33 @@ class Repository private constructor(context: Context) {
     private val airPowerServerConnection =
         ConnectionManager.getInstance().getConnectionById(AirPowerServerConnectionContractImpl)
     private val airPowerServerMgr = AirPowerServerManager(airPowerServerConnection)
+    private val _devicesSummary = MutableStateFlow<List<DeviceSummary>>(emptyList())
 
-    private val _devicesSummary = MutableLiveData<List<DeviceSummary>>(emptyList())
-    val devicesSummary: LiveData<List<DeviceSummary>> get() = _devicesSummary
-
+    val devicesSummary: StateFlow<List<DeviceSummary>> get() = _devicesSummary
     private val _alarmInfo = MutableStateFlow<List<AlarmInfo>>(emptyList())
+
     val alarmInfo: StateFlow<List<AlarmInfo>> = _alarmInfo.asStateFlow()
-
     private val _chartDataWrapper = MutableStateFlow(getEmptyTelemetryDataWrapper())
-    val chartDataWrapper: StateFlow<TelemetryDataWrapper> = _chartDataWrapper.asStateFlow()
 
+    val chartDataWrapper: StateFlow<TelemetryDataWrapper> = _chartDataWrapper.asStateFlow()
     private val _allDevicesMetricsWrapper = MutableStateFlow(getEmptyAllDevicesMetricsWrapper())
+
     val allDevicesMetricsWrapper: StateFlow<AllMetricsWrapper> =
         _allDevicesMetricsWrapper.asStateFlow()
-
     private val _dashBoardsMetricsWrapper =
         MutableStateFlow(listOf(getEmptyAllDevicesMetricsWrapper()))
-    val dashBoardsMetricsWrapper: StateFlow<List<AllMetricsWrapper>> =
-        _dashBoardsMetricsWrapper.asStateFlow()
 
+    val dashBoardsMetricsWrapper: StateFlow<List<AllMetricsWrapper>> = _dashBoardsMetricsWrapper.asStateFlow()
     private val _notification = MutableStateFlow(getEmptyNotification())
+
     private val notification: StateFlow<List<NotificationItem>> = _notification.asStateFlow()
 
+    private val _allDevicesAggregatedDataWrapper = MutableStateFlow(getEmptyDataWrapper())
+    val allDevicesAggregatedDataWrapper: StateFlow<AggDataWrapperResponse> = _allDevicesAggregatedDataWrapper.asStateFlow()
 
     companion object {
         @Volatile
         private var instance: Repository? = null
-
         fun build(context: Context) {
             if (instance == null) {
                 synchronized(this) {
@@ -93,6 +95,7 @@ class Repository private constructor(context: Context) {
         }
 
         private val TAG = Repository::class.simpleName
+
     }
 
     suspend fun authenticate(
@@ -174,6 +177,13 @@ class Repository private constructor(context: Context) {
             }
         }
         return currentUserResult
+    }
+
+    suspend fun retrieveAllDeviceAggregatedDataWrapper(
+        request: AggregationRequest
+    ):ResultWrapper<AggDataWrapperResponse>{
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveAllDeviceAggregatedDataWrapper()")
+        return airPowerServerMgr.getDeviceAggregatedDataWrapper(request)
     }
 
     suspend fun isSessionExpired(): Boolean {
@@ -282,7 +292,6 @@ class Repository private constructor(context: Context) {
         }
     }
 
-
     private fun ThingsBoardUser.toAirPowerUser(): AirPowerUser {
         return AirPowerUser(
             id = id.id.toString(),
@@ -296,6 +305,7 @@ class Repository private constructor(context: Context) {
             phone = phone
         )
     }
+
 
     private fun getCurrentUser(): AirPowerUser? {
         return userDao.findAll()[0]
@@ -499,4 +509,18 @@ class Repository private constructor(context: Context) {
     private fun getEmptyNotification(): List<NotificationItem> {
         return emptyList()
     }
+
+}
+
+private fun getEmptyDataWrapper(): AggDataWrapperResponse {
+    return AggDataWrapperResponse(
+        label = "",
+        chartDataWrapper = ChartDataWrapper(
+            label = "",
+            entries = listOf()
+        ),
+        statusSummaries = emptyList(),
+        aggregation = Agg("", ""),
+        0,
+    )
 }
