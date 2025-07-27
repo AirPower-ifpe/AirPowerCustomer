@@ -38,6 +38,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
 import com.ifpe.edu.br.model.repository.remote.dto.agg.ChartDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.agg.TelemetryKey
 import com.ifpe.edu.br.model.repository.remote.dto.agg.TimeInterval
+import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.model.util.ResultWrapper
 import com.ifpe.edu.br.view.ui.components.AlarmCardInfo
 import com.ifpe.edu.br.view.ui.components.EmptyStateCard
@@ -62,7 +63,6 @@ fun DeviceDetailScreen(
     mainViewModel: AirPowerViewModel
 ) {
 
-
     val deviceDetailAddRequest = AggregationRequest(
         devicesIds = listOf(deviceId.toString()),
         aggStrategy = AggStrategy.AVG,
@@ -77,7 +77,7 @@ fun DeviceDetailScreen(
         mainViewModel.getAggregatedDataState(deviceDetailAddRequest).collectAsState()
     val scrollState = rememberScrollState()
     val device = mainViewModel.getDeviceById(deviceId.toString())
-    val alarmInfoSet = mainViewModel.getAlarmInfoSet().collectAsState(initial = emptyList())
+    val alarmInfoSet = mainViewModel.getAlarmInfoSet().collectAsState()
 
     LaunchedEffect(deviceId) {
         mainViewModel.fetchAggregatedData(deviceDetailAddRequest)
@@ -93,7 +93,8 @@ fun DeviceDetailScreen(
             DeviceConsumptionCard(
                 aggregationState = aggregationState.value
             )
-            AlarmsCard(alarmInfoSet.value)
+
+            AlarmsCard(AirPowerUtil.getAlarmInfoForDeviceId(deviceId, alarmInfoSet.value))
         }
     )
 }
@@ -123,6 +124,7 @@ private fun AlarmsCard(
             }
 
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
+
 
             DeviceDetailAlarmGrid(alarmCards) {
                 Toast.makeText(

@@ -44,23 +44,23 @@ class Repository private constructor(context: Context) {
     private val airPowerServerConnection =
         ConnectionManager.getInstance().getConnectionById(AirPowerServerConnectionContractImpl)
     private val airPowerServerMgr = AirPowerServerManager(airPowerServerConnection)
+
     private val _devicesSummary = MutableStateFlow<List<DeviceSummary>>(emptyList())
-
     val devicesSummary: StateFlow<List<DeviceSummary>> get() = _devicesSummary
+
     private val _alarmInfo = MutableStateFlow<List<AlarmInfo>>(emptyList())
-
     val alarmInfo: StateFlow<List<AlarmInfo>> = _alarmInfo.asStateFlow()
-    private val _allDevicesMetricsWrapper = MutableStateFlow(getEmptyAllDevicesMetricsWrapper())
 
+    private val _allDevicesMetricsWrapper = MutableStateFlow(getEmptyAllDevicesMetricsWrapper())
     val allDevicesMetricsWrapper: StateFlow<AllMetricsWrapper> =
         _allDevicesMetricsWrapper.asStateFlow()
+
     private val _dashBoardsMetricsWrapper =
         MutableStateFlow(listOf(getEmptyAllDevicesMetricsWrapper()))
-
     val dashBoardsMetricsWrapper: StateFlow<List<AllMetricsWrapper>> =
         _dashBoardsMetricsWrapper.asStateFlow()
-    private val _notification = MutableStateFlow(getEmptyNotification())
 
+    private val _notification = MutableStateFlow(getEmptyNotification())
     private val notification: StateFlow<List<NotificationItem>> = _notification.asStateFlow()
 
     companion object {
