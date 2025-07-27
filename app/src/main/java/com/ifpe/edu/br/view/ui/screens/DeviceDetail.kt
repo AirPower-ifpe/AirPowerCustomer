@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -94,7 +95,10 @@ fun DeviceDetailScreen(
                 aggregationState = aggregationState.value
             )
 
-            AlarmsCard(AirPowerUtil.getAlarmInfoForDeviceId(deviceId, alarmInfoSet.value))
+            val deviceAlarms = remember(deviceId, alarmInfoSet.value) {
+                AirPowerUtil.getAlarmInfoForDeviceId(deviceId, alarmInfoSet.value)
+            }
+            AlarmsCard(deviceAlarms)
         }
     )
 }
