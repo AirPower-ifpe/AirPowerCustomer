@@ -3,7 +3,6 @@ package com.ifpe.edu.br.model.repository.remote.api
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
-import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.repository.remote.dto.user.ThingsBoardUser
@@ -31,9 +30,6 @@ interface AirPowerServerAPIService {
 
     @GET("/api/v1/user/me")
     suspend fun getCurrentUser(): ThingsBoardUser
-
-    @POST("/test/api/v1/devices/telemetry/aggregate")
-    suspend fun getAggregatedTelemetry(@Body requestBody: RequestBody): TelemetryAggregationResponse
 
     @GET("/api/v1/user/{userId}/devices-summary")
     suspend fun getDeviceSummariesForUser(

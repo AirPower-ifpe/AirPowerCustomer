@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.res.Resources.NotFoundException
 import com.ifpe.edu.br.core.api.ConnectionManager
 import com.ifpe.edu.br.model.Constants
-import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.persistence.AirPowerDatabase
 import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
 import com.ifpe.edu.br.model.repository.persistence.manager.SharedPrefManager
@@ -23,16 +22,12 @@ import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
 import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
-import com.ifpe.edu.br.model.repository.remote.dto.TelemetryAggregationResponse
-import com.ifpe.edu.br.model.repository.remote.dto.agg.Agg
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
-import com.ifpe.edu.br.model.repository.remote.dto.agg.ChartDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
 import com.ifpe.edu.br.model.repository.remote.dto.user.ThingsBoardUser
-import com.ifpe.edu.br.model.repository.remote.query.AggregatedTelemetryQuery
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.ResultWrapper
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +35,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import java.util.UUID
 
 class Repository private constructor(context: Context) {
     private val db = AirPowerDatabase.getDataBaseInstance(context)
@@ -56,9 +50,6 @@ class Repository private constructor(context: Context) {
     private val _alarmInfo = MutableStateFlow<List<AlarmInfo>>(emptyList())
 
     val alarmInfo: StateFlow<List<AlarmInfo>> = _alarmInfo.asStateFlow()
-    private val _chartDataWrapper = MutableStateFlow(getEmptyTelemetryDataWrapper())
-
-    val chartDataWrapper: StateFlow<TelemetryDataWrapper> = _chartDataWrapper.asStateFlow()
     private val _allDevicesMetricsWrapper = MutableStateFlow(getEmptyAllDevicesMetricsWrapper())
 
     val allDevicesMetricsWrapper: StateFlow<AllMetricsWrapper> =
@@ -66,13 +57,11 @@ class Repository private constructor(context: Context) {
     private val _dashBoardsMetricsWrapper =
         MutableStateFlow(listOf(getEmptyAllDevicesMetricsWrapper()))
 
-    val dashBoardsMetricsWrapper: StateFlow<List<AllMetricsWrapper>> = _dashBoardsMetricsWrapper.asStateFlow()
+    val dashBoardsMetricsWrapper: StateFlow<List<AllMetricsWrapper>> =
+        _dashBoardsMetricsWrapper.asStateFlow()
     private val _notification = MutableStateFlow(getEmptyNotification())
 
     private val notification: StateFlow<List<NotificationItem>> = _notification.asStateFlow()
-
-    private val _allDevicesAggregatedDataWrapper = MutableStateFlow(getEmptyDataWrapper())
-    val allDevicesAggregatedDataWrapper: StateFlow<AggDataWrapperResponse> = _allDevicesAggregatedDataWrapper.asStateFlow()
 
     companion object {
         @Volatile
@@ -103,13 +92,6 @@ class Repository private constructor(context: Context) {
     ): ResultWrapper<Token> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "authenticate()")
         return airPowerServerMgr.authenticate(user)
-    }
-
-    suspend fun getAggregatedTelemetry(
-        query: AggregatedTelemetryQuery
-    ): ResultWrapper<TelemetryAggregationResponse> {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getAggregatedTelemetry()")
-        return airPowerServerMgr.getAggregatedTelemetry(query)
     }
 
     suspend fun retrieveDeviceSummaryForCurrentUser(): ResultWrapper<List<DeviceSummary>> {
@@ -144,15 +126,6 @@ class Repository private constructor(context: Context) {
         return airPowerServerMgr.refreshToken()
     }
 
-    suspend fun retrieveChartDataWrapper(id: UUID): ResultWrapper<TelemetryDataWrapper> {
-        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveChartDataWrapper()")
-        val deviceMetricsResult = airPowerServerMgr.getDeviceMetricsWrapperById(id)
-        if (deviceMetricsResult is ResultWrapper.Success) {
-            _chartDataWrapper.value = deviceMetricsResult.value
-        }
-        return deviceMetricsResult
-    }
-
     suspend fun retrieveCurrentUser(): ResultWrapper<ThingsBoardUser> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveCurrentUser()")
         val currentUserResult = airPowerServerMgr.getCurrentUser()
@@ -181,7 +154,7 @@ class Repository private constructor(context: Context) {
 
     suspend fun retrieveAllDeviceAggregatedDataWrapper(
         request: AggregationRequest
-    ):ResultWrapper<AggDataWrapperResponse>{
+    ): ResultWrapper<AggDataWrapperResponse> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveAllDeviceAggregatedDataWrapper()")
         return airPowerServerMgr.getDeviceAggregatedDataWrapper(request)
     }
@@ -328,29 +301,6 @@ class Repository private constructor(context: Context) {
         throw NotFoundException("[$TAG]: Exception: -> device not found")
     }
 
-    suspend fun fetchAllDevicesMetricsWrapper(): ResultWrapper<List<AllMetricsWrapper>> {
-        if (AirPowerLog.ISLOGABLE)
-            AirPowerLog.d(TAG, "fetchAllDevicesMetricsWrapper()")
-        val resultWrapper = airPowerServerMgr.getDevicesMetricsWrapper(Constants.MetricsGroup.ALL)
-        if (resultWrapper is ResultWrapper.Success) {
-            if (resultWrapper.value.isNotEmpty()) {
-                _allDevicesMetricsWrapper.value = resultWrapper.value[0]
-                if (resultWrapper.value.size > 1) {
-                    if (AirPowerLog.ISLOGABLE) AirPowerLog.w(
-                        TAG,
-                        "More than 1 result for metrics wrapper, taking the first one."
-                    )
-                }
-            } else {
-                if (AirPowerLog.ISLOGABLE) AirPowerLog.w(
-                    TAG,
-                    "Metrics wrapper result is empty."
-                )
-            }
-        }
-        return resultWrapper
-    }
-
     suspend fun fetchAllDashboardsMetricsWrapper(): ResultWrapper<List<AllMetricsWrapper>> {
         if (AirPowerLog.ISLOGABLE)
             AirPowerLog.d(TAG, "fetchAllDashboardsMetricsWrapper()")
@@ -360,88 +310,6 @@ class Repository private constructor(context: Context) {
             _dashBoardsMetricsWrapper.value = resultWrapper.value
         }
         return resultWrapper
-    }
-
-    private fun getMockDashboardsValues(): List<AllMetricsWrapper> {
-        val deviceConsumptionSet = listOf(
-            DeviceConsumption("jan", 200.0),
-            DeviceConsumption("fev", 180.0),
-            DeviceConsumption("mar", 350.0),
-            DeviceConsumption("abr", 99.0),
-            DeviceConsumption("mai", 300.0),
-            DeviceConsumption("jun", 250.0),
-            DeviceConsumption("jul", 50.0),
-            DeviceConsumption("ago", 0.0),
-            DeviceConsumption("sey", 0.0),
-            DeviceConsumption("out", 0.0),
-            DeviceConsumption("nov", 0.0),
-            DeviceConsumption("dez", 0.0),
-        )
-
-        val statusSummary = listOf(
-            DevicesStatusSummary("Online", 10),
-            DevicesStatusSummary("Offline", 1)
-        )
-
-        val result = listOf(
-            AllMetricsWrapper(
-                deviceConsumptionSet = deviceConsumptionSet,
-                statusSummaries = statusSummary,
-                totalConsumption = "820W",
-                devicesCount = 82,
-                "todos os devices"
-            ),
-            AllMetricsWrapper(
-                deviceConsumptionSet = deviceConsumptionSet,
-                statusSummaries = statusSummary,
-                totalConsumption = "2KW",
-                devicesCount = 2,
-                "Lab Dexter"
-            ),
-            AllMetricsWrapper(
-                deviceConsumptionSet = deviceConsumptionSet,
-                statusSummaries = statusSummary,
-                totalConsumption = "80KW",
-                devicesCount = 80,
-                "Reitoria"
-            )
-        )
-
-        return result
-    }
-
-    private fun getMockValues(): AllMetricsWrapper {
-        val deviceConsumptionSet = listOf(
-            DeviceConsumption("jan", 200.0),
-            DeviceConsumption("fev", 180.0),
-            DeviceConsumption("mar", 350.0),
-            DeviceConsumption("abr", 99.0),
-            DeviceConsumption("mai", 300.0),
-            DeviceConsumption("jun", 250.0),
-            DeviceConsumption("jul", 50.0),
-            DeviceConsumption("ago", 0.0),
-            DeviceConsumption("sey", 0.0),
-            DeviceConsumption("out", 0.0),
-            DeviceConsumption("nov", 0.0),
-            DeviceConsumption("dez", 0.0),
-        )
-
-        val statusSummary = listOf(
-            DevicesStatusSummary("Online", 10),
-            DevicesStatusSummary("Offline", 1)
-        )
-
-        return AllMetricsWrapper(
-            deviceConsumptionSet = deviceConsumptionSet,
-            statusSummaries = statusSummary,
-            totalConsumption = "300KW",
-            devicesCount = 11,
-            "todos os devices"
-        )
-    }
-
-    private fun getEmptyTelemetryDataWrapper(): TelemetryDataWrapper {
-        return TelemetryDataWrapper("", emptyList())
     }
 
     private fun getEmptyAllDevicesMetricsWrapper(): AllMetricsWrapper {
@@ -509,18 +377,4 @@ class Repository private constructor(context: Context) {
     private fun getEmptyNotification(): List<NotificationItem> {
         return emptyList()
     }
-
-}
-
-private fun getEmptyDataWrapper(): AggDataWrapperResponse {
-    return AggDataWrapperResponse(
-        label = "",
-        chartDataWrapper = ChartDataWrapper(
-            label = "",
-            entries = listOf()
-        ),
-        statusSummaries = emptyList(),
-        aggregation = Agg("", ""),
-        0,
-    )
 }
