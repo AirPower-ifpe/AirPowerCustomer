@@ -127,7 +127,6 @@ fun HomeScreen(
 fun SummaryCardCardBoard(
     resultWrapper: ResultWrapper<AggDataWrapperResponse>,
     viewModel: AirPowerViewModel
-
 ) {
     val aggKey = Constants.UIStateKey.AGG_DATA_KEY
     val aggDataState = viewModel.uiStateManager.observeUIState(aggKey).collectAsState()
@@ -192,7 +191,7 @@ private fun AlarmsSummaryCardCardBoard(
             ) {
                 CustomText(
                     color = tb_primary_light,
-                    text = "Alarmes do dispositivo",
+                    text = "Meus alarmes",
                     fontSize = 20.sp
                 )
             }
