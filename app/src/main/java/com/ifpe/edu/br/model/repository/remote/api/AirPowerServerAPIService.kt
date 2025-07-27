@@ -35,7 +35,7 @@ interface AirPowerServerAPIService {
     @POST("/test/api/v1/devices/telemetry/aggregate")
     suspend fun getAggregatedTelemetry(@Body requestBody: RequestBody): TelemetryAggregationResponse
 
-    @GET("/test/api/v1/user/{userId}/devices-summary")
+    @GET("/api/v1/user/{userId}/devices-summary")
     suspend fun getDeviceSummariesForUser(
         @Path("userId") userId: String
     ): List<DeviceSummary>
