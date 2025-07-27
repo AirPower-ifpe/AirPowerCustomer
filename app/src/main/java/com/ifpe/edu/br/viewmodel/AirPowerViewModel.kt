@@ -295,37 +295,6 @@ class AirPowerViewModel(
         }
     }
 
-    fun getChartDataWrapper(): StateFlow<TelemetryDataWrapper> {
-        return repository.chartDataWrapper
-    }
-
-    fun fetchChartDataWrapper(id: UUID): Job {
-        return viewModelScope.launch {
-            val startTime = System.currentTimeMillis()
-            val sessionStateKey = Constants.UIStateKey.SESSION
-            val deviceMetricKeys = Constants.UIStateKey.DEVICE_METRICS_KEY
-            uiStateManager.setUIState(deviceMetricKeys, UIState(Constants.UIState.STATE_LOADING))
-            when (val resultWrapper = repository.retrieveChartDataWrapper(id)) {
-                is ResultWrapper.ApiError -> {
-                    handleApiError(resultWrapper.errorCode, sessionStateKey)
-                    handleApiError(resultWrapper.errorCode, deviceMetricKeys)
-                }
-
-                is ResultWrapper.NetworkError -> {
-                    handleNetworkError(sessionStateKey)
-                    handleNetworkError(deviceMetricKeys)
-                }
-
-                is ResultWrapper.Success<*> -> {
-                    handleSuccess(sessionStateKey)
-                    handleSuccess(deviceMetricKeys)
-                }
-
-                ResultWrapper.Empty -> {}
-            }
-        }
-    }
-
     fun fetchAllDashboardsMetricsWrapper(): Job {
         return viewModelScope.launch {
             val startTime = System.currentTimeMillis()

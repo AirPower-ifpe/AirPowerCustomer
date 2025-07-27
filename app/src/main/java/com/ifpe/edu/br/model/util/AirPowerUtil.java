@@ -16,10 +16,14 @@ import androidx.core.content.res.ResourcesCompat;
 import com.ifpe.edu.br.BuildConfig;
 import com.ifpe.edu.br.R;
 import com.ifpe.edu.br.model.Constants;
+import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 public class AirPowerUtil {
 
@@ -99,5 +103,16 @@ public class AirPowerUtil {
                 R.anim.enter_from_right,
                 R.anim.exit_to_left
         );
+    }
+
+    public static List<AlarmInfo> getAlarmInfoForDeviceId(
+            UUID deviceId, List<AlarmInfo> alarmInfoSet) {
+        List<AlarmInfo> resultSet = new ArrayList<>();
+        for (AlarmInfo info : alarmInfoSet) {
+            if (info.getOriginator().getId().equals(deviceId)) {
+                resultSet.add(info);
+            }
+        }
+        return resultSet;
     }
 }
