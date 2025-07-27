@@ -29,13 +29,18 @@ import com.ifpe.edu.br.common.components.CustomBarChart
 import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomText
-import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.model.HomeScreenAlarmSummaryCard
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggStrategy
+import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
+import com.ifpe.edu.br.model.repository.remote.dto.agg.ChartDataWrapper
+import com.ifpe.edu.br.model.repository.remote.dto.agg.TelemetryKey
+import com.ifpe.edu.br.model.repository.remote.dto.agg.TimeInterval
+import com.ifpe.edu.br.model.util.ResultWrapper
 import com.ifpe.edu.br.view.ui.components.AlarmCardInfo
 import com.ifpe.edu.br.view.ui.components.EmptyStateCard
-import com.ifpe.edu.br.view.ui.components.LoadingCard
 import com.ifpe.edu.br.view.ui.components.getStatusColor
 import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_light
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
@@ -57,13 +62,26 @@ fun DeviceDetailScreen(
     mainViewModel: AirPowerViewModel
 ) {
 
-    LaunchedEffect(Unit) {
-        mainViewModel.fetchChartDataWrapper(deviceId)
-    }
 
+    val deviceDetailAddRequest = AggregationRequest(
+        devicesIds = listOf(deviceId.toString()),
+        aggStrategy = AggStrategy.AVG,
+        aggKey = TelemetryKey.POWER,
+        timeIntervalWrapper = getTimeWrapper(
+            System.currentTimeMillis(),
+            TimeInterval.MONTH
+        )
+    )
+
+    val aggregationState =
+        mainViewModel.getAggregatedDataState(deviceDetailAddRequest).collectAsState()
     val scrollState = rememberScrollState()
     val device = mainViewModel.getDeviceById(deviceId.toString())
     val alarmInfoSet = mainViewModel.getAlarmInfoSet().collectAsState(initial = emptyList())
+
+    LaunchedEffect(deviceId) {
+        mainViewModel.fetchAggregatedData(deviceDetailAddRequest)
+    }
 
     CustomColumn(
         modifier = Modifier
@@ -72,7 +90,9 @@ fun DeviceDetailScreen(
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
         layouts = listOf {
             DeviceInfoCard(device)
-            DeviceConsumptionCard(mainViewModel)
+            DeviceConsumptionCard(
+                aggregationState = aggregationState.value
+            )
             AlarmsCard(alarmInfoSet.value)
         }
     )
@@ -137,12 +157,8 @@ private fun AlarmsCard(
 
 @Composable
 private fun DeviceConsumptionCard(
-    viewModel: AirPowerViewModel
+    aggregationState: ResultWrapper<AggDataWrapperResponse>
 ) {
-    val chartDataWrapper = viewModel.getChartDataWrapper().collectAsState()
-    val deviceMetricState =
-        viewModel.uiStateManager.observeUIState(Constants.UIStateKey.DEVICE_METRICS_KEY)
-
     CustomCard(
         paddingStart = 15.dp,
         paddingEnd = 15.dp,
@@ -163,18 +179,17 @@ private fun DeviceConsumptionCard(
                         )
                     }
                     Spacer(modifier = Modifier.padding(vertical = 12.dp))
-                    when (deviceMetricState.value.state) {
-                        Constants.UIState.STATE_LOADING -> {
-                            LoadingCard()
-                        }
 
-                        Constants.UIState.STATE_SUCCESS -> {
-                            CustomBarChart(dataWrapper = chartDataWrapper.value)
-                        }
-
-                        else -> {
-                            EmptyStateCard()
-                        }
+                    if (aggregationState is ResultWrapper.Success) {
+                        CustomBarChart(
+                            height = 300.dp,
+                            dataWrapper = ChartDataWrapper(
+                                aggregationState.value.chartDataWrapper.label,
+                                aggregationState.value.chartDataWrapper.entries
+                            )
+                        )
+                    } else {
+                        EmptyStateCard()
                     }
                     Spacer(modifier = Modifier.padding(vertical = 4.dp))
                 }
