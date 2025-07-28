@@ -48,6 +48,6 @@ interface AirPowerServerAPIService {
     @POST("/api/v1/agg-data/telemetry")
     suspend fun getDeviceAggregatedDataWrapper(@Body requestBody: RequestBody): AggDataWrapperResponse
 
-    @GET("api/v1/notifications/me")
+    @GET("/api/v1/notifications/me")
     suspend fun getNotificationsForCurrentUser(): List<NotificationItem>
 }
