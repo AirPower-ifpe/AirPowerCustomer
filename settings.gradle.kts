@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "AirPower Costumer"
 include(":app")
- 
+include(":common")
+include(":core")
