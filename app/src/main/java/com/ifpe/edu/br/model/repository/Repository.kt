@@ -21,7 +21,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
-import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -61,7 +61,7 @@ class Repository private constructor(context: Context) {
         _dashBoardsMetricsWrapper.asStateFlow()
 
     private val _notification = MutableStateFlow(getEmptyNotification())
-    private val notification: StateFlow<List<NotificationItem>> = _notification.asStateFlow()
+    private val notification: StateFlow<List<AirPowerNotificationItem>> = _notification.asStateFlow()
 
     companion object {
         @Volatile
@@ -326,55 +326,22 @@ class Repository private constructor(context: Context) {
         )
     }
 
-    fun getNotifications(): StateFlow<List<NotificationItem>> {
-        _notification.value = listOf(
-            NotificationItem(
-                "Lebal1",
-                "messagem1 gh fdiohga iasd asdahdfa sdfa sdlfahsdf asdfiausdhfa dsfaisdufhadsfahsdf adlfhasdf ahsdfjasdfajsdhf asdaksdjfhd fskdjfsh",
-                System.currentTimeMillis(),
-                true
-            ),
-            NotificationItem(
-                "Lebal2",
-                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhasdf adsjfhasd fhasd fashd fasdhfasdhfasdhf jasdhf çasjdfh sadjfha sdkjfhasdkf",
-                System.currentTimeMillis(),
-                false
-            ),
-            NotificationItem(
-                "Lebal dfsd 12",
-                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
-                System.currentTimeMillis(),
-                false
-            ),
-            NotificationItem(
-                "Lebal dfs d13",
-                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
-                System.currentTimeMillis(),
-                false
-            ),
-            NotificationItem(
-                "Lebal df sd1",
-                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
-                System.currentTimeMillis(),
-                false
-            ),
-            NotificationItem(
-                "Lebal df sd1",
-                "j sdf asdfhas dfhadfha sdfahsd fasçdfhasdfhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
-                System.currentTimeMillis(),
-                false
-            ),
-            NotificationItem(
-                "Lebal df sd1",
-                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
-                System.currentTimeMillis(),
-                false
-            ),
-        )
+    fun getNotifications(): StateFlow<List<AirPowerNotificationItem>> {
         return notification
     }
 
-    private fun getEmptyNotification(): List<NotificationItem> {
+    private fun getEmptyNotification(): List<AirPowerNotificationItem> {
         return emptyList()
+    }
+
+    suspend fun retrieveNotifications(): ResultWrapper<List<AirPowerNotificationItem>> {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveNotifications()")
+        val resultWrapper = airPowerServerMgr.getNotificationsForCurrentUser()
+        if (resultWrapper is ResultWrapper.Success) {
+            if (AirPowerLog.ISVERBOSE)
+                AirPowerLog.d(TAG, "Updating notifications data with ${resultWrapper.value.size} items.")
+            _notification.value = resultWrapper.value
+        }
+        return resultWrapper
     }
 }

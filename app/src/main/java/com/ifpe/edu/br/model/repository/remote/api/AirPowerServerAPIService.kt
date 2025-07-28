@@ -3,6 +3,7 @@ package com.ifpe.edu.br.model.repository.remote.api
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
+import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.auth.Token
 import com.ifpe.edu.br.model.repository.remote.dto.user.ThingsBoardUser
@@ -46,4 +47,7 @@ interface AirPowerServerAPIService {
 
     @POST("/api/v1/agg-data/telemetry")
     suspend fun getDeviceAggregatedDataWrapper(@Body requestBody: RequestBody): AggDataWrapperResponse
+
+    @GET("/api/v1/notifications/me")
+    suspend fun getNotificationsForCurrentUser(): List<AirPowerNotificationItem>
 }

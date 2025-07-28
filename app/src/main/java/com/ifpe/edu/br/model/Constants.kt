@@ -54,6 +54,7 @@ class Constants {
         const val METRICS_KEY = "METRICS_KEY"
         const val DEVICE_METRICS_KEY = "DEVICE_METRICS_KEY"
         const val AGG_DATA_KEY = "AGG_DATA_KEY"
+        const val NOTIFICATIONS_KEY = "NOTIFICATIONS_KEY"
     }
 
     @Deprecated("Replace with navigation approach")

@@ -6,11 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
-import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
-import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
 import com.ifpe.edu.br.model.repository.remote.dto.agg.generateCacheKey
@@ -26,7 +25,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /*
@@ -48,8 +46,10 @@ class AirPowerViewModel(
     private val devicesFetchInterval = 15_000L
     private val minDelay = 1500L
     private val minDelayCard = 800L
+    private val notificationsFetchInterval = 30_000L
     private val DEVICE_JOB = "DEVICE_JOB"
     private val ALARMS_JOB = "ALARMS_JOB"
+    private val NOTIFICATIONS_JOB = "NOTIFICATIONS_JOB"
     private val aggregationDataCache =
         ConcurrentHashMap<String, MutableStateFlow<ResultWrapper<AggDataWrapperResponse>>>()
 
@@ -266,6 +266,30 @@ class AirPowerViewModel(
         if (jobs[ALARMS_JOB]?.isActive != true) {
             jobs[ALARMS_JOB] = fetchAlarmData()
         }
+        if (jobs[NOTIFICATIONS_JOB]?.isActive != true) {
+            jobs[NOTIFICATIONS_JOB] = fetchNotificationData()
+        }
+    }
+
+    private fun fetchNotificationData(): Job {
+        return viewModelScope.launch {
+            val notificationsKey = Constants.UIStateKey.NOTIFICATIONS_KEY
+            while (isActive) {
+                when (val resultWrapper = repository.retrieveNotifications()) {
+                    is ResultWrapper.Success -> {
+                        handleSuccess(notificationsKey)
+                    }
+                    is ResultWrapper.ApiError -> {
+                        handleApiError(resultWrapper.errorCode, notificationsKey)
+                    }
+                    is ResultWrapper.NetworkError -> {
+                        handleNetworkError(notificationsKey)
+                    }
+                    else -> {}
+                }
+                delay(notificationsFetchInterval)
+            }
+        }
     }
 
     private fun fetchDevicesData(): Job {
@@ -460,7 +484,7 @@ class AirPowerViewModel(
         return repository.dashBoardsMetricsWrapper
     }
 
-    fun getNotifications(): StateFlow<List<NotificationItem>> {
+    fun getNotifications(): StateFlow<List<AirPowerNotificationItem>> {
         return repository.getNotifications()
     }
 

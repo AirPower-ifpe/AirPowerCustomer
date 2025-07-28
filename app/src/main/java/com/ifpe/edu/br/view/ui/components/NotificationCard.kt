@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
-import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_light
 import com.ifpe.edu.br.view.ui.theme.tb_primary_light
 import java.text.SimpleDateFormat
@@ -36,7 +36,7 @@ import java.util.Locale
 */
 @Composable
 fun NotificationCard(
-    item: NotificationItem,
+    item: AirPowerNotificationItem,
     onClick: () -> Unit
 ) {
     CustomCard(
@@ -44,7 +44,7 @@ fun NotificationCard(
             .clip(RoundedCornerShape(cardCornerRadius))
             .wrapContentHeight()
             .fillMaxWidth()
-            .background(getCardColor(item.isNew))
+            .background(getCardColor(item.status))
             .clickable { onClick() },
         layouts = listOf {
             Column(
@@ -58,7 +58,7 @@ fun NotificationCard(
                         color = tb_primary_light,
                         alignment = TextAlign.Left,
                         fontSize = 18.sp,
-                        text = item.label
+                        text = item.text
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
@@ -71,7 +71,7 @@ fun NotificationCard(
                         alignment = TextAlign.Left,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Normal,
-                        text = item.message
+                        text = item.type
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
@@ -84,7 +84,7 @@ fun NotificationCard(
                         fontSize = 10.sp,
                         alignment = TextAlign.Right,
                         fontWeight = FontWeight.Thin,
-                        text = formatTimestamp(item.timestamp)
+                        text = formatTimestamp(item.createdTime)
                     )
                 }
             }
@@ -93,8 +93,8 @@ fun NotificationCard(
 }
 
 @Composable
-private fun getCardColor(isNew: Boolean): Color {
-    return if (isNew) {
+private fun getCardColor(isNew: String): Color {
+    return if (isNew == "SENT") {
         Color.White
     } else {
         app_default_solid_background_light
