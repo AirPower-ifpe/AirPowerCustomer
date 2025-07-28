@@ -1,6 +1,5 @@
 package com.ifpe.edu.br.view.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,13 +9,12 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.CustomColumn
+import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
-import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.view.ui.components.NotificationCard
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 
@@ -30,22 +28,14 @@ fun NotificationCenterScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
-    val context = LocalContext.current
     val notification = mainViewModel.getNotifications().collectAsState()
-
     CustomColumn(
         modifier = Modifier.fillMaxSize(),
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
         layouts = listOf {
             NotificationGrid(
                 notificationSet = notification.value,
-                onClick = {
-                    Toast.makeText(
-                        context,
-                        "Essa funcionalidade está em desenvolvimento",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                viewModel = mainViewModel
             )
         }
     )
@@ -54,7 +44,7 @@ fun NotificationCenterScreen(
 @Composable
 private fun NotificationGrid(
     notificationSet: List<AirPowerNotificationItem>,
-    onClick: () -> Unit
+    viewModel: AirPowerViewModel
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(1),
@@ -64,10 +54,14 @@ private fun NotificationGrid(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        items(notificationSet) { deviceItem ->
+        items(notificationSet) { notification ->
             NotificationCard(
-                item = deviceItem,
-                onClick = onClick
+                item = notification,
+                onClick = {
+                    if (notification.status != Constants.NotificationState.READ) {
+                        viewModel.markNotificationAsRead(notification.id)
+                    }
+                }
             )
         }
     }

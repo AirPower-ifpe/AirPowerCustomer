@@ -6,10 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.ifpe.edu.br.common.contracts.UIState
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.Repository
+import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
-import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
 import com.ifpe.edu.br.model.repository.remote.dto.agg.generateCacheKey
@@ -39,19 +40,25 @@ class AirPowerViewModel(
 ) : AndroidViewModel(application) {
 
     private val TAG: String = AirPowerViewModel::class.java.simpleName
+
+    // INTERVAL
+    private val MINUTE = 60000L
+    private val CACHE_CLEANUP_INTERVAL = MINUTE * 2
+    private val FETCH_INTERVAL_DEVICE = MINUTE * 5
+    private val FETCH_INTERVAL_NOTIFICATION = 30 * 1000L
+    private val FETCH_INTERVAL_ALARM = MINUTE
+    private val MIN_DELAY_UI = 1500L
+    private val MIN_DELAY_CARD = 800L
+
     val uiStateManager = UIStateManager.getInstance()
     private var repository = Repository.getInstance()
     private val jobs: MutableMap<String, Job> = mutableMapOf()
-    private val CACHE_CLEANUP_INTERVAL_MS = 60_000L
-    private val devicesFetchInterval = 15_000L
-    private val minDelay = 1500L
-    private val minDelayCard = 800L
-    private val notificationsFetchInterval = 30_000L
+    private val aggregationDataCache =
+        ConcurrentHashMap<String, MutableStateFlow<ResultWrapper<AggDataWrapperResponse>>>()
+
     private val DEVICE_JOB = "DEVICE_JOB"
     private val ALARMS_JOB = "ALARMS_JOB"
     private val NOTIFICATIONS_JOB = "NOTIFICATIONS_JOB"
-    private val aggregationDataCache =
-        ConcurrentHashMap<String, MutableStateFlow<ResultWrapper<AggDataWrapperResponse>>>()
 
     init {
         startCacheCleanupJob()
@@ -60,7 +67,7 @@ class AirPowerViewModel(
     private fun startCacheCleanupJob(): Job {
         return viewModelScope.launch {
             while (isActive) {
-                delay(CACHE_CLEANUP_INTERVAL_MS)
+                delay(CACHE_CLEANUP_INTERVAL)
                 val initialSize = aggregationDataCache.size
                 if (initialSize > 0) {
                     aggregationDataCache.entries.removeAll { (_, flow) ->
@@ -200,12 +207,12 @@ class AirPowerViewModel(
 
     private fun getTimeLeftDelay(startTime: Long): Long {
         val timeDelayed = System.currentTimeMillis() - startTime
-        return (minDelay - timeDelayed).coerceAtLeast(0L)
+        return (MIN_DELAY_UI - timeDelayed).coerceAtLeast(0L)
     }
 
     private fun getTimeLeftDelayCard(startTime: Long): Long {
         val timeDelayed = System.currentTimeMillis() - startTime
-        return (minDelayCard - timeDelayed).coerceAtLeast(0L)
+        return (MIN_DELAY_CARD - timeDelayed).coerceAtLeast(0L)
     }
 
     fun getDevicesSummary(): StateFlow<List<DeviceSummary>> {
@@ -279,15 +286,18 @@ class AirPowerViewModel(
                     is ResultWrapper.Success -> {
                         handleSuccess(notificationsKey)
                     }
+
                     is ResultWrapper.ApiError -> {
                         handleApiError(resultWrapper.errorCode, notificationsKey)
                     }
+
                     is ResultWrapper.NetworkError -> {
                         handleNetworkError(notificationsKey)
                     }
+
                     else -> {}
                 }
-                delay(notificationsFetchInterval)
+                delay(FETCH_INTERVAL_NOTIFICATION)
             }
         }
     }
@@ -314,7 +324,7 @@ class AirPowerViewModel(
 
                     ResultWrapper.Empty -> {}
                 }
-                delay(devicesFetchInterval)
+                delay(FETCH_INTERVAL_DEVICE)
             }
         }
     }
@@ -345,6 +355,25 @@ class AirPowerViewModel(
         }
     }
 
+    fun markNotificationAsRead(notificationId: Id): Job {
+        return viewModelScope.launch {
+            val uiStateKey = Constants.UIStateKey.SESSION
+            when (val resultWrapper = repository.markNotificationAsRead(notificationId)) {
+                is ResultWrapper.Success -> {}
+
+                is ResultWrapper.ApiError -> {
+                    handleApiError(resultWrapper.errorCode, uiStateKey)
+                }
+
+                ResultWrapper.NetworkError -> {
+                    handleNetworkError(uiStateKey)
+                }
+
+                ResultWrapper.Empty -> {}
+            }
+        }
+    }
+
     private fun fetchAlarmData(): Job {
         return viewModelScope.launch {
             val alarmsKey = Constants.UIStateKey.ALARMS_KEY
@@ -367,7 +396,7 @@ class AirPowerViewModel(
 
                     ResultWrapper.Empty -> {}
                 }
-                delay(devicesFetchInterval)
+                delay(FETCH_INTERVAL_ALARM)
             }
         }
     }
