@@ -48,8 +48,10 @@ class AirPowerViewModel(
     private val devicesFetchInterval = 15_000L
     private val minDelay = 1500L
     private val minDelayCard = 800L
+    private val notificationsFetchInterval = 30_000L
     private val DEVICE_JOB = "DEVICE_JOB"
     private val ALARMS_JOB = "ALARMS_JOB"
+    private val NOTIFICATIONS_JOB = "NOTIFICATIONS_JOB"
     private val aggregationDataCache =
         ConcurrentHashMap<String, MutableStateFlow<ResultWrapper<AggDataWrapperResponse>>>()
 
@@ -265,6 +267,30 @@ class AirPowerViewModel(
         }
         if (jobs[ALARMS_JOB]?.isActive != true) {
             jobs[ALARMS_JOB] = fetchAlarmData()
+        }
+        if (jobs[NOTIFICATIONS_JOB]?.isActive != true) {
+            jobs[NOTIFICATIONS_JOB] = fetchNotificationData()
+        }
+    }
+
+    private fun fetchNotificationData(): Job {
+        return viewModelScope.launch {
+            val notificationsKey = Constants.UIStateKey.NOTIFICATIONS_KEY
+            while (isActive) {
+                when (val resultWrapper = repository.retrieveNotifications()) {
+                    is ResultWrapper.Success -> {
+                        handleSuccess(notificationsKey)
+                    }
+                    is ResultWrapper.ApiError -> {
+                        handleApiError(resultWrapper.errorCode, notificationsKey)
+                    }
+                    is ResultWrapper.NetworkError -> {
+                        handleNetworkError(notificationsKey)
+                    }
+                    else -> {}
+                }
+                delay(notificationsFetchInterval)
+            }
         }
     }
 

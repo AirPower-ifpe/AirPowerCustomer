@@ -327,54 +327,21 @@ class Repository private constructor(context: Context) {
     }
 
     fun getNotifications(): StateFlow<List<NotificationItem>> {
-        _notification.value = listOf(
-            NotificationItem(
-                "Lebal1",
-                "messagem1 gh fdiohga iasd asdahdfa sdfa sdlfahsdf asdfiausdhfa dsfaisdufhadsfahsdf adlfhasdf ahsdfjasdfajsdhf asdaksdjfhd fskdjfsh",
-                System.currentTimeMillis(),
-                true
-            ),
-            NotificationItem(
-                "Lebal2",
-                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhasdf adsjfhasd fhasd fashd fasdhfasdhfasdhf jasdhf çasjdfh sadjfha sdkjfhasdkf",
-                System.currentTimeMillis(),
-                false
-            ),
-            NotificationItem(
-                "Lebal dfsd 12",
-                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
-                System.currentTimeMillis(),
-                false
-            ),
-            NotificationItem(
-                "Lebal dfs d13",
-                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
-                System.currentTimeMillis(),
-                false
-            ),
-            NotificationItem(
-                "Lebal df sd1",
-                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
-                System.currentTimeMillis(),
-                false
-            ),
-            NotificationItem(
-                "Lebal df sd1",
-                "j sdf asdfhas dfhadfha sdfahsd fasçdfhasdfhas j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
-                System.currentTimeMillis(),
-                false
-            ),
-            NotificationItem(
-                "Lebal df sd1",
-                "j sdf asdfhas dfhadfha sdpad fhadçfaodhdhfads fasdofahhadfha sdpad fhadçfaodhdhfads fasdofahsd fasçdfhasdfhas",
-                System.currentTimeMillis(),
-                false
-            ),
-        )
         return notification
     }
 
     private fun getEmptyNotification(): List<NotificationItem> {
         return emptyList()
+    }
+
+    suspend fun retrieveNotifications(): ResultWrapper<List<NotificationItem>> {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveNotifications()")
+        val resultWrapper = airPowerServerMgr.getNotificationsForCurrentUser()
+        if (resultWrapper is ResultWrapper.Success) {
+            if (AirPowerLog.ISVERBOSE)
+                AirPowerLog.d(TAG, "Updating notifications data with ${resultWrapper.value.size} items.")
+            _notification.value = resultWrapper.value
+        }
+        return resultWrapper
     }
 }
