@@ -15,7 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.CustomColumn
-import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.view.ui.components.NotificationCard
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 
@@ -52,7 +53,7 @@ fun NotificationCenterScreen(
 
 @Composable
 private fun NotificationGrid(
-    notificationSet: List<NotificationItem>,
+    notificationSet: List<AirPowerNotificationItem>,
     onClick: () -> Unit
 ) {
     LazyVerticalGrid(

@@ -41,7 +41,7 @@ import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.components.CustomTopBar
 import com.ifpe.edu.br.common.components.FailureDialog
 import com.ifpe.edu.br.common.components.GradientBackground
-import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.AuthActivity
 import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
@@ -333,10 +333,10 @@ private fun navigateAuthScreen(
 }
 
 private fun hasNotification(
-    notificationSet: List<NotificationItem>
+    notificationSet: List<AirPowerNotificationItem>
 ): Boolean {
     notificationSet.forEach { item ->
-        if (item.isNew) {
+        if (item.status == "SENT") {
             return true
         }
     }

@@ -5,7 +5,7 @@ import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
-import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -108,7 +108,7 @@ class AirPowerServerManager(connection: Retrofit) {
         return safeApiCall { apiService.getDeviceAggregatedDataWrapper(requestBody) }
     }
 
-    suspend fun getNotificationsForCurrentUser(): ResultWrapper<List<NotificationItem>> {
+    suspend fun getNotificationsForCurrentUser(): ResultWrapper<List<AirPowerNotificationItem>> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getNotificationsForCurrentUser()")
         return safeApiCall { apiService.getNotificationsForCurrentUser() }
     }

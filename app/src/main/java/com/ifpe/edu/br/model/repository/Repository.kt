@@ -21,7 +21,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
-import com.ifpe.edu.br.model.repository.remote.dto.NotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -61,7 +61,7 @@ class Repository private constructor(context: Context) {
         _dashBoardsMetricsWrapper.asStateFlow()
 
     private val _notification = MutableStateFlow(getEmptyNotification())
-    private val notification: StateFlow<List<NotificationItem>> = _notification.asStateFlow()
+    private val notification: StateFlow<List<AirPowerNotificationItem>> = _notification.asStateFlow()
 
     companion object {
         @Volatile
@@ -326,15 +326,15 @@ class Repository private constructor(context: Context) {
         )
     }
 
-    fun getNotifications(): StateFlow<List<NotificationItem>> {
+    fun getNotifications(): StateFlow<List<AirPowerNotificationItem>> {
         return notification
     }
 
-    private fun getEmptyNotification(): List<NotificationItem> {
+    private fun getEmptyNotification(): List<AirPowerNotificationItem> {
         return emptyList()
     }
 
-    suspend fun retrieveNotifications(): ResultWrapper<List<NotificationItem>> {
+    suspend fun retrieveNotifications(): ResultWrapper<List<AirPowerNotificationItem>> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveNotifications()")
         val resultWrapper = airPowerServerMgr.getNotificationsForCurrentUser()
         if (resultWrapper is ResultWrapper.Success) {
