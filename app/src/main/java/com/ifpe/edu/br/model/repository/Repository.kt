@@ -22,6 +22,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
 import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -341,6 +342,23 @@ class Repository private constructor(context: Context) {
             if (AirPowerLog.ISVERBOSE)
                 AirPowerLog.d(TAG, "Updating notifications data with ${resultWrapper.value.size} items.")
             _notification.value = resultWrapper.value
+        }
+        return resultWrapper
+    }
+
+    suspend fun markNotificationAsRead(notificationId: Id): ResultWrapper<Boolean> {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "markNotificationAsRead()")
+        val resultWrapper = airPowerServerMgr.markNotificationAsRead(notificationId)
+        if (resultWrapper is ResultWrapper.Success) {
+            if (AirPowerLog.ISVERBOSE)
+                AirPowerLog.d(TAG, "Updating notifications state")
+            _notification.value = _notification.value.map { notification ->
+                if (notification.id.id == notificationId.id) {
+                    notification.copy(status = Constants.NotificationState.READ)
+                } else {
+                    notification
+                }
+            }
         }
         return resultWrapper
     }

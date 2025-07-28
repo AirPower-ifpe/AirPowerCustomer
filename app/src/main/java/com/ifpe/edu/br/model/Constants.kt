@@ -73,6 +73,10 @@ class Constants {
         const val KEY_COD_DRAWABLE: String = "drawable"
     }
 
+    object NotificationState {
+        const val READ = "READ"
+    }
+
     @Deprecated("Replace with new approach")
     object DeprecatedValues {
         const val THINGS_BOARD_ERROR_CODE_TOKEN_EXPIRED = 11

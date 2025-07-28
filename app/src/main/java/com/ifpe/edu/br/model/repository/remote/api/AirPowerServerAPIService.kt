@@ -50,4 +50,7 @@ interface AirPowerServerAPIService {
 
     @GET("/api/v1/notifications/me")
     suspend fun getNotificationsForCurrentUser(): List<AirPowerNotificationItem>
+
+    @POST("/api/v1/notifications/read")
+    suspend fun markNotificationAsRead(@Body requestBody: RequestBody): Boolean
 }

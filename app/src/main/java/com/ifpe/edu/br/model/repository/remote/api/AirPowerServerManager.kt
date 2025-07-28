@@ -6,6 +6,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
 import com.ifpe.edu.br.model.repository.remote.dto.auth.AuthUser
@@ -111,5 +112,13 @@ class AirPowerServerManager(connection: Retrofit) {
     suspend fun getNotificationsForCurrentUser(): ResultWrapper<List<AirPowerNotificationItem>> {
         if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getNotificationsForCurrentUser()")
         return safeApiCall { apiService.getNotificationsForCurrentUser() }
+    }
+
+    suspend fun markNotificationAsRead(notificationId: Id): ResultWrapper<Boolean> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "markNotificationAsRead()")
+        val queryJson = Gson().toJson(notificationId)
+        val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+        val requestBody = RequestBody.create(mediaType, queryJson)
+        return safeApiCall { apiService.markNotificationAsRead(requestBody) }
     }
 }
