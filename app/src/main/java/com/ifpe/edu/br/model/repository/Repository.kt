@@ -324,17 +324,6 @@ class Repository private constructor(context: Context) {
         throw NotFoundException("[$TAG]: Exception: -> device not found")
     }
 
-    suspend fun fetchAllDashboardsMetricsWrapper(): ResultWrapper<List<AllMetricsWrapper>> {
-        if (AirPowerLog.ISLOGABLE)
-            AirPowerLog.d(TAG, "fetchAllDashboardsMetricsWrapper()")
-        val resultWrapper =
-            airPowerServerMgr.getDevicesMetricsWrapper(Constants.MetricsGroup.DASHBOARDS)
-        if (resultWrapper is ResultWrapper.Success) {
-            _dashBoardsMetricsWrapper.value = resultWrapper.value
-        }
-        return resultWrapper
-    }
-
     private fun getEmptyAllDevicesMetricsWrapper(): AllMetricsWrapper {
         return AllMetricsWrapper(
             totalConsumption = "",

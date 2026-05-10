@@ -369,33 +369,6 @@ class AirPowerViewModel(
         }
     }
 
-    @Deprecated("Marked to be removed on text release")
-    fun fetchAllDashboardsMetricsWrapper(): Job {
-        return viewModelScope.launch {
-            val startTime = System.currentTimeMillis()
-            val sessionStateKey = Constants.UIStateKey.SESSION
-            val fetchMetricsKey = Constants.UIStateKey.METRICS_KEY
-            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_LOADING))
-            when (val resultWrapper = repository.fetchAllDashboardsMetricsWrapper()) {
-                is ResultWrapper.Success -> {
-                    handleSuccess(sessionStateKey)
-                }
-
-                is ResultWrapper.ApiError -> {
-                    handleApiError(resultWrapper.errorCode, sessionStateKey)
-                }
-
-                ResultWrapper.NetworkError -> {
-                    handleNetworkError(sessionStateKey)
-                }
-
-                ResultWrapper.Empty -> {}
-            }
-            delay(getTimeLeftDelayCard(startTime))
-            uiStateManager.setUIState(fetchMetricsKey, UIState(Constants.UIState.STATE_SUCCESS))
-        }
-    }
-
     fun markNotificationAsRead(notificationId: Id): Job {
         return viewModelScope.launch {
             val uiStateKey = Constants.UIStateKey.SESSION

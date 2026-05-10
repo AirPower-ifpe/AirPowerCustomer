@@ -92,11 +92,6 @@ class AirPowerServerManager(connection: Retrofit) {
         return safeApiCall { apiService.getAlarmsForCurrentUser() }
     }
 
-    suspend fun getDevicesMetricsWrapper(groupID: String): ResultWrapper<List<AllMetricsWrapper>> {
-        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDevicesMetricsWrapper()")
-        return safeApiCall { apiService.getDevicesMetricsWrapper(groupID) }
-    }
-
     suspend fun getDeviceAggregatedDataWrapper(
         request: AggregationRequest
     ): ResultWrapper<AggDataWrapperResponse> {

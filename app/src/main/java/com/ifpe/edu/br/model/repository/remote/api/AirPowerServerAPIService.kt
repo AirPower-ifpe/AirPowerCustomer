@@ -41,11 +41,6 @@ interface AirPowerServerAPIService {
     @GET("api/v1/alarms/me")
     suspend fun getAlarmsForCurrentUser(): List<AlarmInfo>
 
-    @GET("api/v1/telemetry/user/{groupID}/devices-metrics")
-    suspend fun getDevicesMetricsWrapper(
-        @Path("groupID") groupID: String
-    ): List<AllMetricsWrapper>
-
     @POST("/api/v1/agg-data/telemetry")
     suspend fun getDeviceAggregatedDataWrapper(@Body requestBody: RequestBody): AggDataWrapperResponse
 
