@@ -400,13 +400,15 @@ class AirPowerViewModel(
         return viewModelScope.launch {
             val uiStateKey = Constants.UIStateKey.SESSION
             when (val resultWrapper = repository.markNotificationAsRead(notificationId)) {
-                is ResultWrapper.Success -> {}
+                is ResultWrapper.Success -> {
+                    repository.removeReadNotification(notificationId)
+                }
 
                 is ResultWrapper.ApiError -> {
                     handleApiError(resultWrapper.errorCode, uiStateKey)
                 }
 
-                ResultWrapper.NetworkError -> {
+                is ResultWrapper.NetworkError -> {
                     handleNetworkError(uiStateKey)
                 }
 
