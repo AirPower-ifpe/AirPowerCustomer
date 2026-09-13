@@ -64,6 +64,7 @@ import com.ifpe.edu.br.view.ui.components.EmptyStateCard
 import com.ifpe.edu.br.view.ui.components.FilterBottomSheet
 import com.ifpe.edu.br.view.ui.components.HeaderWithSettings
 import com.ifpe.edu.br.view.ui.components.MainChart
+import com.ifpe.edu.br.view.ui.components.StatisticsRow
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 import java.util.UUID
 
@@ -113,7 +114,7 @@ fun DeviceDetailScreen(
 
             Container(
                 layouts = listOf {
-                    AlarmSection(deviceAlarms)
+                    //AlarmSection(deviceAlarms)
                 }
             )
         }

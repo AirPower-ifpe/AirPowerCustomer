@@ -80,6 +80,7 @@ fun MainScreen(
                         Screen.Dashboards.route -> "Dashboards"
                         Screen.DeviceDetail.route -> "Detalhes"
                         Screen.NotificationCenter.route -> "Notificações"
+                        "alarms" -> "Central de Alarmes"
                         else -> ""
                     }
 
@@ -228,6 +229,14 @@ fun NavHostContainer(
                 mainViewModel = mainViewModel
             )
         }
+
+        composable("alarms") {
+            AlarmCenterScreen(
+                navController = navController,
+                mainViewModel = mainViewModel
+            )
+        }
+
     }
 }
 

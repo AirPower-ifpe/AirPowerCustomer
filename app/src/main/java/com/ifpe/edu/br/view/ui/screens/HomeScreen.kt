@@ -4,30 +4,41 @@
 * Project: AirPower Costumer
 */
 
+/*
+* Trabalho de conclusão de curso - IFPE 2025
+* Author: Willian Santos
+* Project: AirPower Costumer
+*/
+
 package com.ifpe.edu.br.view.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,17 +49,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.CustomCard
-import com.ifpe.edu.br.common.components.CustomColumn
-import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.ui.theme.AirPowerTheme
 import com.ifpe.edu.br.model.repository.model.ChartType
-import com.ifpe.edu.br.model.repository.model.HomeScreenAlarmSummaryCard
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
@@ -59,24 +67,18 @@ import com.ifpe.edu.br.model.repository.remote.dto.agg.TelemetryKey
 import com.ifpe.edu.br.model.repository.remote.dto.agg.TimeInterval
 import com.ifpe.edu.br.model.repository.remote.dto.agg.TimeIntervalWrapper
 import com.ifpe.edu.br.model.util.ResultWrapper
-import com.ifpe.edu.br.view.ui.components.AlarmCardInfo
-import com.ifpe.edu.br.view.ui.components.CardInfo
-import com.ifpe.edu.br.view.ui.components.EmptyStateCard
-import com.ifpe.edu.br.view.ui.components.GradientDivider
 import com.ifpe.edu.br.view.ui.components.MainChart
-import com.ifpe.edu.br.view.ui.components.SolidDivider
-import com.ifpe.edu.br.view.ui.components.StatItem
-
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
+import java.util.Date
 import java.util.Locale
-
 
 private val telemetryKey = TelemetryKey.POWER
 
@@ -91,9 +93,6 @@ fun HomeScreen(
         mainViewModel.getDevicesSummary().collectAsState().value.map { it.id.toString() }
     val isRefreshing by mainViewModel.isRefreshing.collectAsState()
 
-    /*
-     * this should me dynamic on future releases
-     */
     val homeScreenRequest = AggregationRequest(
         devicesIds = allDeviceIds,
         aggStrategy = AggStrategy.AVG,
@@ -114,119 +113,527 @@ fun HomeScreen(
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
-        onRefresh = {
-            mainViewModel.forceRefresh()
-        },
+        onRefresh = { mainViewModel.forceRefresh() },
         modifier = Modifier.fillMaxSize()
     ) {
-        CustomColumn(
+        Column(
             modifier = Modifier
+                .fillMaxSize()
                 .verticalScroll(scrollState)
-                .fillMaxSize(),
-            alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
-            layouts = listOf {
-                Container(layouts = listOf {
-                    MiscellaneousSection(aggregationState.value)
-                    SummarySection(aggregationState.value)
-                    ChartSection(aggregationState.value)
-                    AlarmSection(alarmInfo.value)
-                })
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // 1. Resumo Superior de Energia e Dispositivos
+            when (val agg = aggregationState.value) {
+                is ResultWrapper.Success -> {
+                    OverviewSection(
+                        aggData = agg.value,
+                        statusSummaries = agg.value.statusSummaries
+                    )
+                }
+                else -> {}
             }
-        )
+
+            when (val agg = aggregationState.value) {
+                is ResultWrapper.Success -> {
+                    ChartSection(agg)
+                }
+                else -> {}
+            }
+
+            if (alarmInfo.value.isNotEmpty()) {
+                AlarmSection(
+                    alarmsInfo = alarmInfo.value,
+                    onViewAllClick = { navController.navigate("alarms") }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 }
 
+// ---------------------------------------------------------------------------
+// Seção de Resumo Superior (Métricas Principais)
+// ---------------------------------------------------------------------------
+
 @Composable
-fun AlarmSection(alarmsInfo: List<AlarmInfo>) {
-    if (alarmsInfo.isNotEmpty()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+private fun OverviewSection(
+    aggData: AggDataWrapperResponse,
+    statusSummaries: List<DevicesStatusSummary>
+) {
+    val unit = aggData.chartDataWrapper.label.ifBlank { "kWh" }
+    val totalDevices = aggData.size
+    val activeCount = statusSummaries.firstOrNull { it.label.contains("ativo", ignoreCase = true) }?.occurrence
+        ?: totalDevices
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Card Principal: Consumo do Período
+        Card(
+            modifier = Modifier.weight(1.3f),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            SimpleColumn(
-                layouts = listOf {
-                    SectionInfo("Alarmes")
-                    GradientDivider()
-                    SubsectionTitle("Alarmes por Severidade")
-                    val alarmDashboardData = processAlarms(alarmsInfo)
-                    val severity = alarmDashboardData.bySeverity
-                    TagsRow(
-                        layouts = listOf {
-                            // SEVERITY
-                            if (severity.isNotEmpty()) {
-                                val severities = getExistingSeverities(alarmsInfo)
-                                severities.forEach { severity ->
-                                    ItemCard(
-                                        backGroudColor = AirPowerTheme.color.secondaryContainer,
-                                        layouts = listOf {
-                                            CustomText(
-                                                text = severity.toTitleCase(),
-                                                color = AirPowerTheme.color.onSecondaryContainer,
-                                                fontStyle = AirPowerTheme.typography.bodyLarge
-                                            )
-                                            Spacer(modifier = Modifier.padding(vertical = 5.dp))
-                                            CustomText(
-                                                text = alarmDashboardData.bySeverity[severity]?.size.toString(),
-                                                color = AirPowerTheme.color.onSecondaryContainer,
-                                                fontStyle = AirPowerTheme.typography.bodyLarge
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-                            SolidDivider()
-                            SubsectionTitle("Alarmes por Tipo")
-                            // TYPES
-                            val existingTypes = getExistingTypes(alarmsInfo)
-                            val groupedByType = alarmDashboardData.byType
-                            if (existingTypes.isNotEmpty()) {
-                                existingTypes.forEach { item ->
-                                    ItemCard(
-                                        backGroudColor = AirPowerTheme.color.secondaryContainer,
-                                        layouts = listOf {
-                                            val type = groupedByType[item]
-                                            CustomText(
-                                                text = item.toTitleCase(),
-                                                color = AirPowerTheme.color.onSecondaryContainer,
-                                                fontStyle = AirPowerTheme.typography.bodyLarge
-                                            )
-                                            Spacer(modifier = Modifier.padding(vertical = 5.dp))
-                                            CustomText(
-                                                text = type?.size.toString(),
-                                                color = AirPowerTheme.color.onSecondaryContainer,
-                                                fontStyle = AirPowerTheme.typography.bodyLarge
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-                        }
+            Column(
+                modifier = Modifier.padding(14.dp)
+            ) {
+                Text(
+                    text = "Consumo no Mês",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Text(
+                        text = aggData.aggregation.value.formatDecimalBr(),
+                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                    SmallVerticalPadding()
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = unit,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 3.dp)
+                    )
                 }
+            }
+        }
+
+        Card(
+            modifier = Modifier.weight(1f),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(14.dp)
+            ) {
+                Text(
+                    text = "Medidores",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "$totalDevices instalados",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .background(Color(0xFF2E7D32), CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "$activeCount online",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Seção do Gráfico com Régua Refinada de Min/Méd/Max
+// ---------------------------------------------------------------------------
+
+@Composable
+fun ChartSection(value: ResultWrapper.Success<AggDataWrapperResponse>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+        ),
+        shape = RoundedCornerShape(18.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Curva de Carga Agregada",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Watts (W)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // MainChart mantido inalterado
+            MainChart(
+                chartHeight = 220.dp,
+                aggregationState = value,
+                chartType = ChartType.LINE
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Régua de Estatísticas Refinada
+            RefinedStatisticsBar(
+                dataWrapper = value.value.chartDataWrapper,
+                telemetryKey = telemetryKey
             )
         }
     }
 }
 
 @Composable
-fun SubsectionTitle(text: String) {
-    Row(
+fun RefinedStatisticsBar(
+    dataWrapper: ChartDataWrapper,
+    telemetryKey: TelemetryKey
+) {
+    val stats = remember(dataWrapper) {
+        val values = dataWrapper.entries.map { it.value }
+        if (values.isEmpty()) return@remember null
+        val max = values.maxOrNull() ?: 0.0
+        val min = values.minOrNull() ?: 0.0
+        val avg = values.average()
+        Triple(min, avg, max)
+    } ?: return
+
+    val (min, avg, max) = stats
+    val unit = when (telemetryKey) {
+        TelemetryKey.POWER -> "W"
+        TelemetryKey.VOLTAGE -> "V"
+        TelemetryKey.CURRENT -> "A"
+    }
+
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Start
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp, horizontal = 6.dp)
+                .height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            StatMetricColumn(
+                label = "MÍNIMO",
+                value = min.toDouble().formatDecimalBr(),
+                unit = unit,
+                indicatorColor = Color(0xFF43A047) // Verde
+            )
+
+            VerticalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                thickness = 0.7.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+
+            StatMetricColumn(
+                label = "MÉDIA",
+                value = avg.formatDecimalBr(),
+                unit = unit,
+                indicatorColor = MaterialTheme.colorScheme.primary // Azul
+            )
+
+            VerticalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                thickness = 0.7.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+
+            StatMetricColumn(
+                label = "MÁXIMO",
+                value = max.toDouble().formatDecimalBr(),
+                unit = unit,
+                indicatorColor = Color(0xFFFB8C00) // Âmbar / Laranja
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatMetricColumn(
+    label: String,
+    value: String,
+    unit: String,
+    indicatorColor: Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .background(indicatorColor, CircleShape)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Text(
+                text = unit,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Seção de Alarmes Refatorada
+// ---------------------------------------------------------------------------
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun AlarmSection(
+    alarmsInfo: List<AlarmInfo>,
+    onViewAllClick: () -> Unit
+) {
+    val alarmDashboardData = remember(alarmsInfo) { processAlarms(alarmsInfo) }
+    val activeCount = remember(alarmsInfo) { alarmsInfo.count { !it.cleared } }
+    val criticalCount = remember(alarmsInfo) {
+        alarmsInfo.count { it.severity.equals("CRITICAL", ignoreCase = true) }
+    }
+    val recentAlarms = remember(alarmsInfo) {
+        alarmsInfo.sortedByDescending { it.createdTime }.take(2)
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .clickable { onViewAllClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+        ),
+        shape = RoundedCornerShape(18.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Ocorrências & Alarmes",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "$activeCount ocorrência(s) ativa(s)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (criticalCount > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Text(
+                    text = "Ver todos →",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { onViewAllClick() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val severities = getExistingSeverities(alarmsInfo)
+                severities.forEach { sev ->
+                    val count = alarmDashboardData.bySeverity[sev]?.size ?: 0
+                    SeverityChip(severity = sev, count = count)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Preview dos Alarmes Mais Recentes
+            Text(
+                text = "Últimos Eventos Registrados",
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            recentAlarms.forEach { alarm ->
+                AlarmMiniRow(alarm = alarm)
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlarmMiniRow(alarm: AlarmInfo) {
+    val isCleared = alarm.cleared
+    val deviceName = alarm.originatorName?.takeIf { it.isNotBlank() } ?: "Dispositivo"
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = alarm.type.toTitleCase(),
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "$deviceName • ${formatAlarmDate(alarm.createdTime)}",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(
+                        if (isCleared) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                    )
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = if (isCleared) "RESOLVIDO" else "ATIVO",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 9.sp
+                    ),
+                    color = if (isCleared) Color(0xFF2E7D32) else Color(0xFFC62828)
+                )
+            }
+        }
+    }
+}
+
+private fun formatAlarmDate(timestamp: Long): String {
+    val formatter = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
+    return formatter.format(Date(timestamp))
+}
+
+@Composable
+private fun SeverityChip(severity: String, count: Int) {
+    val (bgColor, textColor, borderColor) = when (severity.uppercase()) {
+        "CRITICAL" -> Triple(Color(0xFFFFEBEE), Color(0xFFC62828), Color(0xFFFFCDD2))
+        "MAJOR", "HIGH" -> Triple(Color(0xFFFFF3E0), Color(0xFFE65100), Color(0xFFFFE0B2))
+        "MINOR", "WARNING" -> Triple(Color(0xFFFFFDE7), Color(0xFFF57F17), Color(0xFFFFF9C4))
+        else -> Triple(
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            Color.Transparent
+        )
+    }
+
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(bgColor)
+            .border(0.6.dp, borderColor, RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = text,
-            style = AirPowerTheme.typography.bodySmall,
-            color = AirPowerTheme.color.onSecondaryContainer
+            text = severity.toTitleCase(),
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = textColor
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(textColor.copy(alpha = 0.15f))
+                .padding(horizontal = 5.dp, vertical = 1.dp)
+        ) {
+            Text(
+                text = count.toString(),
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 10.sp),
+                color = textColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun AlarmTypeTag(type: String, count: Int) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 7.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = type.toTitleCase(),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(modifier = Modifier.width(5.dp))
+        Text(
+            text = "($count)",
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
+// ---------------------------------------------------------------------------
+// Helpers e Funções de Tempo (Mantidos Originais)
+// ---------------------------------------------------------------------------
 
 fun String.toTitleCase(): String {
     if (this.isBlank()) return this
-
     return this.lowercase()
         .split(" ")
         .joinToString(" ") { word ->
@@ -251,24 +658,15 @@ fun Double.formatDecimalBr(): String {
 }
 
 private fun getExistingSeverities(alarms: List<AlarmInfo>): List<String> {
-    return alarms
-        .map { it.severity }
-        .distinct()
-        .sorted()
+    return alarms.map { it.severity }.distinct().sorted()
 }
 
 private fun getExistingTypes(alarms: List<AlarmInfo>): List<String> {
-    return alarms
-        .map { it.type }
-        .distinct()
-        .sorted()
+    return alarms.map { it.type }.distinct().sorted()
 }
 
 data class AlarmDashboardData(
-    // Mapa onde a Chave é a Severidade (ex: "CRITICAL") e o Valor é a lista de alarmes
     val bySeverity: Map<String, List<AlarmInfo>> = emptyMap(),
-
-    // Mapa onde a Chave é o Tipo (ex: "High Temperature") e o Valor é a lista de alarmes
     val byType: Map<String, List<AlarmInfo>> = emptyMap(),
 )
 
@@ -279,156 +677,26 @@ fun processAlarms(alarmsInfo: List<AlarmInfo>): AlarmDashboardData {
     )
 }
 
-@Composable
-private fun SectionInfo(text: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Start
-    ) {
-        Text(
-            text = text,
-            style = AirPowerTheme.typography.bodyLarge,
-            color = AirPowerTheme.color.onPrimaryContainer
-        )
+fun getTimeWrapper(
+    refEpochMillis: Long,
+    timeInterval: TimeInterval
+): TimeIntervalWrapper {
+    val rawStart = ZonedDateTime.ofInstant(
+        Instant.ofEpochMilli(refEpochMillis),
+        ZoneId.systemDefault()
+    ).withNano(0)
+
+    val startTs = when (timeInterval) {
+        TimeInterval.DAY -> rawStart.truncatedTo(ChronoUnit.DAYS).toInstant().toEpochMilli()
+        TimeInterval.WEEK -> rawStart.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+            .truncatedTo(ChronoUnit.DAYS).toInstant().toEpochMilli()
+        TimeInterval.MONTH -> rawStart.with(TemporalAdjusters.firstDayOfMonth())
+            .truncatedTo(ChronoUnit.DAYS).toInstant().toEpochMilli()
+        TimeInterval.YEAR -> rawStart.with(TemporalAdjusters.firstDayOfYear())
+            .truncatedTo(ChronoUnit.DAYS).toInstant().toEpochMilli()
     }
-}
 
-@Composable
-fun TagsRow(
-    layouts: List<@Composable () -> Unit>
-) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Start,
-        verticalArrangement = Arrangement.Center
-    ) {
-        layouts.forEach { item ->
-            item()
-        }
-    }
-}
-
-@Composable
-fun ChartSection(value: ResultWrapper<AggDataWrapperResponse>) {
-    when (value) {
-        is ResultWrapper.Success -> {
-            SectionInfo(value.value.label)
-            GradientDivider()
-            Spacer(modifier = Modifier.padding(top = AirPowerTheme.dimens.paddingSmall))
-            MainChart(
-                chartHeight = 250.dp,
-                aggregationState = value,
-                chartType = ChartType.LINE
-            )
-            SmallVerticalPadding()
-            StatisticsRow(
-                dataWrapper = value.value.chartDataWrapper,
-                telemetryKey = telemetryKey
-            )
-            SmallVerticalPadding()
-        }
-
-        else -> {}
-    }
-}
-
-@Composable
-fun SummarySection(
-    aggregationWrapper: ResultWrapper<AggDataWrapperResponse>
-) {
-    when (aggregationWrapper) {
-        is ResultWrapper.Success<AggDataWrapperResponse> -> {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                val aggDataWrapper = aggregationWrapper.value
-                val statusSummariesList = aggDataWrapper.statusSummaries
-                SimpleColumn(
-                    layouts = listOf {
-                        SectionInfo("Status dos dispositivos")
-                        GradientDivider()
-                        TagsRow(
-                            layouts = statusSummariesList.map { item ->
-                                {
-                                    ItemCard(
-                                        backGroudColor = AirPowerTheme.color.secondaryContainer,
-                                        layouts = listOf {
-                                            CustomText(
-                                                text = item.label,
-                                                color = AirPowerTheme.color.onSecondaryContainer,
-                                                fontStyle = AirPowerTheme.typography.bodyLarge
-                                            )
-                                            Spacer(modifier = Modifier.padding(vertical = 5.dp))
-                                            CustomText(
-                                                text = item.occurrence.toString(),
-                                                color = AirPowerTheme.color.onSecondaryContainer,
-                                                fontStyle = AirPowerTheme.typography.bodyLarge
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-                        )
-                        SmallVerticalPadding()
-                    }
-                )
-            }
-        }
-
-        else -> {}
-    }
-}
-
-@Composable
-fun Container(
-    layouts: List<@Composable () -> Unit>
-) {
-    val colorSchema = AirPowerTheme.color
-    val dimens = AirPowerTheme.dimens
-    CustomCard(
-        paddingStart = dimens.paddingSmall,
-        paddingEnd = dimens.paddingSmall,
-        paddingTop = dimens.paddingSmall,
-        paddingBottom = dimens.paddingMedium,
-        modifier = Modifier
-            .clip(RoundedCornerShape(dimens.cardCornerRadius))
-            .background(colorSchema.primaryContainer)
-            .fillMaxWidth(),
-        layouts = layouts
-    )
-}
-
-@Composable
-private fun ItemCard(
-    layouts: List<@Composable () -> Unit>,
-    backGroudColor: Color = Color.Transparent
-) {
-    val dimens = AirPowerTheme.dimens
-    CustomCard(
-        paddingStart = dimens.paddingSmall,
-        paddingEnd = dimens.paddingSmall,
-        paddingTop = dimens.paddingSmall,
-        paddingBottom = dimens.paddingSmall,
-        modifier = Modifier
-            .clip(RoundedCornerShape(dimens.cardCornerRadius))
-            .background(backGroudColor)
-            .wrapContentSize(),
-        layouts = layouts
-    )
-}
-
-@Composable
-private fun SimpleColumn(
-    layouts: List<@Composable () -> Unit>
-) {
-    CustomColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Transparent),
-        alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
-        layouts = layouts
-    )
+    return TimeIntervalWrapper(startTs, timeInterval)
 }
 
 @Composable
@@ -440,298 +708,24 @@ fun SimpleRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isCentered) Arrangement.Center else Arrangement.Start
     ) {
-        layouts.forEach { layout ->
-            layout()
-        }
+        layouts.forEach { it() }
     }
 }
 
 @Composable
-fun MiscellaneousSection(aggDataWrapper: ResultWrapper<AggDataWrapperResponse>) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        when (aggDataWrapper) {
-            is ResultWrapper.Success<AggDataWrapperResponse> -> {
-                val aggDataWrapper = aggDataWrapper.value
-                val deviceAmount = aggDataWrapper.size
-                val consumptionLabel = aggDataWrapper.label
-                val consumptionValue = aggDataWrapper.aggregation
-                val measureUnit = aggDataWrapper.chartDataWrapper.label
-                SectionInfo("Informações")
-                GradientDivider()
-                TagsRow(
-                    layouts = listOf {
-                        ItemCard(
-                            backGroudColor = AirPowerTheme.color.secondaryContainer,
-                            layouts = listOf {
-                                CustomText(
-                                    text = "Seus Dispositivos".toTitleCase(),
-                                    fontStyle = AirPowerTheme.typography.bodyLarge,
-                                    color = AirPowerTheme.color.onSecondaryContainer
-                                )
-                                Spacer(modifier = Modifier.padding(vertical = 5.dp))
-                                CustomText(
-                                    text = "$deviceAmount",
-                                    fontStyle = AirPowerTheme.typography.bodyLarge,
-                                    color = AirPowerTheme.color.onSecondaryContainer
-                                )
-                            }
-                        )
-                        Spacer(modifier = Modifier.padding(vertical = 5.dp))
-                        ItemCard(
-                            backGroudColor = AirPowerTheme.color.secondaryContainer,
-                            layouts = listOf {
-
-                                CustomText(
-                                    text = consumptionLabel.toTitleCase(),
-                                    fontStyle = AirPowerTheme.typography.bodyLarge,
-                                    color = AirPowerTheme.color.onSecondaryContainer
-                                )
-                                Spacer(modifier = Modifier.padding(vertical = 5.dp))
-                                CustomText(
-                                    text = consumptionValue.value.formatDecimalBr()+ " $measureUnit".toTitleCase(),
-                                    fontStyle = AirPowerTheme.typography.bodyLarge,
-                                    color = AirPowerTheme.color.onSecondaryContainer
-                                )
-                            }
-                        )
-                    }
-                )
-                SmallVerticalPadding()
-            }
-
-            else -> {}
-        }
-    }
-}
-
-@Composable
-private fun SmallVerticalPadding() {
-    Spacer(modifier = Modifier.padding(bottom = AirPowerTheme.dimens.paddingSmall))
-}
-
-@Composable
-private fun BigVerticalPadding() {
-    Spacer(modifier = Modifier.padding(bottom = AirPowerTheme.dimens.paddingLarge))
-}
-
-@Composable
-fun StatisticsRow(
-    dataWrapper: ChartDataWrapper,
-    telemetryKey: TelemetryKey
+fun Container(
+    layouts: List<@Composable () -> Unit>
 ) {
-    val stats = remember(dataWrapper) {
-        val values = dataWrapper.entries.map { it.value }
-        if (values.isEmpty()) return@remember null
-        val max = values.maxOrNull() ?: 0.0
-        val min = values.minOrNull() ?: 0.0
-        val avg = values.average()
-        Triple(max, min, avg)
-    }
-
-    if (stats == null) return
-    val (max, min, avg) = stats
-    val unit = when (telemetryKey) {
-        TelemetryKey.POWER -> "W"
-        TelemetryKey.VOLTAGE -> "V"
-        TelemetryKey.CURRENT -> "A"
-    }
-
-    ItemCard(
-        backGroudColor = AirPowerTheme.color.secondaryContainer,
-        layouts = listOf {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                StatItem(
-                    label = "Mínimo",
-                    value = min.toDouble(),
-                    unit = unit,
-                    color = AirPowerTheme.color.onSecondaryContainer
-                )
-                StatItem(
-                    label = "Média",
-                    value = avg,
-                    unit = unit,
-                    color = AirPowerTheme.color.onSecondaryContainer
-                )
-                StatItem(
-                    label = "Máximo",
-                    value = max.toDouble(),
-                    unit = unit,
-                    color = AirPowerTheme.color.onSecondaryContainer
-                )
-            }
-        }
-    )
-}
-
-@Composable
-private fun HomeScreenAlarmGrid(
-    alarmInfoSet: List<AlarmInfo>,
-    onClick: (String) -> Unit
-) {
-    val severityAggregationMap: MutableMap<String, Int> = mutableMapOf()
-    alarmInfoSet.forEach { item ->
-        val severity = item.severity
-        val occurrence = severityAggregationMap[severity] ?: 0
-        severityAggregationMap[severity] = occurrence + 1
-    }
-
-    val cards: List<HomeScreenAlarmSummaryCard> =
-        severityAggregationMap.map { (severity, count) ->
-            HomeScreenAlarmSummaryCard(severity, count)
-        }
-
-    val gridCount = if (cards.size > 3) 2 else 3
-    var cardHeight = if (gridCount == 2) 160.dp else 140.dp
-    if (cards.size > 6) {
-        cardHeight = 260.dp
-    }
-
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(gridCount),
+    val dimens = AirPowerTheme.dimens
+    CustomCard(
+        paddingStart = dimens.paddingSmall,
+        paddingEnd = dimens.paddingSmall,
+        paddingTop = dimens.paddingSmall,
+        paddingBottom = dimens.paddingMedium,
         modifier = Modifier
-            .height(cardHeight)
+            .clip(RoundedCornerShape(dimens.cardCornerRadius))
+            .background(AirPowerTheme.color.primaryContainer)
             .fillMaxWidth(),
-        contentPadding = PaddingValues(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        items(cards, key = { it.severity }) { deviceItem ->
-            AlarmCardInfo(
-                alarmCardInfo = deviceItem,
-                onClick = onClick,
-                backgroundColor = AirPowerTheme.color.primaryContainer
-            )
-        }
-    }
-}
-
-@Composable
-private fun DevicesStatusGrid(
-    statusSummaries: List<DevicesStatusSummary>,
-    onClick: () -> Unit
-) {
-    val context = LocalContext.current
-    if (statusSummaries != null && statusSummaries.isNotEmpty()) {
-        val gridCount = if (statusSummaries.size > 3) 2 else 3
-        var cardHeight = if (gridCount == 2) 160.dp else 140.dp
-        if (statusSummaries.size > 6) {
-            cardHeight = 260.dp
-        }
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(gridCount),
-            modifier = Modifier
-                .height(cardHeight)
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            items(statusSummaries) { deviceItem ->
-                CardInfo(
-                    label = deviceItem.label,
-                    value = deviceItem.occurrence.toString(),
-                    onClick = onClick,
-                    backgroundColor = AirPowerTheme.color.primaryContainer
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.padding(vertical = 4.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            CustomText(
-                modifier = Modifier.clickable {
-                    Toast.makeText(
-                        context,
-                        "Essa funcionalidade está em desenvolvimento",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
-                color = AirPowerTheme.color.onPrimaryContainer,
-                fontStyle = AirPowerTheme.typography.bodyLarge,
-                text = "Detalhes",
-            )
-        }
-    } else {
-        EmptyStateCard()
-    }
-}
-
-/**
- * Calcula a data de início de um intervalo de tempo com base em um timestamp de referência,
- * retornando um [TimeIntervalWrapper] que representa o início do período e o tipo de agregação desejado.
- *
- * Essa função é utilizada para padronizar o alinhamento temporal dos dados de telemetria
- * agregados que serão consultados via API do ThingsBoard, como médias por hora, por dia etc.
- *
- * Exemplo de uso: ao selecionar o intervalo "WEEK", o timestamp de início será ajustado
- * para a segunda-feira mais próxima (ou o próprio dia, se já for segunda).
- *
- * @param refEpochMillis O timestamp de referência em milissegundos (Epoch).
- * Normalmente, representa o instante atual no cliente (ex: `System.currentTimeMillis()`).
- *
- * @param timeInterval Enum que define o intervalo desejado: [TimeInterval.DAY],
- * [TimeInterval.WEEK], [TimeInterval.MONTH] ou [TimeInterval.YEAR].
- *
- * @return [TimeIntervalWrapper] contendo o timestamp de início ajustado (`startTs`)
- * e o tipo de intervalo (`timeInterval`). Esse wrapper é usado para construir as consultas
- * com agregações temporais à API do ThingsBoard.
- *
- * Exemplo de retorno para `refEpochMillis` em 13/07/2025 às 10h30:
- * - DAY  → startTs = 13/07/2025 00:00
- * - WEEK → startTs = 07/07/2025 00:00 (segunda-feira da semana)
- * - MONTH → startTs = 01/07/2025 00:00
- * - YEAR → startTs = 01/01/2025 00:00
- */
-fun getTimeWrapper(
-    refEpochMillis: Long,
-    timeInterval: TimeInterval
-): TimeIntervalWrapper {
-
-    val rawStart = ZonedDateTime.ofInstant(
-        Instant.ofEpochMilli(refEpochMillis),
-        ZoneId.systemDefault()
-    ).withNano(0)
-
-    val startTs = when (timeInterval) {
-        TimeInterval.DAY -> {
-            val start = rawStart.truncatedTo(ChronoUnit.DAYS)
-            start.toInstant().toEpochMilli()
-
-        }
-
-        TimeInterval.WEEK -> {
-            val start =
-                rawStart.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-                    .truncatedTo(ChronoUnit.DAYS)
-            start.toInstant().toEpochMilli()
-        }
-
-        TimeInterval.MONTH -> {
-            val start = rawStart.with(TemporalAdjusters.firstDayOfMonth())
-                .truncatedTo(ChronoUnit.DAYS)
-            start.toInstant().toEpochMilli()
-        }
-
-        TimeInterval.YEAR -> {
-            val start = rawStart.with(TemporalAdjusters.firstDayOfYear())
-                .truncatedTo(ChronoUnit.DAYS)
-            start.toInstant().toEpochMilli()
-        }
-    }
-
-    return TimeIntervalWrapper(
-        startTs,
-        timeInterval
+        layouts = layouts
     )
 }

@@ -179,7 +179,7 @@ class AirPowerViewModel(
      * @param request A requisição de agregação a ser executada.
      */
     fun fetchAggregatedData(request: AggregationRequest) {
-        AirPowerLog.e("TAG", "fetchAggregatedData: request: $request")
+        AirPowerLog.d(TAG, "fetchAggregatedData: request: $request")
         val flow = getAggregatedDataState(request) as MutableStateFlow
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()

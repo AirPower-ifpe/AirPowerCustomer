@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -32,6 +34,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.ifpe.edu.br.common.CommonConstants
@@ -118,7 +121,8 @@ fun CustomNavigationBar(
     contentColor: Color = Color.Black,
     navController: NavHostController,
     showLabel: Boolean = true,
-    items: List<BottomNavItem>
+    items: List<BottomNavItem>,
+    badges: Map<String, Int> = emptyMap() // Rota -> Quantidade de alertas
 ) {
     NavigationBar(
         containerColor = backgroundColor,
@@ -128,6 +132,8 @@ fun CustomNavigationBar(
         val currentRoute = navBackStackEntry?.destination?.route
 
         items.forEach { item ->
+            val count = badges[item.route] ?: 0
+
             NavigationBarItem(
                 selected = currentRoute == item.route,
                 onClick = {
@@ -141,7 +147,25 @@ fun CustomNavigationBar(
                         }
                     }
                 },
-                icon = item.icon,
+                icon = {
+                    BadgedBox(
+                        badge = {
+                            if (count > 0) {
+                                Badge(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                ) {
+                                    Text(
+                                        text = if (count > 99) "99+" else count.toString(),
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        item.icon()
+                    }
+                },
                 label = {
                     CustomText(
                         text = item.label,

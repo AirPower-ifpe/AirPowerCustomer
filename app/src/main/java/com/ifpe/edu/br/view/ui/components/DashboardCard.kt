@@ -58,7 +58,6 @@ import com.ifpe.edu.br.model.repository.remote.dto.agg.TelemetryKey
 import com.ifpe.edu.br.model.repository.remote.dto.agg.TimeInterval
 import com.ifpe.edu.br.model.util.ResultWrapper
 import com.ifpe.edu.br.view.ui.screens.SimpleRow
-import com.ifpe.edu.br.view.ui.screens.StatisticsRow
 import com.ifpe.edu.br.view.ui.screens.formatDecimalBr
 import com.ifpe.edu.br.view.ui.screens.getTimeWrapper
 import com.ifpe.edu.br.view.ui.screens.toTitleCase
@@ -413,6 +412,58 @@ fun StatItem(
             text = value.toString().formatDecimalBr() + unit,
             color = color,
             fontStyle = AirPowerTheme.typography.bodySmall
+        )
+    }
+}
+
+@Composable
+fun StatisticsRow(
+    dataWrapper: ChartDataWrapper,
+    telemetryKey: TelemetryKey
+) {
+    val stats = remember(dataWrapper) {
+        // Converte cada valor Long para Double diretamente via .toDouble()
+        val values = dataWrapper.entries.map { it.value.toDouble() }
+        if (values.isEmpty()) return@remember null
+        val max = values.maxOrNull() ?: 0.0
+        val min = values.minOrNull() ?: 0.0
+        val avg = values.average()
+        Triple(min, avg, max)
+    } ?: return
+
+    val (min, avg, max) = stats
+    val unit = when (telemetryKey) {
+        TelemetryKey.POWER -> " W"
+        TelemetryKey.VOLTAGE -> " V"
+        TelemetryKey.CURRENT -> " A"
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(AirPowerTheme.dimens.cardCornerRadius))
+            .background(AirPowerTheme.color.secondaryContainer)
+            .padding(vertical = 8.dp, horizontal = 12.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        StatItem(
+            label = "Mínimo",
+            value = min,
+            unit = unit,
+            color = AirPowerTheme.color.onSecondaryContainer
+        )
+        StatItem(
+            label = "Média",
+            value = avg,
+            unit = unit,
+            color = AirPowerTheme.color.onSecondaryContainer
+        )
+        StatItem(
+            label = "Máximo",
+            value = max,
+            unit = unit,
+            color = AirPowerTheme.color.onSecondaryContainer
         )
     }
 }
