@@ -71,6 +71,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.agg.ChartDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.agg.TelemetryKey
 import com.ifpe.edu.br.model.repository.remote.dto.agg.TimeInterval
 import com.ifpe.edu.br.model.util.ResultWrapper
+import com.ifpe.edu.br.view.ui.screens.RefinedStatisticsBar
 import com.ifpe.edu.br.view.ui.screens.formatDecimalBr
 import com.ifpe.edu.br.view.ui.screens.getTimeWrapper
 import com.ifpe.edu.br.view.ui.screens.toTitleCase
@@ -129,7 +130,7 @@ fun DashboardCard(
                     if (aggregatedDataState is ResultWrapper.Success) {
                         val wrapper =
                             (aggregatedDataState as ResultWrapper.Success).value.chartDataWrapper
-                        StatisticsRow(
+                        RefinedStatisticsBar(
                             dataWrapper = ChartDataWrapper(wrapper.label, wrapper.entries),
                             telemetryKey = activeFilters.telemetryKey
                         )

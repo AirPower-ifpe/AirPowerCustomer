@@ -300,7 +300,7 @@ private fun DeviceTelemetryCard(
 
             if (aggregatedDataState is ResultWrapper.Success) {
                 val wrapper = (aggregatedDataState as ResultWrapper.Success<AggDataWrapperResponse>).value.chartDataWrapper
-                StatisticsRow(
+                RefinedStatisticsBar(
                     dataWrapper = ChartDataWrapper(wrapper.label, wrapper.entries),
                     telemetryKey = activeFilters.telemetryKey
                 )
