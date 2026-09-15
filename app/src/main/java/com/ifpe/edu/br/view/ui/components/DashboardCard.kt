@@ -5,23 +5,30 @@
 // Copyright (c) 2025 IFPE. All rights reserved.
 package com.ifpe.edu.br.view.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -144,7 +152,7 @@ val telemetryDisplayNames = mapOf(
     TelemetryKey.CURRENT to "Corrente",
     TelemetryKey.VOLTAGE to "Tensão",
 )
- val intervalLabels = mapOf(
+val intervalLabels = mapOf(
     TimeInterval.DAY to "Hoje",
     TimeInterval.WEEK to "Esta Semana",
     TimeInterval.MONTH to "Este Mês",
@@ -155,47 +163,86 @@ val chartTypesLabels = mapOf(
     ChartType.LINE to "Gráfico de linha"
 )
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ChartQueryDetails(filters: DashboardFilters) {
+fun ChartQueryDetails(
+    filters: DashboardFilters,
+    modifier: Modifier = Modifier
+) {
+    val intervalText = intervalLabels[filters.interval] ?: filters.interval.name
+    val metricText = telemetryDisplayNames[filters.telemetryKey] ?: filters.telemetryKey.name
+    val chartTypeText = when (filters.chartType) {
+        ChartType.BAR -> "Colunas"
+        ChartType.LINE -> "Linhas"
+    }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically
+    FlowRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Column() {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CustomText(
-                    color = AirPowerTheme.color.onPrimaryContainer,
-                    text = "Intervalo:",
-                    fontStyle = AirPowerTheme.typography.bodyLarge
-                )
-                CustomText(
-                    color = AirPowerTheme.color.onPrimaryContainer,
-                    text = "${intervalLabels[filters.interval]}",
-                    fontStyle = AirPowerTheme.typography.bodySmall
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CustomText(
-                    color = AirPowerTheme.color.onPrimaryContainer,
-                    text = "Dado:",
-                    fontStyle = AirPowerTheme.typography.bodyLarge
-                )
-                CustomText(
-                    color = AirPowerTheme.color.onPrimaryContainer,
-                    text = "${telemetryDisplayNames[filters.telemetryKey]}",
-                    fontStyle = AirPowerTheme.typography.bodySmall
-                )
-            }
+        FilterQueryBadge(
+            label = "Período",
+            value = intervalText,
+            indicatorColor = MaterialTheme.colorScheme.primary
+        )
+
+        FilterQueryBadge(
+            label = "Dado",
+            value = metricText,
+            indicatorColor = Color(0xFFFB8C00) // Laranja / Âmbar
+        )
+
+        FilterQueryBadge(
+            label = "Estilo",
+            value = chartTypeText,
+            indicatorColor = MaterialTheme.colorScheme.tertiary
+        )
+    }
+}
+
+@Composable
+private fun FilterQueryBadge(
+    label: String,
+    value: String,
+    indicatorColor: Color
+) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+        border = BorderStroke(0.6.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .background(indicatorColor, CircleShape)
+            )
+
+            Spacer(modifier = Modifier.width(5.dp))
+
+            Text(
+                text = "$label: ",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+            )
+
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
