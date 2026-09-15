@@ -1,7 +1,12 @@
 package com.ifpe.edu.br.view.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -18,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -55,8 +62,8 @@ fun MainScreen(
 ) {
     val TAG = "MainScreen"
 
-    val notification = mainViewModel.getNotifications().collectAsState()
 
+    val notification = mainViewModel.getNotifications().collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -68,6 +75,30 @@ fun MainScreen(
 
     val context = LocalContext.current
     val shouldShowBottomBar = currentRoute in screensWithBottomBar
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (!isGranted) {
+            Toast.makeText(
+                context,
+                "Alertas desativados. Ative as notificações nas configurações para receber avisos de alarmes.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasPermission) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 
     CustomColumn(
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
@@ -80,6 +111,7 @@ fun MainScreen(
                         Screen.Dashboards.route -> "Dashboards"
                         Screen.DeviceDetail.route -> "Detalhes"
                         Screen.NotificationCenter.route -> "Notificações"
+                        "alarms" -> "Central de Alarmes"
                         else -> ""
                     }
 
@@ -228,6 +260,14 @@ fun NavHostContainer(
                 mainViewModel = mainViewModel
             )
         }
+
+        composable("alarms") {
+            AlarmCenterScreen(
+                navController = navController,
+                mainViewModel = mainViewModel
+            )
+        }
+
     }
 }
 
