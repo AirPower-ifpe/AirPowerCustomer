@@ -18,10 +18,10 @@ android {
 
     defaultConfig {
         applicationId = "com.ifpe.edu.br"
-        minSdk = 33
+        minSdk = 30
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0.0-alpha"
+        versionName = "2.0.0-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
