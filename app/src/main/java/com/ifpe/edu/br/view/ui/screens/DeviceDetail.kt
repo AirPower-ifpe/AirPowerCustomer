@@ -281,6 +281,7 @@ private fun DeviceTelemetryCard(
         ) {
             HeaderWithSettings(
                 title = "Consumo & Telemetria",
+                deviceCount = 1,
                 onSettingsClick = { showSheet = true }
             )
 

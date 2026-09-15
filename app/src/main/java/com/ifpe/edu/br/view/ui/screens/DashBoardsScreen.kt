@@ -6,34 +6,41 @@ package com.ifpe.edu.br.view.ui.screens
 * Project: AirPower Costumer
 */
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.ifpe.edu.br.common.CommonConstants
-import com.ifpe.edu.br.common.components.CustomColumn
-import com.ifpe.edu.br.common.components.RectButton
-import com.ifpe.edu.br.common.ui.theme.White
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.AuthActivity
+import com.ifpe.edu.br.view.ui.components.DashboardCard
 import com.ifpe.edu.br.view.ui.components.EmptyStateCard
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
-import com.ifpe.edu.br.view.ui.components.DashboardCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,82 +48,115 @@ fun DashBoardsScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
-    val scrollState = rememberScrollState()
     val context = LocalContext.current
-    val userDashboards by
-    mainViewModel.getDashboardsForCurrentUser().collectAsState(initial = emptyList())
-    val allAlarms = mainViewModel.getAlarmInfoSet().collectAsState()
+    val userDashboards by mainViewModel.getDashboardsForCurrentUser().collectAsState(initial = emptyList())
+    val allAlarms by mainViewModel.getAlarmInfoSet().collectAsState()
     val isRefreshing by mainViewModel.isRefreshing.collectAsState()
+
+    val totalMonitoredDevices = remember(userDashboards) {
+        userDashboards.flatMap { it.devicesIds }.distinct().size
+    }
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
-        onRefresh = {
-            mainViewModel.forceRefresh()
-        },
+        onRefresh = { mainViewModel.forceRefresh() },
         modifier = Modifier.fillMaxSize()
     ) {
-        CustomColumn(
-            modifier = Modifier
-                .verticalScroll(scrollState)
-                .fillMaxSize()
-                .padding(horizontal = 10.dp),
-            alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
-            layouts = listOf {
-                if (userDashboards.isEmpty()) {
-                    EmptyStateCard()
-                } else {
-                    userDashboards.forEach { dashboard ->
-                        DashboardCard(
-                            dashboard = dashboard,
-                            mainViewModel = mainViewModel,
-                            allAlarms = allAlarms.value
-                        )
-                        Spacer(modifier = Modifier.padding(vertical = 8.dp))
-                    }
-                }
-                Spacer(modifier = Modifier.padding(vertical = 6.dp))
-                RectButton(
-                    text = "Logout",
-                    onClick = {
-                        mainViewModel.logout()
-                        AirPowerUtil.launchActivity(
-                            navController.context,
-                            AuthActivity::class.java,
-                        )
-                        navController.popBackStack()
-                        (context as? ComponentActivity)?.finish()
-                    },
-                    fontSize = 20.sp,
-                    colors = ButtonDefaults.buttonColors(
-                        contentColor = White,
-                        containerColor = MaterialTheme.colorScheme.secondary,
-                        disabledContentColor = Color.Gray,
-                        disabledContainerColor = Color.Gray
-                    )
-                )
-                Spacer(modifier = Modifier.padding(vertical = 6.dp))
+        if (userDashboards.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                EmptyStateCard()
             }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Cabeçalho com visão consolidada
+                item {
+                    DashboardsHeader(
+                        totalDashboards = userDashboards.size,
+                        totalDevices = totalMonitoredDevices
+                    )
+                }
+
+                // Lista de Dashboards
+                items(userDashboards, key = { it.id.id }) { dashboard ->
+                    DashboardCard(
+                        dashboard = dashboard,
+                        mainViewModel = mainViewModel,
+                        allAlarms = allAlarms
+                    )
+                }
+
+                // Botão de Logout padronizado
+                item {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedButton(
+                        onClick = {
+                            mainViewModel.logout()
+                            AirPowerUtil.launchActivity(
+                                navController.context,
+                                AuthActivity::class.java,
+                            )
+                            navController.popBackStack()
+                            (context as? ComponentActivity)?.finish()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(
+                                MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                            )
+                        )
+                    ) {
+                        Text(
+                            text = "Encerrar Sessão",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardsHeader(totalDashboards: Int, totalDevices: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 2.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Painéis de Monitoramento",
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Text(
+            text = "$totalDashboards visões • $totalDevices medidores",
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }
 
-
-/**
- * Filtra uma lista de objetos [AlarmInfo] para retornar apenas aqueles associados a um conjunto específico de IDs de dispositivos.
- *
- * Este método é "null-safe" e ignora com segurança quaisquer alarmes na lista de entrada
- * que tenham um `originator` ou `originator.id` nulos, prevenindo `NullPointerException`.
- * Ele utiliza um `Set` para os IDs de dispositivos fornecidos para garantir uma verificação de contenção eficiente (complexidade O(1) em média).
- *
- * @param alarms A lista completa de [AlarmInfo] a ser filtrada. Pode conter alarmes com dados nulos.
- * @param deviceIds Uma lista de [String] contendo os IDs dos dispositivos a serem usados como critério de filtro.
- * @return Uma nova [List] de [AlarmInfo] contendo apenas os alarmes cujo ID do originador
- *         corresponde a um dos IDs na lista `deviceIds`. Retorna uma lista vazia se não houver correspondências.
- */
 fun filterAlarmsByDeviceIds(alarms: List<AlarmInfo>, deviceIds: List<String>): List<AlarmInfo> {
     val deviceIdsSet = deviceIds.toSet()
     return alarms.filter { alarm ->
-        alarm.originator?.id?.toString()?.let { deviceId ->
+        alarm.originator.id?.toString()?.let { deviceId ->
             deviceIdsSet.contains(deviceId)
         } ?: false
     }
