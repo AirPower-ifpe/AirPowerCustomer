@@ -1,9 +1,7 @@
 package com.ifpe.edu.br.common.contracts
 
 import androidx.compose.ui.graphics.Brush
-import com.ifpe.edu.br.common.ui.theme.cardBackgroundGradientDark
 import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientDark
-import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
 import ir.ehsannarmani.compose_charts.models.Bars
 
 

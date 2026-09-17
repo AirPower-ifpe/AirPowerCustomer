@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -32,9 +34,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.ifpe.edu.br.common.CommonConstants
+import com.ifpe.edu.br.common.ui.theme.AirPowerCostumerTheme
+import com.ifpe.edu.br.common.ui.theme.AirPowerTheme
 import com.ifpe.edu.br.common.ui.theme.cardBackgroundGradientDark
 import com.ifpe.edu.br.common.ui.theme.cardBackgroundGradientLight
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
@@ -69,21 +74,21 @@ fun CustomColumn(
 
 @Composable
 fun CustomCard(
-    layouts: List<@Composable () -> Unit>,
-    paddingStart: Dp = 0.dp,
-    paddingEnd: Dp = 0.dp,
-    paddingTop: Dp = 0.dp,
-    paddingBottom: Dp = 0.dp,
     modifier: Modifier = Modifier
         .clip(RoundedCornerShape(cardCornerRadius))
         .fillMaxWidth()
         .background(
             brush = Brush.linearGradient(
-                colors = if (isSystemInDarkTheme()) cardBackgroundGradientDark else cardBackgroundGradientLight,
+                colors = listOf(Color.Transparent, Color.Transparent),
                 start = Offset(0f, 0f),
                 end = Offset(1000f, 1000f)
             )
-        )
+        ),
+    layouts: List<@Composable () -> Unit>,
+    paddingStart: Dp = 0.dp,
+    paddingEnd: Dp = 0.dp,
+    paddingTop: Dp = 0.dp,
+    paddingBottom: Dp = 0.dp,
 ) {
     Surface(
         modifier = Modifier.padding(
@@ -116,7 +121,8 @@ fun CustomNavigationBar(
     contentColor: Color = Color.Black,
     navController: NavHostController,
     showLabel: Boolean = true,
-    items: List<BottomNavItem>
+    items: List<BottomNavItem>,
+    badges: Map<String, Int> = emptyMap() // Rota -> Quantidade de alertas
 ) {
     NavigationBar(
         containerColor = backgroundColor,
@@ -126,6 +132,8 @@ fun CustomNavigationBar(
         val currentRoute = navBackStackEntry?.destination?.route
 
         items.forEach { item ->
+            val count = badges[item.route] ?: 0
+
             NavigationBarItem(
                 selected = currentRoute == item.route,
                 onClick = {
@@ -139,8 +147,32 @@ fun CustomNavigationBar(
                         }
                     }
                 },
-                icon = item.icon,
-                label = { Text(item.label) },
+                icon = {
+                    BadgedBox(
+                        badge = {
+                            if (count > 0) {
+                                Badge(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                ) {
+                                    Text(
+                                        text = if (count > 99) "99+" else count.toString(),
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        item.icon()
+                    }
+                },
+                label = {
+                    CustomText(
+                        text = item.label,
+                        fontStyle = MaterialTheme.typography.labelSmall,
+                        color = AirPowerTheme.color.onSecondaryContainer
+                    )
+                },
                 alwaysShowLabel = showLabel
             )
         }
@@ -151,8 +183,8 @@ fun CustomNavigationBar(
 @Composable
 fun CustomTopBar(
     modifier: Modifier = Modifier,
-    backgroundColor: Color = MaterialTheme.colorScheme.primary,
-    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
+    backgroundColor: Color = AirPowerTheme.color.primaryContainer,
+    contentColor: Color = AirPowerTheme.color.onPrimaryContainer,
     leftContent: @Composable (() -> Unit)? = null,
     centerContent: @Composable () -> Unit,
     rightContent: @Composable (() -> Unit)? = null

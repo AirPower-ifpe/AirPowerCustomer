@@ -8,12 +8,12 @@ package com.ifpe.edu.br.view.ui.screens
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,16 +31,13 @@ import com.ifpe.edu.br.R
 import com.ifpe.edu.br.common.CommonConstants
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.FailureDialog
-import com.ifpe.edu.br.common.components.GradientBackground
 import com.ifpe.edu.br.common.components.RoundedImageIcon
 import com.ifpe.edu.br.common.contracts.UIState
-import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientDark
-import com.ifpe.edu.br.common.ui.theme.defaultBackgroundGradientLight
+import com.ifpe.edu.br.common.ui.theme.AirPowerTheme
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.MainActivity
-import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
-import com.ifpe.edu.br.view.ui.theme.tb_primary_light
+import com.ifpe.edu.br.view.ui.components.CustomFullScreenGradientBackground
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 import kotlinx.coroutines.delay
 
@@ -50,17 +47,13 @@ fun SplashScreen(
     viewModel: AirPowerViewModel,
     componentActivity: ComponentActivity
 ) {
-    val sessionStateKey = Constants.UIStateKey.SESSION
-    val sessionState = viewModel.uiStateManager.observeUIState(sessionStateKey)
-        .collectAsState(initial = UIState(Constants.UIState.EMPTY_STATE))
-
     val updateSessionStateKey = Constants.UIStateKey.REFRESH_TOKEN_KEY
     val updateSessionUIState = viewModel.uiStateManager.observeUIState(updateSessionStateKey)
         .collectAsState(initial = UIState(Constants.UIState.EMPTY_STATE))
 
-    GradientBackground(
-        if (isSystemInDarkTheme()) defaultBackgroundGradientDark
-        else defaultBackgroundGradientLight
+    val theme = MaterialTheme.colorScheme
+    CustomFullScreenGradientBackground(
+        listColor = listOf(theme.background, theme.background.copy(alpha = 0.6f))
     )
 
     CustomColumn(
@@ -71,8 +64,8 @@ fun SplashScreen(
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
             RoundedImageIcon(
                 description = "custom icon",
-                iconResId = R.drawable.app_icon,
-                modifier = Modifier.size(250.dp)
+                iconResId = R.drawable.app_logo,
+                modifier = Modifier.wrapContentSize()
             )
             Spacer(modifier = Modifier.padding(vertical = 100.dp))
             AuthScreenPostDelayed(
@@ -116,12 +109,18 @@ fun ExpiredSessionWarningScreen(
             drawableResId = R.drawable.auth_issue,
             iconSize = 150.dp,
             text = "A sessão expirou, faça login novamente",
-            textColor = tb_primary_light,
+            textColor = AirPowerTheme.color.onBackground,
             retryCallback = {
                 viewModel.resetUIState(sessionStateKey)
                 navigateAuthScreen(navController)
             }
-        ) { DefaultTransparentGradient() }
+        ) {
+            val theme = MaterialTheme.colorScheme
+            CustomFullScreenGradientBackground(
+                modifier = it,
+                listColor = listOf(theme.background, theme.background.copy(alpha = 0.6f))
+            )
+        }
     }
 }
 

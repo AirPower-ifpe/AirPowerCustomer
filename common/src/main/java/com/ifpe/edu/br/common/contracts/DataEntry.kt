@@ -1,5 +1,7 @@
 package com.ifpe.edu.br.common.contracts
 
+import androidx.compose.ui.graphics.Brush
+
 
 // Trabalho de conclusão de curso - IFPE 2025
 // Author: Willian Santos

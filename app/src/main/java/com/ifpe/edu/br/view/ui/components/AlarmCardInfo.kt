@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,11 +25,9 @@ import androidx.compose.ui.unit.sp
 import com.ifpe.edu.br.common.components.CustomCard
 import com.ifpe.edu.br.common.components.CustomColumn
 import com.ifpe.edu.br.common.components.CustomText
+import com.ifpe.edu.br.common.ui.theme.AirPowerTheme
 import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
 import com.ifpe.edu.br.model.repository.model.HomeScreenAlarmSummaryCard
-import com.ifpe.edu.br.view.ui.theme.tb_primary_light
-import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
-import java.util.UUID
 
 
 // Trabalho de conclusão de curso - IFPE 2025
@@ -64,9 +63,8 @@ fun AlarmCardInfo(
                             CustomText(
                                 text = alarmCardInfo.severity,
                                 alignment = TextAlign.Center,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                color = tb_primary_light,
+                                fontStyle = AirPowerTheme.typography.bodyLarge,
+                                color = AirPowerTheme.color.onPrimaryContainer,
                                 modifier = Modifier.wrapContentWidth()
                             )
                         }
@@ -86,7 +84,7 @@ fun AlarmCardInfo(
                                 alignment = TextAlign.Center,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp,
-                                color = tb_secondary_light,
+                                color = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.wrapContentWidth()
                             )
                         }
@@ -128,9 +126,8 @@ fun CardInfo(
                             CustomText(
                                 text = label,
                                 alignment = TextAlign.Center,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                color = tb_primary_light,
+                                fontStyle = AirPowerTheme.typography.bodyLarge,
+                                color = AirPowerTheme.color.onPrimaryContainer,
                                 modifier = Modifier.wrapContentWidth()
                             )
                         }
@@ -150,7 +147,7 @@ fun CardInfo(
                                 alignment = TextAlign.Center,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp,
-                                color = tb_secondary_light,
+                                color = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.wrapContentWidth()
                             )
                         }

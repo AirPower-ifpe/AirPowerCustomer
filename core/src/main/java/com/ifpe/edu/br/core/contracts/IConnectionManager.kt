@@ -12,6 +12,7 @@ import javax.net.ssl.X509TrustManager
 
 interface IConnectionManager {
     fun getJwtInterceptor(): Interceptor
+    fun getDynamicHostInterceptor(): Interceptor
     fun getSSLSocketFactory(): SSLSocketFactory
     fun getX509TrustManager(): X509TrustManager
     fun getLoggerClient(): HttpLoggingInterceptor

@@ -21,6 +21,9 @@ val White = Color.White
 val White1 = Color(0xF2F6F4F4)
 val Yellow = Color(0xF2F4F418)
 
+val tb_primary_light = Color(0xFF305680)
+val tb_secondary_light = Color(0xFFFF5722)
+
 // LIGHT THEME COLORS
 val ColorPrimaryLight = Color(0xFF2286DA)
 val ColorSecondaryLight = Color(0xFF6AB7F7)

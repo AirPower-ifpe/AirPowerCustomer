@@ -1,11 +1,18 @@
 package com.ifpe.edu.br.model.repository.remote.api
 
+import android.Manifest
+import androidx.annotation.RequiresPermission
+import com.ifpe.edu.br.AirPowerApplication
 import com.ifpe.edu.br.BuildConfig
 import com.ifpe.edu.br.core.contracts.IConnectionManager
 import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.repository.persistence.manager.JWTManager
+import com.ifpe.edu.br.model.repository.persistence.manager.SharedPrefManager
 import com.ifpe.edu.br.model.util.AirPowerLog
+import com.ifpe.edu.br.model.util.NetworkUtils
 import kotlinx.coroutines.runBlocking
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import okhttp3.logging.HttpLoggingInterceptor
 import java.security.SecureRandom
@@ -27,6 +34,9 @@ object AirPowerServerConnectionContractImpl : IConnectionManager {
     private val TAG: String = AirPowerServerConnectionContractImpl.javaClass.simpleName
     private val apiUrl = BuildConfig.API_URL
     override fun getJwtInterceptor(): Interceptor {
+        if (AirPowerLog.ISVERBOSE) {
+            AirPowerLog.d(TAG, "getJwtInterceptor()")
+        }
         return Interceptor { chain ->
             val originalRequest = chain.request()
             val jwtToken = runBlocking {
@@ -36,6 +46,47 @@ object AirPowerServerConnectionContractImpl : IConnectionManager {
                 .addHeader("Authorization", "Bearer $jwtToken")
                 .build()
             chain.proceed(newRequest)
+        }
+    }
+
+    @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
+    override fun getDynamicHostInterceptor(): Interceptor {
+        if (AirPowerLog.ISVERBOSE) {
+            AirPowerLog.d(TAG, "getDynamicHostInterceptor()")
+        }
+        val spM = SharedPrefManager.getInstance()
+        return Interceptor { chain ->
+            var request = chain.request()
+            val isVpnActive = NetworkUtils.isVpnActive(AirPowerApplication.getContext())
+            val forceVpn = spM.isForceVpn()
+
+            val targetBaseUrlString = if (isVpnActive || forceVpn) {
+                if (AirPowerLog.ISLOGABLE) {
+                    AirPowerLog.d(TAG, "using VPN base URL")
+                }
+                spM.vpnIp
+            } else {
+                if (AirPowerLog.ISLOGABLE) {
+                    AirPowerLog.d(TAG, "using local base URL")
+                }
+                spM.localIp
+            }
+
+            val newBaseUrl = targetBaseUrlString.toHttpUrlOrNull()
+
+            if (newBaseUrl != null) {
+                val newUrl = request.url.newBuilder()
+                    .scheme(newBaseUrl.scheme)
+                    .host(newBaseUrl.host)
+                    .port(newBaseUrl.port)
+                    .build()
+
+                request = request.newBuilder()
+                    .url(newUrl)
+                    .build()
+            }
+
+            chain.proceed(request)
         }
     }
 

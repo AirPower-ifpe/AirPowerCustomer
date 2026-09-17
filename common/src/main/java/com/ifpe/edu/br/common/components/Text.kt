@@ -15,8 +15,10 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
@@ -26,9 +28,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -63,12 +67,17 @@ fun CustomInputText(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     label: String? = null,
+    labelColor: Color = MaterialTheme.colorScheme.onSurface,
     placeholder: String = "",
+    placeHolderColor: Color = MaterialTheme.colorScheme.onSurface,
     leadingIcon: @Composable (() -> Unit)? = null,
+    onFocusChanged: ((Boolean) -> Unit)? = null,
     isPassword: Boolean = false,
     singleLine: Boolean = true,
     shape: Shape = RectangleShape,
-    inputFieldColors: TextFieldColors = TextFieldDefaults.colors(
+    labelFontStyle: TextStyle = LocalTextStyle.current,
+    placeholderFontStyle: TextStyle = LocalTextStyle.current,
+    inputFieldColors: TextFieldColors = OutlinedTextFieldDefaults.colors(
         focusedTextColor = MaterialTheme.colorScheme.onPrimary,
         unfocusedTextColor = MaterialTheme.colorScheme.onPrimary,
         focusedLabelColor = MaterialTheme.colorScheme.onPrimary,
@@ -84,14 +93,17 @@ fun CustomInputText(
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .onFocusChanged({
+                onFocusChanged?.invoke(it.isFocused)
+            }),
         label = label?.let {
-            { Text(it) }
+            { Text(it, style = labelFontStyle, color = labelColor) }
         },
         placeholder = {
             Text(
                 placeholder,
-                color = iconColor
+                color = placeHolderColor,
+                style = placeholderFontStyle
             )
         },
         singleLine = singleLine,
@@ -122,6 +134,7 @@ fun CustomText(
     alignment: TextAlign = TextAlign.Left,
     color: Color = MaterialTheme.colorScheme.onPrimary,
     fontSize: TextUnit = 16.sp,
+    fontStyle: TextStyle = LocalTextStyle.current,
     fontWeight: FontWeight = FontWeight.Bold,
     modifier: Modifier = Modifier
         .wrapContentWidth()
@@ -132,8 +145,7 @@ fun CustomText(
         textAlign = alignment,
         text = customText,
         color = color,
-        fontSize = fontSize,
-        fontWeight = fontWeight,
-        modifier = modifier
+        modifier = modifier,
+        style = fontStyle
     )
 }

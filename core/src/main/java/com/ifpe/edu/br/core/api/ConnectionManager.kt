@@ -28,6 +28,7 @@ class ConnectionManager {
 
     private fun createRetrofitInstance(connectionManager: IConnectionManager): Retrofit {
         val httpClient = OkHttpClient.Builder().apply {
+            addInterceptor(connectionManager.getDynamicHostInterceptor())
             addInterceptor(connectionManager.getJwtInterceptor())
             addInterceptor(connectionManager.getLoggerClient())
             connectTimeout(connectionManager.getConnectionTimeout(), TimeUnit.SECONDS)

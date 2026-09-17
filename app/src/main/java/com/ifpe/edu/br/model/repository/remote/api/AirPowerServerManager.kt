@@ -6,6 +6,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
+import com.ifpe.edu.br.model.repository.remote.dto.DashboardInfo
 import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
@@ -120,5 +121,15 @@ class AirPowerServerManager(connection: Retrofit) {
         val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val requestBody = RequestBody.create(mediaType, queryJson)
         return safeApiCall { apiService.markNotificationAsRead(requestBody) }
+    }
+
+    suspend fun getDashBoardsForUser(userId: String): ResultWrapper<List<DashboardInfo>> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDashBoardsForUser()")
+        return safeApiCall { apiService.getDashBoardsForUser(userId) }
+    }
+
+    suspend fun getDeviceIdsFromDashboard(dashboardId: String): ResultWrapper<List<String>> {
+        if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "getDeviceIdsFromDashboard()")
+        return safeApiCall { apiService.getDeviceIdsFromDashboards(dashboardId) }
     }
 }

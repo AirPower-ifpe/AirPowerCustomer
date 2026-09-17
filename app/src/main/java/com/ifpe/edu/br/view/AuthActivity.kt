@@ -16,6 +16,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,12 +27,16 @@ import com.ifpe.edu.br.model.Constants
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.view.ui.screens.AuthScreen
 import com.ifpe.edu.br.view.ui.screens.SplashScreen
+import com.ifpe.edu.br.view.ui.theme.darkAppThemeSchema
+import com.ifpe.edu.br.view.ui.theme.lightAppThemeSchema
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 import com.ifpe.edu.br.viewmodel.AirPowerViewModelProvider
 
 class AuthActivity : ComponentActivity() {
     val TAG = "AuthActivity"
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { false }
         super.onCreate(savedInstanceState)
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "onCreate()")
         overridePendingTransition(R.anim.enter_from_right, R.anim.exit_to_left)
@@ -42,7 +47,10 @@ class AuthActivity : ComponentActivity() {
             val viewModel = AirPowerViewModelProvider.getInstance()
 
             CompositionLocalProvider(LocalContext provides adjustedContext) {
-                AirPowerCostumerTheme {
+                AirPowerCostumerTheme(
+                    lightAppScheme = lightAppThemeSchema,
+                    darkAppColorScheme = darkAppThemeSchema
+                ) {
                     Surface {
                         InitializeNavigation(viewModel, navController, this)
                     }

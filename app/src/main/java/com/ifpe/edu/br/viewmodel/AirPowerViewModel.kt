@@ -9,6 +9,7 @@ import com.ifpe.edu.br.model.repository.Repository
 import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
+import com.ifpe.edu.br.model.repository.remote.dto.DashboardInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
@@ -23,6 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
@@ -46,6 +48,7 @@ class AirPowerViewModel(
     private val CACHE_CLEANUP_INTERVAL = MINUTE * 2
     private val FETCH_INTERVAL_DEVICE = MINUTE * 5
     private val FETCH_INTERVAL_NOTIFICATION = 30 * 1000L
+    private val FETCH_INTERVAL_AUTO_UPDATE = 2 * MINUTE
     private val FETCH_INTERVAL_ALARM = MINUTE
     private val MIN_DELAY_UI = 1500L
     private val MIN_DELAY_CARD = 800L
@@ -56,9 +59,13 @@ class AirPowerViewModel(
     private val aggregationDataCache =
         ConcurrentHashMap<String, MutableStateFlow<ResultWrapper<AggDataWrapperResponse>>>()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
     private val DEVICE_JOB = "DEVICE_JOB"
     private val ALARMS_JOB = "ALARMS_JOB"
     private val NOTIFICATIONS_JOB = "NOTIFICATIONS_JOB"
+    private val DASHBOARDS_JOB = "DASHBOARDS_JOB"
 
     init {
         startCacheCleanupJob()
@@ -172,7 +179,7 @@ class AirPowerViewModel(
      * @param request A requisição de agregação a ser executada.
      */
     fun fetchAggregatedData(request: AggregationRequest) {
-        AirPowerLog.e("TAG", "fetchAggregatedData: request: $request")
+        AirPowerLog.d(TAG, "fetchAggregatedData: request: $request")
         val flow = getAggregatedDataState(request) as MutableStateFlow
         viewModelScope.launch {
             val startTime = System.currentTimeMillis()
@@ -276,6 +283,39 @@ class AirPowerViewModel(
         if (jobs[NOTIFICATIONS_JOB]?.isActive != true) {
             jobs[NOTIFICATIONS_JOB] = fetchNotificationData()
         }
+        if (jobs[DASHBOARDS_JOB]?.isActive != true) {
+            jobs[DASHBOARDS_JOB] = fetchDashboards()
+        }
+    }
+
+    fun getDashboardsForCurrentUser(): StateFlow<List<DashboardInfo>> {
+        return repository.getDashBoards()
+    }
+
+    private fun fetchDashboards(): Job {
+        return viewModelScope.launch {
+            val uiStateKey = Constants.UIStateKey.DASHBOARDS_KEY
+            while (isActive) {
+                when (val resultWrapper = repository.retrieveDashBoardsForCurrentUser()) {
+                    is ResultWrapper.ApiError -> {
+                        handleApiError(
+                            resultWrapper.errorCode,
+                            uiStateKey
+                        )
+                    }
+
+                    ResultWrapper.Empty -> {}
+                    ResultWrapper.NetworkError -> {
+                        handleNetworkError(uiStateKey)
+                    }
+
+                    is ResultWrapper.Success<List<DashboardInfo>> -> {
+                        handleSuccess(uiStateKey)
+                    }
+                }
+                delay(FETCH_INTERVAL_AUTO_UPDATE)
+            }
+        }
     }
 
     private fun fetchNotificationData(): Job {
@@ -329,6 +369,7 @@ class AirPowerViewModel(
         }
     }
 
+    @Deprecated("Marked to be removed on text release")
     fun fetchAllDashboardsMetricsWrapper(): Job {
         return viewModelScope.launch {
             val startTime = System.currentTimeMillis()
@@ -359,19 +400,25 @@ class AirPowerViewModel(
         return viewModelScope.launch {
             val uiStateKey = Constants.UIStateKey.SESSION
             when (val resultWrapper = repository.markNotificationAsRead(notificationId)) {
-                is ResultWrapper.Success -> {}
+                is ResultWrapper.Success -> {
+                    repository.removeReadNotification(notificationId)
+                }
 
                 is ResultWrapper.ApiError -> {
                     handleApiError(resultWrapper.errorCode, uiStateKey)
                 }
 
-                ResultWrapper.NetworkError -> {
+                is ResultWrapper.NetworkError -> {
                     handleNetworkError(uiStateKey)
                 }
 
                 ResultWrapper.Empty -> {}
             }
         }
+    }
+
+    fun removeReadNotification(notificationId: Id) {
+        repository.removeReadNotification(notificationId)
     }
 
     private fun fetchAlarmData(): Job {
@@ -505,10 +552,12 @@ class AirPowerViewModel(
         return repository.alarmInfo
     }
 
+    @Deprecated("Marked to be removed on text release")
     fun getAllDevicesMetricsWrapper(): StateFlow<AllMetricsWrapper> {
         return repository.allDevicesMetricsWrapper
     }
 
+    @Deprecated("Marked to be removed on text release")
     fun getUserDashBoardsDataWrapper(): StateFlow<List<AllMetricsWrapper>> {
         return repository.dashBoardsMetricsWrapper
     }
@@ -523,4 +572,15 @@ class AirPowerViewModel(
             job.cancel()
         }
     }
+
+    fun forceRefresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            stopAllFetchers()
+            delay(500)
+            startDataFetchers()
+            _isRefreshing.value = false
+        }
+    }
+
 }

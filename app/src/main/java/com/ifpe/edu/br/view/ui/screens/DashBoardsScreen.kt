@@ -5,263 +5,159 @@ package com.ifpe.edu.br.view.ui.screens
 * Author: Willian Santos
 * Project: AirPower Costumer
 */
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.ifpe.edu.br.common.CommonConstants
-import com.ifpe.edu.br.common.components.CustomBarChart
-import com.ifpe.edu.br.common.components.CustomCard
-import com.ifpe.edu.br.common.components.CustomColumn
-import com.ifpe.edu.br.common.components.CustomText
-import com.ifpe.edu.br.common.components.RectButton
-import com.ifpe.edu.br.common.contracts.UIState
-import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
-import com.ifpe.edu.br.model.Constants
-import com.ifpe.edu.br.model.repository.model.TelemetryDataWrapper
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
-import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.AuthActivity
-import com.ifpe.edu.br.view.ui.components.LoadingCard
-import com.ifpe.edu.br.view.ui.theme.app_default_solid_background_light
-import com.ifpe.edu.br.view.ui.theme.tb_primary_light
-import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
+import com.ifpe.edu.br.view.ui.components.DashboardCard
+import com.ifpe.edu.br.view.ui.components.EmptyStateCard
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashBoardsScreen(
     navController: NavHostController,
     mainViewModel: AirPowerViewModel
 ) {
-    val fetchMetricsKey = Constants.UIStateKey.METRICS_KEY
-    val fetchMetricsState = mainViewModel.uiStateManager.observeUIState(fetchMetricsKey)
-        .collectAsState(initial = UIState(Constants.UIState.STATE_LOADING))
-
-    val scrollState = rememberScrollState()
     val context = LocalContext.current
-    val dashBoardsDataWrapper = mainViewModel.getUserDashBoardsDataWrapper().collectAsState()
-    val alarmInfo = mainViewModel.getAlarmInfoSet().collectAsState()
+    val userDashboards by mainViewModel.getDashboardsForCurrentUser().collectAsState(initial = emptyList())
+    val allAlarms by mainViewModel.getAlarmInfoSet().collectAsState()
+    val isRefreshing by mainViewModel.isRefreshing.collectAsState()
 
-    LaunchedEffect(Unit) {
-        mainViewModel.fetchAllDashboardsMetricsWrapper()
+    val totalMonitoredDevices = remember(userDashboards) {
+        userDashboards.flatMap { it.devicesIds }.distinct().size
     }
 
-    CustomColumn(
-        modifier = Modifier
-            .verticalScroll(scrollState)
-            .fillMaxSize(),
-        alignmentStrategy = CommonConstants.Ui.ALIGNMENT_CENTER,
-        layouts = listOf {
-            if (fetchMetricsState.value.state == Constants.UIState.STATE_LOADING) {
-                LoadingCard()
-            } else {
-                dashBoardsDataWrapper.value.forEach { dashBoardsDataWrapper ->
-                    DashboardsCardBoard(
-                        allMetricsWrapper = dashBoardsDataWrapper,
-                        alarmInfo = alarmInfo.value
-                    )
-                }
-            }
-
-            RectButton(
-                text = "Logout",
-                onClick = {
-                    mainViewModel.logout()
-                    AirPowerUtil.launchActivity(
-                        navController.context,
-                        AuthActivity::class.java,
-                    )
-                    navController.popBackStack()
-                    (context as? ComponentActivity)?.finish()
-                },
-                fontSize = 20.sp
-            )
-        }
-    )
-}
-
-@Composable
-private fun DashboardsCardBoard(
-    allMetricsWrapper: AllMetricsWrapper,
-    alarmInfo: List<AlarmInfo>
-) {
-
-    val context = LocalContext.current
-
-    CustomCard(
-        paddingStart = 15.dp,
-        paddingEnd = 15.dp,
-        paddingTop = 5.dp,
-        paddingBottom = 5.dp,
-        layouts = listOf {
-            CustomColumn(
-                modifier = Modifier.fillMaxSize(),
-                layouts = listOf {
-
-                    Spacer(modifier = Modifier.padding(vertical = 4.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        CustomText(
-                            color = tb_primary_light,
-                            text = allMetricsWrapper.label,
-                            fontSize = 20.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.padding(vertical = 6.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CustomColumn(
-                            modifier = Modifier.width(110.dp),
-                            layouts = listOf {
-                                Spacer(modifier = Modifier.padding(vertical = 10.dp))
-                                SummaryCard("alarmes", alarmInfo.size.toString(), onClick = {})
-                                Spacer(modifier = Modifier.padding(vertical = 4.dp))
-                                SummaryCard(
-                                    "Consumo Anual",
-                                    allMetricsWrapper.totalConsumption,
-                                    onClick = {})
-                                Spacer(modifier = Modifier.padding(vertical = 4.dp))
-                                SummaryCard(
-                                    "Dispositivos",
-                                    allMetricsWrapper.devicesCount.toString(),
-                                    onClick = {})
-                            })
-
-                        Spacer(modifier = Modifier.padding(horizontal = 10.dp))
-                        CustomColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            layouts = listOf {
-                                Spacer(modifier = Modifier.padding(vertical = 12.dp))
-                                CustomBarChart(
-                                    height = 300.dp,
-                                    dataWrapper = TelemetryDataWrapper(
-                                        allMetricsWrapper.label,
-                                        allMetricsWrapper.deviceConsumptionSet
-                                    )
-                                )
-                                Spacer(modifier = Modifier.padding(vertical = 4.dp))
-                            })
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.padding(vertical = 4.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { mainViewModel.forceRefresh() },
+        modifier = Modifier.fillMaxSize()
+    ) {
+        if (userDashboards.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
             ) {
-                CustomText(
-                    modifier = Modifier.clickable {
-                        Toast.makeText(
-                            context,
-                            "Essa funcionalidade está em desenvolvimento",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    },
-                    color = tb_primary_light,
-                    text = "Detalhes",
-                    fontSize = 12.sp
-                )
+                EmptyStateCard()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Cabeçalho com visão consolidada
+                item {
+                    DashboardsHeader(
+                        totalDashboards = userDashboards.size,
+                        totalDevices = totalMonitoredDevices
+                    )
+                }
+
+                // Lista de Dashboards
+                items(userDashboards, key = { it.id.id }) { dashboard ->
+                    DashboardCard(
+                        dashboard = dashboard,
+                        mainViewModel = mainViewModel,
+                        allAlarms = allAlarms
+                    )
+                }
+
+                // Botão de Logout padronizado
+                item {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedButton(
+                        onClick = {
+                            mainViewModel.logout()
+                            AirPowerUtil.launchActivity(
+                                navController.context,
+                                AuthActivity::class.java,
+                            )
+                            navController.popBackStack()
+                            (context as? ComponentActivity)?.finish()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(
+                                MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                            )
+                        )
+                    ) {
+                        Text(
+                            text = "Encerrar Sessão",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
-    )
+    }
 }
 
 @Composable
-private fun SummaryCard(
-    label: String,
-    data: String,
-    onClick: () -> Unit,
-    backgroundColor: Color = app_default_solid_background_light,
-    textColor: Color = tb_primary_light,
-    fontWeight: FontWeight = FontWeight.Light
-) {
-    CustomCard(
+private fun DashboardsHeader(totalDashboards: Int, totalDevices: Int) {
+    Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(cardCornerRadius))
             .fillMaxWidth()
-            .wrapContentHeight()
-            .background(backgroundColor)
-            .clickable { onClick() },
-        layouts = listOf {
-            CustomColumn(
-                modifier = Modifier.fillMaxSize(),
-                layouts = listOf {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CustomColumn(
-                            modifier = Modifier.wrapContentSize(),
-                            layouts = listOf {
-                                CustomText(
-                                    text = label,
-                                    alignment = TextAlign.Center,
-                                    fontWeight = fontWeight,
-                                    fontSize = 12.sp,
-                                    color = textColor,
-                                    modifier = Modifier.wrapContentWidth()
-                                )
-                            }
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CustomColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            layouts = listOf {
-                                CustomText(
-                                    text = data,
-                                    alignment = TextAlign.Center,
-                                    fontWeight = fontWeight,
-                                    fontSize = 12.sp,
-                                    color = tb_secondary_light,
-                                    modifier = Modifier
-                                        .wrapContentWidth()
-                                        .padding(all = 0.dp)
-                                )
-                            }
-                        )
-                    }
+            .padding(horizontal = 2.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Painéis de Monitoramento",
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
+        )
 
-                }
-            )
-        }
-    )
+        Text(
+            text = "$totalDashboards visões • $totalDevices medidores",
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+fun filterAlarmsByDeviceIds(alarms: List<AlarmInfo>, deviceIds: List<String>): List<AlarmInfo> {
+    val deviceIdsSet = deviceIds.toSet()
+    return alarms.filter { alarm ->
+        alarm.originator.id?.toString()?.let { deviceId ->
+            deviceIdsSet.contains(deviceId)
+        } ?: false
+    }
 }

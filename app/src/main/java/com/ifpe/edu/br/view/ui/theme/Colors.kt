@@ -5,52 +5,95 @@ package com.ifpe.edu.br.view.ui.theme
 * Project: AirPower Costumer
 */
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.scale
+import com.ifpe.edu.br.common.contracts.AppColorScheme
 
-val tb_primary_light = Color(0xFF305680)
-val tb_secondary_light = Color(0xFFFF5722)
-val tb_tertiary_light = Color(0xFFEEEEEE)
-val app_default_solid_background_light = Color(0xD7DAD6D6)
-val app_default_solid_background_dark = Color(0xD79A9696)
-val app_default_solid_background_dark_variant = Color(0xD7C4C0C0)
+// Light Colors
+val primaryLightAppColor = Color(0xFF25669B)
+val onPrimaryLightAppColor = Color(0xFAD8DADE)
 
-val a = Color(0xE9FAF9F9)
-val b = Color(0xD7C2BEBE)
+val secondaryLightAppColor = Color(0xFFFF5722)
+val onSecondaryLightAppColor = Color(0xFFEAE3E1)
 
-private val transparentGradient = listOf(
-    a, b
+val tertiaryLightAppColor = Color(0x8AE8E295)
+val onTertiaryLightAppColor = Color(0xFF86A2E0)
+
+val backgroundLightAppColor = Color(0xFFF3F1F1)
+val onBackgroundLightAppColor = Color(0xFF636465)
+
+val surfaceLightAppColor = Color(0xF3E8E7E7)
+val onSurfaceLightAppColor = Color(0xFF42586B)
+
+val primaryContainerLightAppColor = Color(0x59C0C0C2)
+val onPrimaryContainerLightAppColor = Color(0xFF63747E)
+
+val secondaryContainerLightAppColor = Color(0x12000000)
+val onSecondaryContainerLightAppColor = Color(0xFF636D7E)
+
+// Dark Colors
+val primaryDarkAppColor = Color(0xFF3E608A)
+val onPrimaryDarkAppColor = Color(0xFFC5C7CB)
+
+val secondaryDarkAppColor = Color(0xFFFF5722)
+val onSecondaryDarkAppColor = Color(0xFFDCD4D2)
+
+val primaryContainerDarkAppColor = Color(0x2DB0B1B2)
+val onPrimaryContainerDarkAppColor = Color(0xFFD3DEEC)
+
+val secondaryContainerDarkAppColor = Color(0x0FFFFFFF)
+val onSecondaryContainerDarkAppColor = Color(0xD3D3D6EC)
+
+val tertiaryDarkAppColor = Color(0x9CF5DE52)
+val onTertiaryDarkAppColor = Color(0xFF6F9CDC)
+
+val backgroundDarkAppColor = Color(0xFF313136)
+val onBackgroundDarkAppColor = Color(0xFFCBD0D5)
+
+val surfaceDarkAppColor = Color(0xE91F1F1F)
+val onSurfaceDarkAppColor = Color(0xFFD7DCEA)
+
+val lightAppThemeSchema = AppColorScheme(
+    primary = primaryLightAppColor,
+    onPrimary = onPrimaryLightAppColor,
+
+    secondary = secondaryLightAppColor,
+    onSecondary = onSecondaryLightAppColor,
+
+    tertiary = tertiaryLightAppColor,
+    onTertiary = onTertiaryLightAppColor,
+
+    primaryContainer = primaryContainerLightAppColor,
+    onPrimaryContainer = onPrimaryContainerLightAppColor,
+
+    secondaryContainer = secondaryContainerLightAppColor,
+    onSecondaryContainer = onSecondaryContainerLightAppColor,
+
+    background = backgroundLightAppColor,
+    onBackground = onBackgroundLightAppColor,
+
+    surface = surfaceLightAppColor,
+    onSurface = onSurfaceLightAppColor
 )
 
-val appBackgroundGradientLight = listOf(
-    Color.White, app_default_solid_background_light
-)
+val darkAppThemeSchema = AppColorScheme(
+    primary = primaryDarkAppColor,
+    onPrimary = onPrimaryDarkAppColor,
 
-val appBackgroundGradientDark = listOf(
-    app_default_solid_background_dark_variant, app_default_solid_background_dark
-)
+    secondary = secondaryDarkAppColor,
+    onSecondary = onSecondaryDarkAppColor,
 
-@Composable
-fun DefaultTransparentGradient(
-    modifier: Modifier = Modifier.fillMaxSize()
-) {
-    Canvas(
-        modifier = modifier
-    ) {
-        scale(scaleX = 1f, scaleY = 1f) {
-            drawRect(
-                brush = Brush.radialGradient(
-                    colors = transparentGradient,
-                    center = Offset(size.width / 2, size.height / 2),
-                    radius = size.width * 0.8f
-                )
-            )
-        }
-    }
-}
+    primaryContainer = primaryContainerDarkAppColor,
+    onPrimaryContainer = onPrimaryContainerDarkAppColor,
+
+    secondaryContainer = secondaryContainerDarkAppColor,
+    onSecondaryContainer = onSecondaryContainerDarkAppColor,
+
+    tertiary = tertiaryDarkAppColor,
+    onTertiary = onTertiaryDarkAppColor,
+
+    background = backgroundDarkAppColor,
+    onBackground = onBackgroundDarkAppColor,
+
+    surface = surfaceDarkAppColor,
+    onSurface = onSurfaceDarkAppColor
+)

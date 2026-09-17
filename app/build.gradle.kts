@@ -18,10 +18,10 @@ android {
 
     defaultConfig {
         applicationId = "com.ifpe.edu.br"
-        minSdk = 33
+        minSdk = 30
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0.0-alpha"
+        versionName = "2.0.0-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
     annotationProcessor(libs.androidx.room.compiler)
 
     // Retrofit
@@ -105,4 +106,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.material.icons.extended)
 }

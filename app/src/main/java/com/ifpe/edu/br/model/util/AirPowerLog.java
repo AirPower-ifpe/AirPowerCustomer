@@ -9,7 +9,7 @@ package com.ifpe.edu.br.model.util;
 import android.util.Log;
 
 public class AirPowerLog {
-    private static final String TAG = "AirPowerCostumerApp:";
+    private static final String TAG = "AirPowerCustomerApp:";
     public static final boolean ISLOGABLE = AirPowerUtil.isDebugVersion();
     public static final boolean ISVERBOSE = ISLOGABLE && AirPowerUtil.isVerbose();
 

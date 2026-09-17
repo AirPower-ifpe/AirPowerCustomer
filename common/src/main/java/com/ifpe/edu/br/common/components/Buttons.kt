@@ -15,9 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,46 +28,17 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ifpe.edu.br.common.ui.theme.White
-import com.ifpe.edu.br.common.ui.theme.cardCornerRadius
-
-@Composable
-fun RoundedButton(
-    text: String,
-    onClick: () -> Unit,
-    fontSize: TextUnit = 20.sp,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        shape = RoundedCornerShape(cardCornerRadius),
-        colors = ButtonColors(
-            contentColor = White,
-            containerColor = MaterialTheme.colorScheme.primary,
-            disabledContentColor = Color.Gray,
-            disabledContainerColor = Color.Gray
-        )
-    ) {
-        Text(
-            text = text,
-            fontWeight = FontWeight.Bold,
-            fontSize = fontSize,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-    }
-}
 
 @Composable
 fun RectButton(
     text: String,
     onClick: () -> Unit,
+    fontStyle: TextStyle = LocalTextStyle.current,
     fontSize: TextUnit = 20.sp,
     colors: ButtonColors = ButtonColors(
         contentColor = White,
@@ -86,9 +57,9 @@ fun RectButton(
     ) {
         Text(
             text = text,
-            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(vertical = 8.dp),
             fontSize = fontSize,
-            modifier = Modifier.padding(vertical = 8.dp)
+            style = fontStyle
         )
     }
 }
@@ -99,7 +70,7 @@ fun CustomIconButton(
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier.size(50.dp),
-    backgroundColor: Color = MaterialTheme.colorScheme.primary,
+    backgroundColor: Color = MaterialTheme.colorScheme.onBackground,
     iconTint: Color = Color.White,
     shape: Shape = RectangleShape
 ) {

@@ -1,29 +1,30 @@
 package com.ifpe.edu.br.view.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -39,16 +40,11 @@ import com.ifpe.edu.br.common.components.CustomIconButton
 import com.ifpe.edu.br.common.components.CustomNavigationBar
 import com.ifpe.edu.br.common.components.CustomText
 import com.ifpe.edu.br.common.components.CustomTopBar
-import com.ifpe.edu.br.common.components.FailureDialog
-import com.ifpe.edu.br.common.components.GradientBackground
+import com.ifpe.edu.br.common.components.ImageIcon
+import com.ifpe.edu.br.common.ui.theme.AirPowerTheme
 import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.util.AirPowerUtil
 import com.ifpe.edu.br.view.AuthActivity
-import com.ifpe.edu.br.view.ui.theme.DefaultTransparentGradient
-import com.ifpe.edu.br.view.ui.theme.appBackgroundGradientDark
-import com.ifpe.edu.br.view.ui.theme.appBackgroundGradientLight
-import com.ifpe.edu.br.view.ui.theme.tb_primary_light
-import com.ifpe.edu.br.view.ui.theme.tb_secondary_light
 import com.ifpe.edu.br.viewmodel.AirPowerViewModel
 import java.util.UUID
 
@@ -66,8 +62,8 @@ fun MainScreen(
 ) {
     val TAG = "MainScreen"
 
-    val notification = mainViewModel.getNotifications().collectAsState()
 
+    val notification = mainViewModel.getNotifications().collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -79,6 +75,30 @@ fun MainScreen(
 
     val context = LocalContext.current
     val shouldShowBottomBar = currentRoute in screensWithBottomBar
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (!isGranted) {
+            Toast.makeText(
+                context,
+                "Alertas desativados. Ative as notificações nas configurações para receber avisos de alarmes.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasPermission) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 
     CustomColumn(
         alignmentStrategy = CommonConstants.Ui.ALIGNMENT_TOP,
@@ -86,11 +106,12 @@ fun MainScreen(
             Scaffold(
                 topBar = {
                     val title = when (currentRoute) {
-                        Screen.Home.route -> "Início"
+                        Screen.Home.route -> "Resumo"
                         Screen.Devices.route -> "Dispositivos"
                         Screen.Dashboards.route -> "Dashboards"
-                        Screen.DeviceDetail.route -> "Detalhes do Dispositivo"
-                        Screen.NotificationCenter.route -> "Centro de Notificações"
+                        Screen.DeviceDetail.route -> "Detalhes"
+                        Screen.NotificationCenter.route -> "Notificações"
+                        "alarms" -> "Central de Alarmes"
                         else -> ""
                     }
 
@@ -100,7 +121,7 @@ fun MainScreen(
                             if (shouldShowBottomBar) {
                                 CustomIconButton(
                                     iconResId = R.drawable.notification_icon,
-                                    iconTint = if (hasNotification(notification.value)) tb_secondary_light else tb_primary_light,
+                                    iconTint = if (hasNotification(notification.value)) AirPowerTheme.color.secondary else AirPowerTheme.color.onBackground,
                                     contentDescription = "ícone de notificações",
                                     backgroundColor = Color.Transparent,
                                     onClick = {
@@ -108,22 +129,24 @@ fun MainScreen(
                                     }
                                 )
                             } else {
-                                IconButton(onClick = { navController.popBackStack() }) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Voltar"
-                                    )
-                                }
+                                ImageIcon(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clickable(
+                                            onClick = { navController.popBackStack() }
+                                        ),
+                                    description = "device icon",
+                                    iconResId = R.drawable.arrow_back,
+                                    iconTint = AirPowerTheme.color.onPrimaryContainer
+                                )
                             }
-
                         },
 
                         centerContent = {
                             CustomText(
                                 text = title,
-                                fontSize = 30.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = tb_primary_light,
+                                fontStyle = AirPowerTheme.typography.displayLarge,
+                                color = AirPowerTheme.color.onBackground,
                                 alignment = TextAlign.Center,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -133,7 +156,7 @@ fun MainScreen(
                             if (shouldShowBottomBar) {
                                 CustomIconButton(
                                     iconResId = R.drawable.menu_icon,
-                                    iconTint = tb_primary_light,
+                                    iconTint = AirPowerTheme.color.onBackground,
                                     backgroundColor = Color.Transparent,
                                     contentDescription = "Ícone de menu",
                                     onClick = {
@@ -163,10 +186,6 @@ fun MainScreen(
                     }
                 }
             ) { innerPadding ->
-                GradientBackground(
-                    if (isSystemInDarkTheme()) appBackgroundGradientDark
-                    else appBackgroundGradientLight
-                )
                 NavHostContainer(
                     navController = navController,
                     modifier = Modifier.padding(innerPadding),
@@ -175,82 +194,6 @@ fun MainScreen(
             }
         }
     )
-}
-
-@Composable
-fun UpdateSessionFailure(
-    navController: NavHostController,
-    componentActivity: ComponentActivity
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.8f))
-    ) {
-        FailureDialog(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxSize(),
-            drawableResId = R.drawable.auth_issue,
-            iconSize = 150.dp,
-            text = "Sua sessão expirou, por favor faça login novamente",
-            textColor = tb_primary_light,
-            retryCallback = {
-                navigateAuthScreen(navController, componentActivity)
-            }
-        ) { modifier -> DefaultTransparentGradient(modifier) }
-    }
-}
-
-@Composable
-private fun NetworkIssue(
-    navController: NavHostController,
-    componentActivity: ComponentActivity
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.8f))
-    ) {
-        FailureDialog(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxSize(),
-            drawableResId = R.drawable.network_issue,
-            iconSize = 150.dp,
-            text = "Houve um erro de conexão",
-            textColor = tb_primary_light,
-            retryCallback = {
-                navigateAuthScreen(navController, componentActivity)
-            }
-        ) { modifier -> DefaultTransparentGradient(modifier) }
-    }
-}
-
-
-@Composable
-fun AuthFailure(
-    navController: NavHostController,
-    componentActivity: ComponentActivity
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.9f))
-    ) {
-        FailureDialog(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxSize(),
-            drawableResId = R.drawable.auth_issue,
-            iconSize = 150.dp,
-            text = "Credenciais inválidas",
-            textColor = tb_primary_light,
-            retryCallback = {
-                navigateAuthScreen(navController, componentActivity)
-            }
-        ) { DefaultTransparentGradient() }
-    }
 }
 
 @Composable
@@ -317,6 +260,14 @@ fun NavHostContainer(
                 mainViewModel = mainViewModel
             )
         }
+
+        composable("alarms") {
+            AlarmCenterScreen(
+                navController = navController,
+                mainViewModel = mainViewModel
+            )
+        }
+
     }
 }
 

@@ -16,12 +16,13 @@ import com.ifpe.edu.br.model.repository.persistence.model.AirPowerUser
 import com.ifpe.edu.br.model.repository.persistence.model.toThingsBoardUser
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerConnectionContractImpl
 import com.ifpe.edu.br.model.repository.remote.api.AirPowerServerManager
+import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.AlarmInfo
 import com.ifpe.edu.br.model.repository.remote.dto.AllMetricsWrapper
+import com.ifpe.edu.br.model.repository.remote.dto.DashboardInfo
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceConsumption
 import com.ifpe.edu.br.model.repository.remote.dto.DeviceSummary
 import com.ifpe.edu.br.model.repository.remote.dto.DevicesStatusSummary
-import com.ifpe.edu.br.model.repository.remote.dto.AirPowerNotificationItem
 import com.ifpe.edu.br.model.repository.remote.dto.Id
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggDataWrapperResponse
 import com.ifpe.edu.br.model.repository.remote.dto.agg.AggregationRequest
@@ -31,6 +32,7 @@ import com.ifpe.edu.br.model.repository.remote.dto.error.ErrorCode
 import com.ifpe.edu.br.model.repository.remote.dto.user.ThingsBoardUser
 import com.ifpe.edu.br.model.util.AirPowerLog
 import com.ifpe.edu.br.model.util.ResultWrapper
+import com.ifpe.edu.br.view.manager.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,6 +47,7 @@ class Repository private constructor(context: Context) {
     private val airPowerServerConnection =
         ConnectionManager.getInstance().getConnectionById(AirPowerServerConnectionContractImpl)
     private val airPowerServerMgr = AirPowerServerManager(airPowerServerConnection)
+    private val notificationHelper = NotificationHelper(context)
 
     private val _devicesSummary = MutableStateFlow<List<DeviceSummary>>(emptyList())
     val devicesSummary: StateFlow<List<DeviceSummary>> get() = _devicesSummary
@@ -62,7 +65,11 @@ class Repository private constructor(context: Context) {
         _dashBoardsMetricsWrapper.asStateFlow()
 
     private val _notification = MutableStateFlow(getEmptyNotification())
-    private val notification: StateFlow<List<AirPowerNotificationItem>> = _notification.asStateFlow()
+    private val notification: StateFlow<List<AirPowerNotificationItem>> =
+        _notification.asStateFlow()
+
+    private val _dashboards = MutableStateFlow(getEmptyDashboards())
+    private val dashboards: StateFlow<List<DashboardInfo>> = _dashboards.asStateFlow()
 
     companion object {
         @Volatile
@@ -117,6 +124,7 @@ class Repository private constructor(context: Context) {
         val resultWrapper = airPowerServerMgr.getAlarmsForCurrentUser()
         if (resultWrapper is ResultWrapper.Success) {
             if (AirPowerLog.ISVERBOSE) AirPowerLog.d(TAG, "updating alarms data")
+            AirPowerLog.d("alarms:", "resultado: ${resultWrapper.value}")
             _alarmInfo.value = resultWrapper.value
         }
         return resultWrapper
@@ -280,9 +288,23 @@ class Repository private constructor(context: Context) {
         )
     }
 
-
+    /**
+     * Recupera o usuário atualmente logado do banco de dados local.
+     *
+     * Este método consulta a tabela de usuários e retorna o primeiro usuário encontrado.
+     * A lógica assume que no máximo um usuário pode estar logado e persistido no
+     * banco de dados por vez.
+     *
+     * @return Uma instância de [AirPowerUser] se um usuário for encontrado no banco de dados,
+     *         ou `null` se nenhum usuário estiver logado (ou seja, o banco de dados de usuários está vazio).
+     */
     private fun getCurrentUser(): AirPowerUser? {
-        return userDao.findAll()[0]
+        val allUsers = userDao.findAll()
+        return if (allUsers.isEmpty()) {
+            null
+        } else {
+            allUsers[0]
+        }
     }
 
     fun isUserLoggedIn(): Boolean {
@@ -335,12 +357,28 @@ class Repository private constructor(context: Context) {
         return emptyList()
     }
 
+    private fun getEmptyDashboards(): List<DashboardInfo> {
+        return emptyList()
+    }
+
     suspend fun retrieveNotifications(): ResultWrapper<List<AirPowerNotificationItem>> {
         if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "retrieveNotifications()")
         val resultWrapper = airPowerServerMgr.getNotificationsForCurrentUser()
         if (resultWrapper is ResultWrapper.Success) {
             if (AirPowerLog.ISVERBOSE)
-                AirPowerLog.d(TAG, "Updating notifications data with ${resultWrapper.value.size} items.")
+                AirPowerLog.d(
+                    TAG,
+                    "Updating notifications data with ${resultWrapper.value.size} items."
+                )
+            val oldNotifications = getNotifications().value
+            val newNotifications = resultWrapper.value
+            if (oldNotifications.isNotEmpty() && newNotifications.size > oldNotifications.size) {
+                val notificationsToPost =
+                    newNotifications.filter { it !in oldNotifications }
+                notificationsToPost.forEach { notificationItem ->
+                    notificationHelper.showNotification(notificationItem)
+                }
+            }
             _notification.value = resultWrapper.value
         }
         return resultWrapper
@@ -361,5 +399,40 @@ class Repository private constructor(context: Context) {
             }
         }
         return resultWrapper
+    }
+
+    fun getDashBoards(): StateFlow<List<DashboardInfo>> {
+        return dashboards
+    }
+
+    suspend fun retrieveDashBoardsForCurrentUser(): ResultWrapper<List<DashboardInfo>> {
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.d(TAG, "retrieveDashBoardsForCurrentUser()")
+        val storedUser = getCurrentUser()
+        if (storedUser == null) {
+            return ResultWrapper.NetworkError
+        }
+        val resultWrapper = airPowerServerMgr.getDashBoardsForUser(storedUser.id)
+        if (resultWrapper is ResultWrapper.Success) {
+            if (AirPowerLog.ISVERBOSE)
+                AirPowerLog.d(TAG, "getting dashboards: ${resultWrapper.value.size} items.")
+            _dashboards.value = resultWrapper.value
+        }
+        return resultWrapper
+    }
+
+    @Deprecated("Marked to be removed")
+    suspend fun getDeviceIdsFromDashboards(dashboardId: String): ResultWrapper<List<String>> {
+        if (AirPowerLog.ISLOGABLE) AirPowerLog.d(TAG, "getDeviceIdsFromDashboard()")
+        val resultWrapper = airPowerServerMgr.getDeviceIdsFromDashboard(dashboardId)
+        return resultWrapper
+    }
+
+    fun removeReadNotification(notificationId: Id) {
+        if (AirPowerLog.ISLOGABLE)
+            AirPowerLog.d(TAG, "Removing notification with id: ${notificationId.id}")
+        _notification.value = _notification.value.filter { notification ->
+            notification.id.id != notificationId.id
+        }
     }
 }
