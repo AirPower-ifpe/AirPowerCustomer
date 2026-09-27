@@ -154,6 +154,6 @@ object AirPowerServerConnectionContractImpl : IConnectionManager {
     }
 
     override fun getConnectionTimeout(): Long {
-        return 3
+        return 15
     }
 }
