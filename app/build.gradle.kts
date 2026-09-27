@@ -20,18 +20,19 @@ android {
         applicationId = "com.ifpe.edu.br"
         minSdk = 30
         targetSdk = 35
-        versionCode = 1
-        versionName = "2.0.0-release"
+        versionCode = 2
+        versionName = "2.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
 
+        val baseApiUrl = localProperties.getProperty("airpowerserver.url.api.base") ?: "https://192.168.15.12:8443/"
         buildConfigField(
             "String",
             "API_URL",
-            "\"${localProperties["airpowerserver.url.api.base"]}\""
+            "\"$baseApiUrl\""
         )
     }
 
