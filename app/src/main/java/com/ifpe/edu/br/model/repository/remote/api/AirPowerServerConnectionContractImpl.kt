@@ -150,10 +150,11 @@ object AirPowerServerConnectionContractImpl : IConnectionManager {
     }
 
     override fun getBaseURL(): String {
-        return apiUrl
+        val url = if (!apiUrl.isNullOrBlank() && apiUrl != "null") apiUrl else "https://192.168.15.12:8443/"
+        return if (url.endsWith("/")) url else "$url/"
     }
 
     override fun getConnectionTimeout(): Long {
-        return 3
+        return 15
     }
 }
