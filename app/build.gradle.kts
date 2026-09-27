@@ -28,10 +28,11 @@ android {
             useSupportLibrary = true
         }
 
+        val baseApiUrl = localProperties.getProperty("airpowerserver.url.api.base") ?: "https://192.168.15.12:8443/"
         buildConfigField(
             "String",
             "API_URL",
-            "\"${localProperties["airpowerserver.url.api.base"]}\""
+            "\"$baseApiUrl\""
         )
     }
 
